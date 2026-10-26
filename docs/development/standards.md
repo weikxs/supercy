@@ -98,8 +98,8 @@ Enforced by `make privacy` (pre-commit hook) and review.
 | Rule | Level | Enforced by |
 |---|---|---|
 | `Cargo.lock` is committed; checks run with `--locked` | MUST | `scripts/docker-test.sh` |
-| A new dependency needs a reason in the pull request: maintenance, size, permissive license (MIT, Apache-2.0, BSD, ISC, Zlib, Unicode); any other license needs a recorded decision | MUST | `cargo deny` (from M1), review |
-| Known vulnerabilities in dependencies are checked | MUST | `cargo audit` (from M1) |
+| A new dependency needs a reason in the pull request: maintenance, size, permissive license (MIT, Apache-2.0, BSD, ISC, Zlib, Unicode); any other license needs a recorded decision | MUST | `make licenses` (part of `make test`), review |
+| Known vulnerabilities in dependencies are checked | MUST | `cargo audit` (planned; not yet in the container) |
 | Release packages are built in CI only, never on a developer's machine, and published with SHA-256 checksums | MUST | release workflow (later) |
 
 ## 7. Code
@@ -135,7 +135,8 @@ the default history size; a change that breaks a budget needs a recorded decisio
 ## 9. Tests (MUST)
 
 - **Test first:** write a failing test, make it pass, then refactor.
-- **Coverage:** at least 80% of lines across the Rust workspace; core crates aim at 90%.
+- **Coverage:** at least 80% of lines across the Rust workspace (`make cover` fails below it); core crates aim at 90%.
+- **Budgets:** search speed and index memory have release-mode benchmarks with hard limits (`make bench`).
 - **Style:** descriptive test names; Arrange–Act–Assert; property tests (`proptest`) for parsers and merge.
 - **All tests run in Docker** (`make test`, `scripts/docker-test.sh`): `cargo fmt --check`, `clippy -D warnings`
   and `cargo test` in a Linux container with a CPU and memory limit. The Rust core must be fully testable on
