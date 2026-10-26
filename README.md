@@ -4,12 +4,12 @@
 
 [简体中文](README.zh-CN.md)
 
-![Status](https://img.shields.io/badge/status-planning-lightgrey)
+![Status](https://img.shields.io/badge/status-early%20development-lightgrey)
 ![License](https://img.shields.io/badge/license-not%20chosen%20yet-lightgrey)
 
 > [!NOTE]
-> Supercy is in the **planning** stage. There is no app to download yet; this repository holds the project
-> skeleton, the development standards and the test harness.
+> Supercy is in **early development**. There is no app to download yet: this repository holds the Rust core
+> (history model, filtering, search, encrypted storage), the development standards and the test harness.
 
 ## What it will be
 
@@ -31,12 +31,23 @@ Android do not let apps read the clipboard in the background.
 ## Development
 
 The core is written in Rust (`crates/`); each platform has a thin native shell (`apps/`, from milestone M3).
+
+| Crate | Purpose |
+|---|---|
+| `cy-model` | History items, representations, ids, hybrid logical clocks, content fingerprints |
+| `cy-filter` | What is kept: concealed/transient markers, ignored apps, size limits, sensitive content |
+| `cy-search` | In-memory fuzzy search with pinyin |
+| `cy-store` | Encrypted SQLite history (XChaCha20-Poly1305, key in the system keystore) |
+| `cy-platform` | Keystore and clock traits, with in-memory versions for tests |
+
 All checks run in a Linux container, so nothing is built or installed on your machine:
 
 ```sh
 make hooks     # use the repository's git hooks
 make privacy   # no local paths, secrets or real identifiers
-make test      # cargo fmt --check, clippy -D warnings and cargo test in Docker
+make test      # cargo fmt --check, clippy -D warnings, license check and cargo test in Docker
+make bench     # search speed and memory budgets (release build)
+make cover     # line coverage, at least 80%
 ```
 
 Read [docs/development/standards.md](docs/development/standards.md) before contributing.

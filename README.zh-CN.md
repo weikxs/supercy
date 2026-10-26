@@ -4,11 +4,11 @@
 
 [English](README.md)
 
-![状态](https://img.shields.io/badge/状态-规划中-lightgrey)
+![状态](https://img.shields.io/badge/状态-早期开发-lightgrey)
 ![许可证](https://img.shields.io/badge/许可证-待定-lightgrey)
 
 > [!NOTE]
-> Supercy 处于**规划阶段**，还没有可下载的应用；本仓库目前只有项目骨架、开发规范和测试框架。
+> Supercy 处于**早期开发**阶段，还没有可下载的应用；本仓库目前有 Rust 核心（历史模型、过滤、搜索、加密存储）、开发规范和测试框架。
 
 ## 它将是什么
 
@@ -23,12 +23,24 @@
 
 ## 开发
 
-核心用 Rust 编写（`crates/`），每个平台一个很薄的原生外壳（`apps/`，从里程碑 M3 开始）。所有检查都在 Linux 容器里运行，不在你的电脑上编译或安装任何东西：
+核心用 Rust 编写（`crates/`），每个平台一个很薄的原生外壳（`apps/`，从里程碑 M3 开始）。
+
+| Crate | 作用 |
+|---|---|
+| `cy-model` | 历史条目、表示形式、ID、混合逻辑时钟、内容指纹 |
+| `cy-filter` | 决定保存什么：隐藏/临时标记、忽略应用、大小上限、敏感内容 |
+| `cy-search` | 内存中的模糊搜索，支持拼音 |
+| `cy-store` | 加密的 SQLite 历史（XChaCha20-Poly1305，密钥在系统钥匙串） |
+| `cy-platform` | 钥匙串与时钟的 trait，及测试用的内存实现 |
+
+所有检查都在 Linux 容器里运行，不在你的电脑上编译或安装任何东西：
 
 ```sh
 make hooks     # 启用仓库自带的 git 钩子
 make privacy   # 检查没有本地路径、密钥或真实身份信息
-make test      # 在 Docker 中运行 cargo fmt --check、clippy -D warnings 和 cargo test
+make test      # 在 Docker 中运行 cargo fmt --check、clippy -D warnings、许可证检查和 cargo test
+make bench     # 搜索速度与内存预算（release 构建）
+make cover     # 行覆盖率，至少 80%
 ```
 
 参与开发前请先阅读 [docs/development/standards.md](docs/development/standards.md)（英文）。

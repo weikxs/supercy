@@ -1,0 +1,17 @@
+[package]
+name = "cy-search"
+description = "In-memory search for Supercy history: fuzzy matching and pinyin."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+cy-model.workspace = true
+pinyin.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

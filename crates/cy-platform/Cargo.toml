@@ -1,0 +1,17 @@
+[package]
+name = "cy-platform"
+description = "Platform services behind traits (keystore, clock) with in-memory implementations."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+cy-model.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+
+
+[lints]
+workspace = true
