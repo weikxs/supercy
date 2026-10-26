@@ -1,0 +1,7 @@
+# Product and platform names that are words, not code identifiers, in doc comments.
+doc-valid-idents = ["Supercy", "OTPKeep", "GitHub", "AppKit", "SwiftUI", "UniFFI", "SQLite", "NSPasteboard", ".."]
+
+# Tests may fail loudly: a panic in a test is a failed assertion, not a crash in production.
+allow-panic-in-tests = true
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true

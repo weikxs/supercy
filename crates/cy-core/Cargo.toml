@@ -1,0 +1,10 @@
+[package]
+name = "cy-core"
+description = "Placeholder for the Supercy core; the real crates arrive in milestone M1."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

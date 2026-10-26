@@ -1,0 +1,46 @@
+# Supercy
+
+**A lightweight clipboard manager for the menu bar, with private sync between your own devices.**
+
+[简体中文](README.zh-CN.md)
+
+![Status](https://img.shields.io/badge/status-planning-lightgrey)
+![License](https://img.shields.io/badge/license-not%20chosen%20yet-lightgrey)
+
+> [!NOTE]
+> Supercy is in the **planning** stage. There is no app to download yet; this repository holds the project
+> skeleton, the development standards and the test harness.
+
+## What it will be
+
+- **Light:** a native menu-bar app (SwiftUI/AppKit on macOS first), no web view. Target: at most 30 MB of memory
+  and no CPU use while idle.
+- **History at your fingertips:** text, rich text, links and small images; fuzzy search (including pinyin for
+  Chinese); pins; a global shortcut; keyboard navigation; paste straight back into the app you were using.
+- **Private by default:** content that password managers mark as concealed or transient is never stored; apps
+  can be ignored; sensitive items expire; history is encrypted on disk with a key kept in the system keychain.
+  No account, no cloud, no telemetry.
+- **Sync between your own devices:** on the local network, end-to-end encrypted, after pairing with a QR code or
+  a one-time code. No server by default.
+
+## Platforms
+
+macOS first. Windows and Linux follow; mobile comes last and can only send and receive by hand, because iOS and
+Android do not let apps read the clipboard in the background.
+
+## Development
+
+The core is written in Rust (`crates/`); each platform has a thin native shell (`apps/`, from milestone M3).
+All checks run in a Linux container, so nothing is built or installed on your machine:
+
+```sh
+make hooks     # use the repository's git hooks
+make privacy   # no local paths, secrets or real identifiers
+make test      # cargo fmt --check, clippy -D warnings and cargo test in Docker
+```
+
+Read [docs/development/standards.md](docs/development/standards.md) before contributing.
+
+## License
+
+Not chosen yet. Until a license is added, all rights are reserved (see [LICENSE](LICENSE)).

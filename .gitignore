@@ -1,0 +1,17 @@
+/target/
+.DS_Store
+
+# Swift / Xcode build output (macOS shell, later)
+.build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# PRD, design and planning documents are internal; never publish.
+docs/prd/
+
+# Local privacy denylist (real identifiers checked by scripts/check-privacy.sh); never publish.
+.privacy-denylist
+
+# Local test output
+/tmp-test/
