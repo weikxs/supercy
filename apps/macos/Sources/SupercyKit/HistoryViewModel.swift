@@ -1,4 +1,5 @@
 import Combine
+import CoreGraphics
 import Foundation
 
 /// The history list's state: query, results, selection and the actions on them. Keyboard
@@ -112,4 +113,17 @@ public final class HistoryViewModel: ObservableObject {
     }
 
     private var cachedPayload: (id: String, representations: [PasteRepresentation])?
+
+    /// Thumbnails of image items, decoded at display size; dropped with the panel.
+    public let thumbnails = ThumbnailCache()
+
+    /// The thumbnail of an image item, at most `maxPixels` on its longer side.
+    public func thumbnail(of item: ItemSummary, maxPixels: Int) -> CGImage? {
+        guard item.kind == .image else { return nil }
+        return thumbnails.thumbnail(for: item.id, maxPixels: maxPixels) {
+            let representations = (try? controller.engine.payload(id: item.id)) ?? []
+            for case let .image(_, _, _, bytes) in representations { return bytes }
+            return nil
+        }
+    }
 }

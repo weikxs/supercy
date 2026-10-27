@@ -57,12 +57,21 @@ public struct HistoryView: View {
         .padding(10)
     }
 
+    /// Thumbnails are decoded at the row's pixel size (points × screen scale).
+    private func thumbnail(for item: ItemSummary) -> CGImage? {
+        guard item.kind == .image else { return nil }
+        let points = Double(settings?.imagePreviewHeight ?? 40)
+        let scale = NSScreen.main?.backingScaleFactor ?? 2
+        return model.thumbnail(of: item, maxPixels: Int(points * scale))
+    }
+
     private var list: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(Array(model.items.enumerated()), id: \.element.id) { index, item in
-                        HistoryRow(item: item, index: index, selected: index == model.selectedIndex, settings: settings)
+                        HistoryRow(item: item, index: index, selected: index == model.selectedIndex, settings: settings,
+                                   thumbnail: thumbnail(for: item))
                             .id(item.id)
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -91,10 +100,20 @@ struct HistoryRow: View {
     let index: Int
     let selected: Bool
     let settings: Settings?
+    let thumbnail: CGImage?
+
+    private var imageHeight: CGFloat { CGFloat(settings?.imagePreviewHeight ?? 40) }
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: Self.symbol(item.kind)).frame(width: 16).foregroundStyle(.secondary)
+            if let thumbnail {
+                Image(decorative: thumbnail, scale: NSScreen.main?.backingScaleFactor ?? 2)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: imageHeight * 3, maxHeight: imageHeight)
+            } else {
+                Image(systemName: Self.symbol(item.kind)).frame(width: 16).foregroundStyle(.secondary)
+            }
             if item.pinned { Image(systemName: "pin.fill").font(.caption).foregroundStyle(.orange) }
             Text(title).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 4)
@@ -102,7 +121,7 @@ struct HistoryRow: View {
             Text(shortcutHint).font(.caption.monospaced()).foregroundStyle(.secondary)
         }
         .padding(.horizontal, 10)
-        .frame(height: HistoryView.rowHeight)
+        .frame(height: thumbnail == nil ? HistoryView.rowHeight : max(HistoryView.rowHeight, imageHeight + 6))
         .background(selected ? Color.accentColor.opacity(0.25) : Color.clear)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selected ? .isSelected : [])

@@ -17,6 +17,10 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
     private var lastOrigin: NSPoint?
     var onOpenSettings: (() -> Void)?
     var onNeedsAccessibility: (() -> Void)?
+    /// Called after the panel closed and released its views (to hand memory back).
+    var onClosed: (() -> Void)?
+    /// Places the panel off screen (scripted measurements only).
+    var offscreen = false
 
     init(controller: ClipboardController, clock: Clock) {
         self.controller = controller
@@ -51,7 +55,9 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         panel.isReleasedWhenClosed = false
         panel.contentView = hosting
         panel.delegate = self
-        panel.setFrameOrigin(origin(for: panel.frame.size, statusButton: statusButton, settings: model.settings))
+        let origin = offscreen ? NSPoint(x: -20_000, y: -20_000)
+            : origin(for: panel.frame.size, statusButton: statusButton, settings: model.settings)
+        panel.setFrameOrigin(origin)
         self.panel = panel
         self.model = model
         panel.makeKeyAndOrderFront(nil)
@@ -63,9 +69,11 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         keyMonitor = nil
         panel?.orderOut(nil)
+        panel?.contentView = nil
         panel = nil
-        // Drop the view model with its previews and cached payloads.
+        // Drop the view model with its previews, thumbnails and cached payloads.
         model = nil
+        onClosed?()
     }
 
     func windowDidResignKey(_ notification: Notification) {

@@ -27,6 +27,10 @@
 			isa = PBXBuildFile;
 			fileRef = D79A804A17645278414EB9E0;
 		};
+		0D7C502F483E9C412B44994C = {
+			isa = PBXBuildFile;
+			fileRef = 6EA43F133B79FD02264085AF;
+		};
 		0E51A6B86EB25DC55FBA5271 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -38,6 +42,10 @@
 			isa = PBXBuildFile;
 			fileRef = 849FA2FFA30F837A7D5209DF;
 		};
+		11080F6C22D37086B91EB308 = {
+			isa = PBXBuildFile;
+			fileRef = 2D0ECC818F0BCB4FB9570B41;
+		};
 		11A7E023B8688CA40606F745 = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -48,6 +56,14 @@
 		13F5F2AE80828A8E56E54E85 = {
 			isa = PBXBuildFile;
 			fileRef = 3FD35DE70625E12A64B019B8;
+		};
+		14A97DEC4F0B573C3D6F11B2 = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				11080F6C22D37086B91EB308,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		15751CDB70DF15E0AB8BFE57 = {
 			isa = PBXBuildFile;
@@ -81,6 +97,13 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		2D0ECC818F0BCB4FB9570B41 = {
+			isa = PBXFileReference;
+			lastKnownFileType = folder.assetcatalog;
+			name = Assets.xcassets;
+			path = Resources/Assets.xcassets;
+			sourceTree = SOURCE_ROOT;
+		};
 		2D273FF4853AA096BD48A1DE = {
 			isa = PBXBuildFile;
 			fileRef = CD2B32BEAFE23494565A6405;
@@ -101,9 +124,11 @@
 			children = (
 				A591E88546F54FBEA6F3EAE5,
 				555C4164DB01E24CE853E4A1,
+				59542C2EE14BB0C1F12F9A7B,
 				753F3E2592D629452688755F,
 				1BE32799EFD87E0EC1ED3F0B,
 				0E51A6B86EB25DC55FBA5271,
+				2D0ECC818F0BCB4FB9570B41,
 			);
 			name = SupercyApp;
 			sourceTree = "<group>";
@@ -121,6 +146,7 @@
 			buildPhases = (
 				581799B5D3814B182B86F851,
 				91B9D196A51BD93A6F51B945,
+				14A97DEC4F0B573C3D6F11B2,
 			);
 			buildRules = (
 			);
@@ -192,6 +218,7 @@
 				CBE3ABB6E7B7E3F9ADC5BCE4,
 				55BA82D026AD73406D266CFD,
 				33BD50CF20918BC05EEB4F0B,
+				584D785838DCD9E3EBF2F9E2,
 				37C053271B0E6B77806A4580,
 				9361A571F96E0552648F4DA8,
 				3AAF4EDCB83A18469A4AD8C7,
@@ -203,6 +230,7 @@
 				CD2B32BEAFE23494565A6405,
 				C0FF50272609FDB896678AE9,
 				8D06EAC446F2E034AF24853B,
+				6EA43F133B79FD02264085AF,
 			);
 			name = SupercyKit;
 			sourceTree = "<group>";
@@ -243,6 +271,7 @@
 				F32AB9268883F2B005455C27,
 				2E15BE4A6BE7AB3AE6DE5BFB,
 				61D7BC6FC7A16AAC3FD8953F,
+				D377CDADCBABD189E1164DB8,
 				4E7B9DD28BE46A32D5136747,
 				4143A2E8E43E3011993A3A87,
 				F0F012D91F28B211E869F1A2,
@@ -254,14 +283,30 @@
 				2D273FF4853AA096BD48A1DE,
 				A484B931B68F91DBA5EDF0EC,
 				15751CDB70DF15E0AB8BFE57,
+				0D7C502F483E9C412B44994C,
 				67E1D049080F8688AFDC8FA1,
 				A0318ECA6C5A7AE1448C5E13,
+				E7FBB617B99556DE11B83D55,
 				D5E367E13B8434FAD779789C,
 				D63D240C4692E6456CA64F5F,
 				ABC436CC4C92B5B05625FF61,
 				D9B32EB9A63819D2FF8451D9,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
+		};
+		584D785838DCD9E3EBF2F9E2 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = MenuBarIconStyle.swift;
+			path = Sources/SupercyKit/MenuBarIconStyle.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		59542C2EE14BB0C1F12F9A7B = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = MeasurementScript.swift;
+			path = Sources/SupercyApp/MeasurementScript.swift;
+			sourceTree = SOURCE_ROOT;
 		};
 		5FEBD1E4EECC7FA7BD08F95D = {
 			isa = XCBuildConfiguration;
@@ -290,6 +335,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.weikxs.Supercy;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_KEY_CFBundleDisplayName = Supercy;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -346,6 +392,20 @@
 			};
 			name = Release;
 		};
+		6EA43F133B79FD02264085AF = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = ThumbnailCache.swift;
+			path = Sources/SupercyKit/ThumbnailCache.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		6F5FA57B2C1E5E9430A94F00 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = ThumbnailCacheTests.swift;
+			path = Tests/SupercyKitTests/ThumbnailCacheTests.swift;
+			sourceTree = SOURCE_ROOT;
+		};
 		743676AFC5D4EAD2B6406C2C = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -374,6 +434,7 @@
 				D4B735DD3E4A23FE8FE0F566,
 				D1621B0BB26DAE0176A4924A,
 				FFF1B21347875D7485DBB7CB,
+				BA117510D6DC958EE24AE442,
 				9C824E9AC28854818A1A65F7,
 				03117EDA19B77B580FA02D34,
 				295995B7E7DD7A5042755312,
@@ -385,11 +446,13 @@
 				C5C45D5409A1E8021AC0FEEB,
 				3E07164BCD13E630CA3F5E5D,
 				B3C340B4A4D0A5EBE0FAE5BF,
+				A192DB92A2D42293B4B6003C,
 				091A54C5BE2464F8CC5DB6AD,
 				179CCAB13E16DD51822CD70F,
 				D19BDD81A3DF0A90243D0A82,
 				BFA4AADF711FCF0ED950C2E0,
 				FAEE6EFAE26CAB5C3D4F26F6,
+				D151F9F8B878D9B283B09165,
 				53A71791BEFF860001C7219E,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -430,6 +493,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.weikxs.Supercy;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_KEY_CFBundleDisplayName = Supercy;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -560,6 +624,10 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A192DB92A2D42293B4B6003C = {
+			isa = PBXBuildFile;
+			fileRef = 6EA43F133B79FD02264085AF;
+		};
 		A41AFED4A024AF3478BD5674 = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -612,6 +680,10 @@
 			isa = PBXBuildFile;
 			fileRef = 07E4E59CE95AD0AB0D7B5F44;
 		};
+		BA117510D6DC958EE24AE442 = {
+			isa = PBXBuildFile;
+			fileRef = 584D785838DCD9E3EBF2F9E2;
+		};
 		BFA4AADF711FCF0ED950C2E0 = {
 			isa = PBXBuildFile;
 			fileRef = 498A8F6C8829BCF6F1BC8C2A;
@@ -649,9 +721,14 @@
 				B2C6509C6F8880D7CC15B692,
 				498A8F6C8829BCF6F1BC8C2A,
 				833C3915CE6966FE92600D81,
+				6F5FA57B2C1E5E9430A94F00,
 			);
 			name = SupercyKitTests;
 			sourceTree = "<group>";
+		};
+		D151F9F8B878D9B283B09165 = {
+			isa = PBXBuildFile;
+			fileRef = 6F5FA57B2C1E5E9430A94F00;
 		};
 		D1621B0BB26DAE0176A4924A = {
 			isa = PBXBuildFile;
@@ -664,6 +741,10 @@
 		D35586CCDD38B2A605585042 = {
 			isa = PBXBuildFile;
 			fileRef = F1D411B7AF6339985E96DB1F;
+		};
+		D377CDADCBABD189E1164DB8 = {
+			isa = PBXBuildFile;
+			fileRef = 584D785838DCD9E3EBF2F9E2;
 		};
 		D45C7065A44F3AB3A15A577B = {
 			isa = PBXProject;
@@ -746,6 +827,10 @@
 			name = HistoryView.swift;
 			path = Sources/SupercyKit/HistoryView.swift;
 			sourceTree = SOURCE_ROOT;
+		};
+		E7FBB617B99556DE11B83D55 = {
+			isa = PBXBuildFile;
+			fileRef = 59542C2EE14BB0C1F12F9A7B;
 		};
 		EB066EF68B669ABCAF78E973 = {
 			isa = PBXBuildFile;

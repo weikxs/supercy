@@ -18,6 +18,7 @@ public enum L10nKey: String, CaseIterable {
     case accessibility, accessibilityGranted, accessibilityMissing, openSystemSettings
     case accessibilityExplanation, needsAccessibilityTitle, version, coreVersion, privacyNote
     case keyHints, paused, kindText, kindRichText, kindLink, kindImage, kindFiles, invalidRegex
+    case menuIcon, iconSupercy, iconPaperclip, iconScissors, iconStack, trialMode
 }
 
 /// The interface language actually used.
@@ -84,6 +85,9 @@ public enum L10n {
         .keyHints: "⏎ paste · ⌥⏎ copy · ⌥⇧⏎ plain text · ⌥P pin · ⌥⌫ delete · ⌘1–9 choose · ⌃letter pinned",
         .paused: "Recording paused", .kindText: "Text", .kindRichText: "Rich text", .kindLink: "Link",
         .kindImage: "Image", .kindFiles: "Files", .invalidRegex: "Invalid regular expression",
+        .menuIcon: "Menu bar icon", .iconSupercy: "Supercy", .iconPaperclip: "Paper clip",
+        .iconScissors: "Scissors", .iconStack: "Stack",
+        .trialMode: "Trial: history kept in /tmp/supercy only",
     ]
 
     static let chinese: [L10nKey: String] = [
@@ -124,5 +128,8 @@ public enum L10n {
         .keyHints: "⏎ 粘贴 · ⌥⏎ 复制 · ⌥⇧⏎ 纯文本 · ⌥P 置顶 · ⌥⌫ 删除 · ⌘1–9 选择 · ⌃字母 置顶项",
         .paused: "已暂停记录", .kindText: "文本", .kindRichText: "富文本", .kindLink: "链接",
         .kindImage: "图片", .kindFiles: "文件", .invalidRegex: "正则表达式无效",
+        .menuIcon: "菜单栏图标", .iconSupercy: "Supercy", .iconPaperclip: "回形针",
+        .iconScissors: "剪刀", .iconStack: "叠层",
+        .trialMode: "试用模式：历史只保存在 /tmp/supercy",
     ]
 }

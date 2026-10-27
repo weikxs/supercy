@@ -172,6 +172,13 @@ private struct AppearanceTab: View {
     var body: some View {
         Form {
             Toggle(L10n.text(.showMenuIcon), isOn: binding(model, \.showMenuIcon))
+            Picker(L10n.text(.menuIcon), selection: binding(model, \.menuIcon)) {
+                Text(L10n.text(.iconSupercy)).tag(MenuIcon.clipboard)
+                Text(L10n.text(.iconPaperclip)).tag(MenuIcon.paperclip)
+                Text(L10n.text(.iconScissors)).tag(MenuIcon.scissors)
+                Text(L10n.text(.iconStack)).tag(MenuIcon.stack)
+            }
+            .disabled(!model.settings.showMenuIcon)
             Toggle(L10n.text(.showRecentInMenuBar), isOn: binding(model, \.showRecentInMenuBar))
             Toggle(L10n.text(.showSpecialChars), isOn: binding(model, \.showSpecialChars))
             Stepper(value: binding(model, \.visibleItems), in: 5...100) {

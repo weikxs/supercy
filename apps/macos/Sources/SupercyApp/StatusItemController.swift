@@ -7,6 +7,9 @@ final class StatusItemController: NSObject {
     private let panel: HistoryPanelController
     private var item: NSStatusItem?
     private var showRecent = false
+    private var style: MenuIcon = .clipboard
+    /// Shown at the top of the menu in trial mode.
+    var trialNotice: String?
     var onOpenSettings: (() -> Void)?
 
     init(controller: ClipboardController, panel: HistoryPanelController) {
@@ -18,6 +21,7 @@ final class StatusItemController: NSObject {
 
     func apply(_ settings: Settings) {
         showRecent = settings.showRecentInMenuBar
+        style = settings.menuIcon
         if settings.showMenuIcon, item == nil {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             item.button?.target = self
@@ -35,8 +39,16 @@ final class StatusItemController: NSObject {
     func refresh() {
         guard let button = item?.button else { return }
         let paused = controller.isPaused
-        let symbol = paused ? "pause.circle" : "doc.on.clipboard"
-        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: L10n.text(paused ? .paused : .appName))
+        let description = L10n.text(paused ? .paused : .appName)
+        switch MenuBarIconStyle.image(for: style, paused: paused) {
+        case let .asset(name):
+            let image = NSImage(named: name)
+            image?.isTemplate = true
+            image?.accessibilityDescription = description
+            button.image = image
+        case let .symbol(name):
+            button.image = NSImage(systemSymbolName: name, accessibilityDescription: description)
+        }
         button.imagePosition = .imageLeading
         if showRecent, let latest = try? controller.engine.list(kind: nil, offset: 0, limit: 1).first {
             button.title = " " + String(PreviewFormatter.title(latest.preview, showSpecialChars: false).prefix(24))
@@ -56,6 +68,12 @@ final class StatusItemController: NSObject {
 
     private func showMenu() {
         let menu = NSMenu()
+        if let trialNotice {
+            let notice = NSMenuItem(title: trialNotice, action: nil, keyEquivalent: "")
+            notice.isEnabled = false
+            menu.addItem(notice)
+            menu.addItem(.separator())
+        }
         menu.addItem(menuItem(.openHistory, #selector(openHistory)))
         menu.addItem(.separator())
         if controller.isPaused {

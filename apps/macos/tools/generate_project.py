@@ -65,6 +65,10 @@ def file_ref(path: str) -> str:
 
 
 refs = {path: file_ref(path) for path in KIT + APP + TESTS + [BINDINGS]}
+ASSETS = "Resources/Assets.xcassets"
+refs[ASSETS] = oid("ref", ASSETS)
+objects[refs[ASSETS]] = {"isa": "PBXFileReference", "lastKnownFileType": "folder.assetcatalog",
+                         "name": "Assets.xcassets", "path": ASSETS, "sourceTree": "SOURCE_ROOT"}
 
 
 def group(name: str, children: list[str]) -> str:
@@ -85,7 +89,7 @@ TEST_PRODUCT = product("SupercyKitTests.xctest", "wrapper.cfbundle")
 PRODUCTS = group("Products", [APP_PRODUCT, TEST_PRODUCT])
 MAIN = group("Supercy", [
     group("SupercyKit", [refs[p] for p in KIT]),
-    group("SupercyApp", [refs[p] for p in APP]),
+    group("SupercyApp", [refs[p] for p in APP] + [refs[ASSETS]]),
     group("Bindings", [refs[BINDINGS]]),
     group("SupercyKitTests", [refs[p] for p in TESTS]),
     PRODUCTS,
@@ -145,6 +149,7 @@ APP_SETTINGS = {
     "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID,
     "GENERATE_INFOPLIST_FILE": "YES",
     "INFOPLIST_KEY_LSUIElement": "YES",
+    "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
     "INFOPLIST_KEY_CFBundleDisplayName": "Supercy",
     "INFOPLIST_KEY_LSApplicationCategoryType": "public.app-category.productivity",
     "INFOPLIST_KEY_NSHumanReadableCopyright": "",
@@ -158,12 +163,16 @@ TEST_SETTINGS = {
 }
 
 
-def target(name: str, product_ref: str, kind: str, sources: list[str], settings: dict) -> str:
+def target(name: str, product_ref: str, kind: str, sources: list[str], settings: dict,
+           resources: list[str] | None = None) -> str:
     key = oid("target", name)
+    phases = [phase(name, "PBXSourcesBuildPhase", sources), phase(name, "PBXFrameworksBuildPhase", [])]
+    if resources:
+        phases.append(phase(name, "PBXResourcesBuildPhase", resources))
     objects[key] = {
         "isa": "PBXNativeTarget",
         "buildConfigurationList": config_list(name, {**DEBUG, **settings}, {**RELEASE, **settings}),
-        "buildPhases": [phase(name, "PBXSourcesBuildPhase", sources), phase(name, "PBXFrameworksBuildPhase", [])],
+        "buildPhases": phases,
         "buildRules": [],
         "dependencies": [],
         "name": name,
@@ -174,7 +183,8 @@ def target(name: str, product_ref: str, kind: str, sources: list[str], settings:
     return key
 
 
-APP_TARGET = target("Supercy", APP_PRODUCT, "com.apple.product-type.application", KIT + APP + [BINDINGS], APP_SETTINGS)
+APP_TARGET = target("Supercy", APP_PRODUCT, "com.apple.product-type.application", KIT + APP + [BINDINGS], APP_SETTINGS,
+                    resources=[ASSETS])
 TEST_TARGET = target("SupercyKitTests", TEST_PRODUCT, "com.apple.product-type.bundle.unit-test",
                      KIT + TESTS + [BINDINGS], TEST_SETTINGS)
 

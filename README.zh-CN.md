@@ -66,7 +66,14 @@ make macos-measure   # 空闲内存与 CPU，使用内存中的剪贴板（不�
 make macos-app       # 把 Supercy.app 构建到 /tmp/supercy-build
 ```
 
-运行构建出的应用会把你真实的剪贴板记录到 `~/Library/Application Support/Supercy`（加密），密钥保存在登录钥匙串中。
+运行构建出的应用会把你真实的剪贴板记录到 `~/Library/Application Support/Supercy`（加密），密钥保存在登录钥匙串中。如果不想这样，可以用试用模式：它像正式应用一样读取真实剪贴板、注册 ⇧⌘V，但所有东西都放在 `/tmp/supercy`，密钥只在内存中，也不注册登录项：
+
+```sh
+make macos-trial         # 需要时先构建，然后启动试用（每次启动都从空历史开始）
+make macos-trial-clean   # 退出试用并删除 /tmp/supercy
+```
+
+图标以 SVG 绘制在 `design/icons`，在容器中渲染（`scripts/docker-test.sh icons`），说明见 [docs/design/icons.md](docs/design/icons.md)。
 
 参与开发前请先阅读 [docs/development/standards.md](docs/development/standards.md)（英文）。
 

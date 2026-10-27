@@ -16,10 +16,12 @@
 #   lock            write Cargo.lock files after a dependency change
 #   format          run cargo fmt on the sources
 #   bindings-write  regenerate the committed Swift bindings
+#   icons           render design/icons/*.svg to the app's PNGs (Debian image with librsvg)
 set -euo pipefail
 
 readonly IMAGE="${SUPERCY_RUST_IMAGE:-rust:1.95-slim}"
 readonly NIGHTLY_IMAGE="${SUPERCY_NIGHTLY_IMAGE:-rustlang/rust:nightly}"
+readonly ICONS_IMAGE="${SUPERCY_ICONS_IMAGE:-debian:bookworm-slim}"
 readonly CPUS=4
 readonly MEMORY=5g
 readonly TARGET_VOLUME="supercy-target"
@@ -36,9 +38,9 @@ repo_root=$(git rev-parse --show-toplevel)
 step=${1:-all}
 
 case "$step" in
-  all | fmt | clippy | deny | audit | test | bindings | bench | cover | fuzz | lock | format | bindings-write) ;;
+  all | fmt | clippy | deny | audit | test | bindings | bench | cover | fuzz | lock | format | bindings-write | icons) ;;
   *)
-    echo "usage: $0 [all|fmt|clippy|deny|audit|test|bindings|bench|cover|fuzz|lock|format|bindings-write]" >&2
+    echo "usage: $0 [all|fmt|clippy|deny|audit|test|bindings|bench|cover|fuzz|lock|format|bindings-write|icons]" >&2
     exit 64
     ;;
 esac
@@ -81,6 +83,10 @@ image=$IMAGE
 tools_volume=$TOOLS_VOLUME
 case "$step" in
   lock | format | bindings-write) mount_mode=rw ;;
+  icons)
+    mount_mode=rw
+    image=$ICONS_IMAGE
+    ;;
   fuzz)
     image=$NIGHTLY_IMAGE
     tools_volume=$NIGHTLY_TOOLS_VOLUME
@@ -105,6 +111,9 @@ generate_bindings() {
 }
 
 case "$STEP" in
+  icons)
+    apt-get update -qq >/dev/null && apt-get install -y -qq --no-install-recommends librsvg2-bin imagemagick >/dev/null
+    sh /src/design/icons/render.sh; exit 0 ;;
   lock)
     cd /src && cargo metadata --format-version 1 >/dev/null
     cd /src/fuzz && cargo +1.95.0 metadata --format-version 1 >/dev/null

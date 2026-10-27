@@ -9,6 +9,7 @@ set -euo pipefail
 . "$(dirname "$0")/common.sh"
 
 require_quiet_host
+require_no_trial
 check_kit_isolation
 "$app_dir/scripts/build-core.sh"
 

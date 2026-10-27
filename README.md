@@ -80,7 +80,17 @@ make macos-app       # build Supercy.app into /tmp/supercy-build
 ```
 
 Running the built app records your real clipboard into `~/Library/Application Support/Supercy` (encrypted) and
-keeps its key in your login keychain.
+keeps its key in your login keychain. To try it without that, use the trial: it reads your real clipboard and
+registers ⇧⌘V like the app, but keeps everything under `/tmp/supercy`, holds the key in memory only and never
+registers a login item:
+
+```sh
+make macos-trial         # build if needed and start the trial (each start begins empty)
+make macos-trial-clean   # quit it and delete /tmp/supercy
+```
+
+Icons are drawn as SVG in `design/icons` and rendered in a container (`scripts/docker-test.sh icons`); see
+[docs/design/icons.md](docs/design/icons.md).
 
 Read [docs/development/standards.md](docs/development/standards.md) before contributing.
 

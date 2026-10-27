@@ -8,6 +8,7 @@ set -euo pipefail
 
 readonly OUT=/tmp/supercy-build
 require_quiet_host
+require_no_trial
 check_kit_isolation
 "$app_dir/scripts/build-core.sh"
 mkdir -p "$OUT"

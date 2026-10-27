@@ -25,6 +25,14 @@ require_quiet_host() {
   fi
 }
 
+# The trial keeps its data in the sandbox; other scripts must not wipe it while it runs.
+require_no_trial() {
+  if [[ -f "$SANDBOX/trial.pid" ]] && kill -0 "$(cat "$SANDBOX/trial.pid")" 2>/dev/null; then
+    echo "macos: the trial is running; end it first with apps/macos/scripts/trial.sh clean" >&2
+    exit 1
+  fi
+}
+
 # The Swift code shared with the tests must never reach the user's clipboard, keychain,
 # login items or keyboard; only the app target may.
 check_kit_isolation() {

@@ -1,7 +1,7 @@
 # Common tasks. Every Rust check runs in Docker (scripts/docker-test.sh); nothing is built on the host.
 
 .PHONY: all check privacy test fmt clippy deny audit bench cover fuzz format lock bindings hooks \
-        macos-project macos-test macos-measure macos-app
+        macos-project macos-test macos-measure macos-app macos-trial macos-trial-clean
 
 all: check
 
@@ -64,6 +64,13 @@ macos-measure:
 # Builds Supercy.app into /tmp/supercy-build for a manual check (does not run it).
 macos-app:
 	apps/macos/scripts/build-app.sh
+
+# Manual check with the real clipboard, everything kept under /tmp/supercy; then remove it all.
+macos-trial:
+	apps/macos/scripts/trial.sh
+
+macos-trial-clean:
+	apps/macos/scripts/trial.sh clean
 
 # Use the repository's hooks: privacy check before commit, Conventional Commits on the message.
 hooks:

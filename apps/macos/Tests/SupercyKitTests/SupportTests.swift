@@ -41,25 +41,58 @@ final class L10nTests: XCTestCase {
 final class LaunchOptionsTests: XCTestCase {
     private let standard = URL(fileURLWithPath: "/var/empty/Supercy")
 
-    func testNormalLaunchUsesTheStandardDirectory() {
-        let result = LaunchOptions.parse(arguments: ["Supercy"], environment: [:], defaultDataDirectory: standard)
-
-        XCTAssertEqual(result, .success(LaunchOptions(isolated: false, dataDirectory: standard)))
+    private func parse(_ arguments: [String], _ environment: [String: String]) -> Result<LaunchOptions, LaunchOptions.Problem> {
+        LaunchOptions.parse(arguments: ["Supercy"] + arguments, environment: environment, defaultDataDirectory: standard)
     }
 
-    func testIsolatedLaunchNeedsADataDirectoryUnderTmp() {
-        let ok = LaunchOptions.parse(arguments: ["Supercy", "--isolated"], environment: ["SUPERCY_DATA_DIR": "/tmp/supercy/data"],
-                                     defaultDataDirectory: standard)
-        let missing = LaunchOptions.parse(arguments: ["--isolated"], environment: [:], defaultDataDirectory: standard)
-        let elsewhere = LaunchOptions.parse(arguments: ["--isolated"], environment: ["SUPERCY_DATA_DIR": "/var/data"],
-                                            defaultDataDirectory: standard)
-        let escaping = LaunchOptions.parse(arguments: ["--isolated"], environment: ["SUPERCY_DATA_DIR": "/tmp/../var"],
-                                           defaultDataDirectory: standard)
+    func testNormalLaunchUsesTheStandardDirectoryAndEverything() throws {
+        let options = try parse([], [:]).get()
 
-        XCTAssertEqual(try ok.get().isolated, true)
-        XCTAssertEqual(missing, .failure(.isolatedNeedsTemporaryDataDirectory))
-        XCTAssertEqual(elsewhere, .failure(.isolatedNeedsTemporaryDataDirectory))
-        XCTAssertEqual(escaping, .failure(.isolatedNeedsTemporaryDataDirectory))
+        XCTAssertEqual(options, LaunchOptions(mode: .normal, dataDirectory: standard))
+        XCTAssertTrue(options.mode.usesLoginKeychain && options.mode.allowsLoginItem)
+    }
+
+    func testIsolatedLaunchNeedsADataDirectoryUnderTmpAndNeverReadsThePasteboard() throws {
+        let ok = try parse(["--isolated"], ["SUPERCY_DATA_DIR": "/tmp/supercy/data"]).get()
+
+        XCTAssertEqual(ok.mode, .isolated)
+        XCTAssertFalse(ok.mode.readsSystemPasteboard || ok.mode.usesLoginKeychain || ok.mode.registersGlobalShortcut)
+        XCTAssertEqual(parse(["--isolated"], [:]), .failure(.needsTemporaryDataDirectory))
+        XCTAssertEqual(parse(["--isolated"], ["SUPERCY_DATA_DIR": "/var/data"]), .failure(.needsTemporaryDataDirectory))
+        XCTAssertEqual(parse(["--isolated"], ["SUPERCY_DATA_DIR": "/tmp/../var"]), .failure(.needsTemporaryDataDirectory))
+    }
+
+    func testTrialUsesThePasteboardButNeverTheKeychainOrLoginItems() throws {
+        let environment = ["SUPERCY_DATA_DIR": "/tmp/supercy/data", "HOME": "/tmp/supercy/home",
+                           "CFFIXED_USER_HOME": "/tmp/supercy/home"]
+        let trial = try parse(["--trial"], environment).get()
+
+        XCTAssertEqual(trial, LaunchOptions(mode: .trial, dataDirectory: URL(fileURLWithPath: "/tmp/supercy/data", isDirectory: true)))
+        XCTAssertTrue(trial.mode.readsSystemPasteboard && trial.mode.registersGlobalShortcut)
+        XCTAssertFalse(trial.mode.usesLoginKeychain || trial.mode.allowsLoginItem)
+    }
+
+    func testTrialRefusesDataOrHomeOutsideTmpAndBothModesAtOnce() {
+        let data = ["SUPERCY_DATA_DIR": "/tmp/supercy/data"]
+
+        XCTAssertEqual(parse(["--trial"], ["HOME": "/tmp/supercy/home"]), .failure(.needsTemporaryDataDirectory))
+        XCTAssertEqual(parse(["--trial"], data), .failure(.trialNeedsTemporaryHome))
+        XCTAssertEqual(parse(["--trial"], data.merging(["HOME": "/var/empty"]) { $1 }), .failure(.trialNeedsTemporaryHome))
+        XCTAssertEqual(parse(["--trial"], data.merging(["HOME": "/tmp/supercy/home", "CFFIXED_USER_HOME": "/var/empty"]) { $1 }),
+                       .failure(.trialNeedsTemporaryHome))
+        XCTAssertEqual(parse(["--trial", "--isolated"], data), .failure(.conflictingModes))
+    }
+
+    func testTheTrialNeverRegistersALoginItem() {
+        let base = FakeSystem()
+        base.isAccessibilityTrusted = true
+        let trial = TrialSystemIntegration(base: base)
+
+        trial.launchAtLogin = true
+
+        XCTAssertFalse(trial.launchAtLogin)
+        XCTAssertFalse(base.launchAtLogin)
+        XCTAssertTrue(trial.isAccessibilityTrusted)
     }
 }
 
