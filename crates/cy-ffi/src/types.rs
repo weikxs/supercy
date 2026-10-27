@@ -65,6 +65,31 @@ impl From<SearchMode> for cy_engine::MatchMode {
     }
 }
 
+/// What importing pinned items did.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, uniffi::Record)]
+pub struct PinsImport {
+    /// New pinned items.
+    pub added: u32,
+    /// Items already in the history, now pinned.
+    pub pinned_existing: u32,
+    /// Items that were pinned already.
+    pub already_pinned: u32,
+    /// Entries without content.
+    pub skipped: u32,
+}
+
+impl From<cy_engine::PinsImport> for PinsImport {
+    fn from(report: cy_engine::PinsImport) -> Self {
+        let count = |n: usize| u32::try_from(n).unwrap_or(u32::MAX);
+        Self {
+            added: count(report.added),
+            pinned_existing: count(report.pinned_existing),
+            already_pinned: count(report.already_pinned),
+            skipped: count(report.skipped),
+        }
+    }
+}
+
 /// The application in front when something was copied.
 #[derive(Clone, Debug, PartialEq, Eq, uniffi::Record)]
 pub struct SourceApp {

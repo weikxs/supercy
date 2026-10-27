@@ -337,6 +337,16 @@ uint64_t uniffi_cy_ffi_fn_method_supercyengine_clear(void*_Nonnull ptr, int8_t k
 int8_t uniffi_cy_ffi_fn_method_supercyengine_delete(void*_Nonnull ptr, RustBuffer id, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_EXPORT_PINS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_EXPORT_PINS
+uint32_t uniffi_cy_ffi_fn_method_supercyengine_export_pins(void*_Nonnull ptr, RustBuffer path, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_IMPORT_PINS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_IMPORT_PINS
+RustBuffer uniffi_cy_ffi_fn_method_supercyengine_import_pins(void*_Nonnull ptr, RustBuffer path, uint64_t now_ms, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_INGEST
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_INGEST
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_ingest(void*_Nonnull ptr, RustBuffer snapshot, RustCallStatus *_Nonnull out_status
@@ -780,6 +790,18 @@ uint16_t uniffi_cy_ffi_checksum_method_supercyengine_clear(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_DELETE
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_DELETE
 uint16_t uniffi_cy_ffi_checksum_method_supercyengine_delete(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_EXPORT_PINS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_EXPORT_PINS
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_export_pins(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_IMPORT_PINS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_IMPORT_PINS
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_import_pins(void
     
 );
 #endif

@@ -6,6 +6,8 @@ import Foundation
 public final class SettingsModel: ObservableObject {
     @Published public var settings: Settings
     @Published public private(set) var error: String?
+    /// The outcome of the last export or import of pinned items.
+    @Published public private(set) var pinsStatus: String?
     @Published public var launchAtLogin: Bool {
         didSet { if launchAtLogin != system.launchAtLogin { system.launchAtLogin = launchAtLogin } }
     }
@@ -60,6 +62,37 @@ public final class SettingsModel: ObservableObject {
         update { $0[keyPath: keyPath].removeAll { $0 == entry } }
     }
 
+    /// Writes the pinned items to `url`.
+    public func exportPins(to url: URL) {
+        do {
+            let count = try store.exportPins(to: url.path)
+            pinsStatus = "\(L10n.text(.pinsExported)): \(count)"
+            error = nil
+        } catch {
+            pinsStatus = nil
+            self.error = Self.message(error)
+        }
+    }
+
+    /// Pins the items of the pins file at `url`.
+    public func importPins(from url: URL) {
+        do {
+            pinsStatus = Self.describe(try store.importPins(from: url.path))
+            error = nil
+        } catch {
+            pinsStatus = nil
+            self.error = Self.message(error)
+        }
+    }
+
+    /// "Added: 2 · Already pinned: 1": the counts that are not zero (or "Added: 0").
+    static func describe(_ report: PinsImport) -> String {
+        let parts: [(L10nKey, UInt32)] = [(.pinsAdded, report.added), (.pinsPinnedExisting, report.pinnedExisting),
+                                          (.pinsAlreadyPinned, report.alreadyPinned), (.pinsSkipped, report.skipped)]
+        let shown = parts.filter { $0.1 > 0 }.map { "\(L10n.text($0.0)): \($0.1)" }
+        return shown.isEmpty ? "\(L10n.text(.pinsAdded)): 0" : shown.joined(separator: " · ")
+    }
+
     /// Why `pattern` is not a valid ignore pattern, if it is not.
     public func patternProblem(_ pattern: String) -> String? {
         checkIgnorePattern(pattern: pattern)
@@ -69,7 +102,8 @@ public final class SettingsModel: ObservableObject {
         switch error as? SupercyError {
         case let .InvalidSetting(message)?, let .Internal(message)?, let .NotFound(message)?,
              let .KeyMissing(message)?, let .Locked(message)?, let .TooNew(message)?,
-             let .InvalidPinKey(message)?, let .InvalidId(message)?, let .Keystore(message)?:
+             let .InvalidPinKey(message)?, let .InvalidId(message)?, let .Keystore(message)?,
+             let .PinsFile(message)?:
             return message
         case nil:
             return (error as? SettingsChannelError)?.message ?? error.localizedDescription

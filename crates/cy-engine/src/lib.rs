@@ -14,6 +14,7 @@ mod pins;
 mod settings;
 mod summary;
 mod thumbnails;
+mod transfer;
 
 pub use cy_filter::DropReason;
 pub use cy_search::MatchMode;
@@ -27,3 +28,4 @@ pub use settings::{
 };
 pub use summary::{ItemSummary, PREVIEW_CHARS};
 pub use thumbnails::THUMBNAIL_TYPE;
+pub use transfer::{MAX_PINS_FILE_BYTES, PINS_FORMAT, PINS_VERSION, PinsImport};

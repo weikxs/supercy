@@ -83,7 +83,7 @@ impl Engine {
     }
 
     /// The pinned items in list order.
-    fn pinned_order(&self) -> Vec<ItemId> {
+    pub(crate) fn pinned_order(&self) -> Vec<ItemId> {
         let mut pinned: Vec<(Option<Hlc>, ItemId)> = self
             .summaries
             .values()

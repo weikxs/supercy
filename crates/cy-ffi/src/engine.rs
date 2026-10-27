@@ -9,7 +9,7 @@ use cy_model::ItemId;
 use crate::keystore::ShellKeystore;
 use crate::{
     ClipboardSnapshot, IngestResult, ItemKind, ItemSummary, Keystore, PasteRepresentation,
-    SearchMode, Settings, SupercyError,
+    PinsImport, SearchMode, Settings, SupercyError,
 };
 
 /// The version of the core library.
@@ -277,6 +277,26 @@ impl SupercyEngine {
     pub fn move_pin(&self, id: String, to_index: u32, now_ms: u64) -> Result<(), SupercyError> {
         let to = usize::try_from(to_index).unwrap_or(usize::MAX);
         Ok(self.engine()?.move_pin(parse_id(&id)?, to, now_ms)?)
+    }
+
+    /// Writes the pinned items to the file at `path` (JSON, not encrypted, readable by this
+    /// user only); returns how many were written.
+    ///
+    /// # Errors
+    ///
+    /// `PinsFile` when the file cannot be written; `Internal`.
+    pub fn export_pins(&self, path: String) -> Result<u32, SupercyError> {
+        let count = self.engine()?.export_pins(Path::new(&path))?;
+        Ok(u32::try_from(count).unwrap_or(u32::MAX))
+    }
+
+    /// Pins the items of the pins file at `path`, after the pinned items already here.
+    ///
+    /// # Errors
+    ///
+    /// `PinsFile` when it cannot be read or is not a pins file; `Internal`.
+    pub fn import_pins(&self, path: String, now_ms: u64) -> Result<PinsImport, SupercyError> {
+        Ok(self.engine()?.import_pins(Path::new(&path), now_ms)?.into())
     }
 
     /// The pinned item with letter `key`, if any.

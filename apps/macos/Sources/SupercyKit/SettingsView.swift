@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The settings window: General, Storage, Ignore, Appearance, Permissions, About.
 public struct SettingsView: View {
@@ -92,7 +93,33 @@ private struct StorageTab: View {
             Stepper(value: binding(model, \.pollIntervalMs), in: 100...2_000, step: 100) {
                 Text("\(L10n.text(.pollInterval)): \(model.settings.pollIntervalMs)")
             }
+            Section(L10n.text(.pinnedItems)) {
+                HStack {
+                    Button(L10n.text(.exportPins), action: exportPins)
+                    Button(L10n.text(.importPins), action: importPins)
+                    if let status = model.pinsStatus {
+                        Text(status).foregroundStyle(.secondary)
+                    }
+                }
+                Text(L10n.text(.exportPinsNote)).font(.caption).foregroundStyle(.secondary)
+            }
         }
+    }
+
+    private func exportPins() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "Supercy Pins.json"
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        model.exportPins(to: url)
+    }
+
+    private func importPins() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        model.importPins(from: url)
     }
 
     private var minutes: Binding<UInt64> {

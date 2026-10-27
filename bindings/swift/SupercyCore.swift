@@ -839,6 +839,25 @@ public protocol SupercyEngineProtocol: AnyObject, Sendable {
     func delete(id: String) throws  -> Bool
     
     /**
+     * Writes the pinned items to the file at `path` (JSON, not encrypted, readable by this
+     * user only); returns how many were written.
+     *
+     * # Errors
+     *
+     * `PinsFile` when the file cannot be written; `Internal`.
+     */
+    func exportPins(path: String) throws  -> UInt32
+    
+    /**
+     * Pins the items of the pins file at `path`, after the pinned items already here.
+     *
+     * # Errors
+     *
+     * `PinsFile` when it cannot be read or is not a pins file; `Internal`.
+     */
+    func importPins(path: String, nowMs: UInt64) throws  -> PinsImport
+    
+    /**
      * Filters and stores a clipboard change.
      *
      * # Errors
@@ -1102,6 +1121,38 @@ open func delete(id: String)throws  -> Bool  {
     return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeSupercyError_lift) {
     uniffi_cy_ffi_fn_method_supercyengine_delete(self.uniffiClonePointer(),
         FfiConverterString.lower(id),$0
+    )
+})
+}
+    
+    /**
+     * Writes the pinned items to the file at `path` (JSON, not encrypted, readable by this
+     * user only); returns how many were written.
+     *
+     * # Errors
+     *
+     * `PinsFile` when the file cannot be written; `Internal`.
+     */
+open func exportPins(path: String)throws  -> UInt32  {
+    return try  FfiConverterUInt32.lift(try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_export_pins(self.uniffiClonePointer(),
+        FfiConverterString.lower(path),$0
+    )
+})
+}
+    
+    /**
+     * Pins the items of the pins file at `path`, after the pinned items already here.
+     *
+     * # Errors
+     *
+     * `PinsFile` when it cannot be read or is not a pins file; `Internal`.
+     */
+open func importPins(path: String, nowMs: UInt64)throws  -> PinsImport  {
+    return try  FfiConverterTypePinsImport_lift(try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_import_pins(self.uniffiClonePointer(),
+        FfiConverterString.lower(path),
+        FfiConverterUInt64.lower(nowMs),$0
     )
 })
 }
@@ -2096,6 +2147,119 @@ public func FfiConverterTypePauseStatus_lift(_ buf: RustBuffer) throws -> PauseS
 #endif
 public func FfiConverterTypePauseStatus_lower(_ value: PauseStatus) -> RustBuffer {
     return FfiConverterTypePauseStatus.lower(value)
+}
+
+
+/**
+ * What importing pinned items did.
+ */
+public struct PinsImport {
+    /**
+     * New pinned items.
+     */
+    public var added: UInt32
+    /**
+     * Items already in the history, now pinned.
+     */
+    public var pinnedExisting: UInt32
+    /**
+     * Items that were pinned already.
+     */
+    public var alreadyPinned: UInt32
+    /**
+     * Entries without content.
+     */
+    public var skipped: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * New pinned items.
+         */added: UInt32, 
+        /**
+         * Items already in the history, now pinned.
+         */pinnedExisting: UInt32, 
+        /**
+         * Items that were pinned already.
+         */alreadyPinned: UInt32, 
+        /**
+         * Entries without content.
+         */skipped: UInt32) {
+        self.added = added
+        self.pinnedExisting = pinnedExisting
+        self.alreadyPinned = alreadyPinned
+        self.skipped = skipped
+    }
+}
+
+#if compiler(>=6)
+extension PinsImport: Sendable {}
+#endif
+
+
+extension PinsImport: Equatable, Hashable {
+    public static func ==(lhs: PinsImport, rhs: PinsImport) -> Bool {
+        if lhs.added != rhs.added {
+            return false
+        }
+        if lhs.pinnedExisting != rhs.pinnedExisting {
+            return false
+        }
+        if lhs.alreadyPinned != rhs.alreadyPinned {
+            return false
+        }
+        if lhs.skipped != rhs.skipped {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(added)
+        hasher.combine(pinnedExisting)
+        hasher.combine(alreadyPinned)
+        hasher.combine(skipped)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePinsImport: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PinsImport {
+        return
+            try PinsImport(
+                added: FfiConverterUInt32.read(from: &buf), 
+                pinnedExisting: FfiConverterUInt32.read(from: &buf), 
+                alreadyPinned: FfiConverterUInt32.read(from: &buf), 
+                skipped: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: PinsImport, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.added, into: &buf)
+        FfiConverterUInt32.write(value.pinnedExisting, into: &buf)
+        FfiConverterUInt32.write(value.alreadyPinned, into: &buf)
+        FfiConverterUInt32.write(value.skipped, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePinsImport_lift(_ buf: RustBuffer) throws -> PinsImport {
+    return try FfiConverterTypePinsImport.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePinsImport_lower(_ value: PinsImport) -> RustBuffer {
+    return FfiConverterTypePinsImport.lower(value)
 }
 
 
@@ -4155,6 +4319,14 @@ public enum SupercyError: Swift.Error {
          */message: String
     )
     /**
+     * A pins file could not be read or written, or is not a pins file.
+     */
+    case PinsFile(
+        /**
+         * What is wrong.
+         */message: String
+    )
+    /**
      * Storage or another internal failure.
      */
     case Internal(
@@ -4202,7 +4374,10 @@ public struct FfiConverterTypeSupercyError: FfiConverterRustBuffer {
         case 8: return .Keystore(
             message: try FfiConverterString.read(from: &buf)
             )
-        case 9: return .Internal(
+        case 9: return .PinsFile(
+            message: try FfiConverterString.read(from: &buf)
+            )
+        case 10: return .Internal(
             message: try FfiConverterString.read(from: &buf)
             )
 
@@ -4257,8 +4432,13 @@ public struct FfiConverterTypeSupercyError: FfiConverterRustBuffer {
             FfiConverterString.write(message, into: &buf)
             
         
-        case let .Internal(message):
+        case let .PinsFile(message):
             writeInt(&buf, Int32(9))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case let .Internal(message):
+            writeInt(&buf, Int32(10))
             FfiConverterString.write(message, into: &buf)
             
         }
@@ -4643,6 +4823,12 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_delete() != 54983) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_export_pins() != 963) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_import_pins() != 60436) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_ingest() != 40694) {

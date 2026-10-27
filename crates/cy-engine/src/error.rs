@@ -25,6 +25,12 @@ pub enum EngineError {
     /// Another pinned item has this letter.
     #[error("another pinned item already uses this letter; choose another one")]
     PinKeyTaken,
+    /// A file to import is not a Supercy pins file this version reads, or is damaged.
+    #[error("this is not a Supercy pins file, or it is damaged or from a newer Supercy")]
+    InvalidPinsFile,
+    /// A file could not be read or written.
+    #[error("the file could not be read or written ({0})")]
+    File(std::io::ErrorKind),
     /// An internal consistency check failed (a bug, never user data).
     #[error("an internal check failed; please report this")]
     Internal,

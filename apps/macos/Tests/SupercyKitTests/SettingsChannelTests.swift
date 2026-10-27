@@ -60,4 +60,35 @@ final class SettingsChannelTests: XCTestCase {
         XCTAssertTrue(SettingsChannel.handle("{}", store: EngineSettingsStore(engine: try makeEngine(self)), saved: { _ in })
             .contains("error"))
     }
+
+    func testPinnedItemsAreExportedAndImportedThroughTheMainProcess() throws {
+        let rig = try Rig(self)
+        rig.controller.start()
+        rig.copy("demo snippet")
+        rig.scheduler.fireRepeating()
+        let id = try XCTUnwrap(try rig.engine.list(kind: nil, offset: 0, limit: 1).first?.id)
+        try rig.engine.setPinned(id: id, pinned: true, nowMs: demoNow + 1)
+        let host = EngineSettingsStore(engine: rig.engine, clock: rig.clock)
+        var pending: String?
+        let remote = RemoteSettingsStore(
+            initial: try rig.engine.settings(),
+            send: { line in pending = SettingsChannel.handle(line, store: host, saved: { _ in }) },
+            receive: { pending }
+        )
+        let model = try SettingsModel(store: remote, system: FakeSystem())
+        let file = try temporaryDirectory(self).appendingPathComponent("pins.json")
+
+        model.exportPins(to: file)
+        XCTAssertNil(model.error)
+        XCTAssertEqual(model.pinsStatus, "\(L10n.text(.pinsExported)): 1")
+        XCTAssertTrue(try String(contentsOf: file, encoding: .utf8).contains("demo snippet"))
+
+        model.importPins(from: file)
+        XCTAssertNil(model.error)
+        XCTAssertEqual(model.pinsStatus, "\(L10n.text(.pinsAlreadyPinned)): 1")
+
+        try Data("not a pins file".utf8).write(to: file)
+        model.importPins(from: file)
+        XCTAssertNotNil(model.error)
+    }
 }

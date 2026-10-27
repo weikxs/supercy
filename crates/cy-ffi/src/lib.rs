@@ -21,5 +21,5 @@ pub use keystore::Keystore;
 pub use settings::{Language, MenuIcon, PinPosition, PopupPosition, Settings, SortOrder};
 pub use types::{
     ClipEntry, ClipboardSnapshot, DropReason, ImageFormat, IngestOutcome, IngestResult, ItemKind,
-    ItemSummary, PasteRepresentation, SearchMode, SourceApp, TextRange,
+    ItemSummary, PasteRepresentation, PinsImport, SearchMode, SourceApp, TextRange,
 };

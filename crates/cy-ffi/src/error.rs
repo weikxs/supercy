@@ -55,6 +55,12 @@ pub enum SupercyError {
         /// What happened.
         message: String,
     },
+    /// A pins file could not be read or written, or is not a pins file.
+    #[error("{message}")]
+    PinsFile {
+        /// What is wrong.
+        message: String,
+    },
     /// Storage or another internal failure.
     #[error("{message}")]
     Internal {
@@ -78,6 +84,7 @@ impl From<EngineError> for SupercyError {
             EngineError::NotPinned | EngineError::InvalidPinKey | EngineError::PinKeyTaken => {
                 Self::InvalidPinKey { message }
             }
+            EngineError::InvalidPinsFile | EngineError::File(_) => Self::PinsFile { message },
             _ => Self::Internal { message },
         }
     }

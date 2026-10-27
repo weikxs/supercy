@@ -19,6 +19,8 @@ public enum L10nKey: String, CaseIterable {
     case accessibilityExplanation, needsAccessibilityTitle, version, coreVersion, privacyNote
     case keyHints, paused, kindText, kindRichText, kindLink, kindImage, kindFiles, invalidRegex
     case menuIcon, iconSupercy, iconPaperclip, iconScissors, iconStack, trialMode
+    case pinnedItems, exportPins, importPins, exportPinsNote, pinsExported, pinsAdded, pinsPinnedExisting
+    case pinsAlreadyPinned, pinsSkipped
 }
 
 /// The interface language actually used.
@@ -98,6 +100,10 @@ public enum L10n {
         .menuIcon: "Menu bar icon", .iconSupercy: "Supercy", .iconPaperclip: "Paper clip",
         .iconScissors: "Scissors", .iconStack: "Stack",
         .trialMode: "Trial: history kept in /tmp/supercy only",
+        .pinnedItems: "Pinned items", .exportPins: "Export…", .importPins: "Import…",
+        .exportPinsNote: "Saves the pinned items, in order and with their letters, to a file you can import on another Mac. The file is not encrypted: keep it somewhere safe.",
+        .pinsExported: "Exported", .pinsAdded: "Added", .pinsPinnedExisting: "Pinned from history",
+        .pinsAlreadyPinned: "Already pinned", .pinsSkipped: "Empty, skipped",
     ]
 
     static let chinese: [L10nKey: String] = [
@@ -141,5 +147,9 @@ public enum L10n {
         .menuIcon: "菜单栏图标", .iconSupercy: "Supercy", .iconPaperclip: "回形针",
         .iconScissors: "剪刀", .iconStack: "叠层",
         .trialMode: "试用模式：历史只保存在 /tmp/supercy",
+        .pinnedItems: "置顶条目", .exportPins: "导出…", .importPins: "导入…",
+        .exportPinsNote: "把置顶条目按顺序连同字母键保存成一个文件，可以在另一台 Mac 上导入。这个文件没有加密，请妥善保管。",
+        .pinsExported: "已导出", .pinsAdded: "新增", .pinsPinnedExisting: "从历史中置顶",
+        .pinsAlreadyPinned: "原本已置顶", .pinsSkipped: "内容为空，已跳过",
     ]
 }
