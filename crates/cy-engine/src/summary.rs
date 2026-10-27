@@ -19,6 +19,8 @@ pub struct ItemSummary {
     pub pinned: bool,
     /// The letter key of a pinned item.
     pub pin_key: Option<char>,
+    /// When it was pinned; pinned items are listed in this order.
+    pub pinned_at: Option<Hlc>,
     /// Its last use.
     pub last_used: Hlc,
     /// When it was first copied (milliseconds since the Unix epoch).
@@ -62,6 +64,7 @@ impl ItemSummary {
             preview,
             pinned: item.pinned,
             pin_key: item.pin_key,
+            pinned_at: item.pinned_at,
             last_used: item.last_used,
             first_copied_ms: item.first_copied_ms,
             copy_count: item.copy_count,

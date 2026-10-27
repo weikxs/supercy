@@ -362,6 +362,11 @@ RustBuffer uniffi_cy_ffi_fn_method_supercyengine_list(void*_Nonnull ptr, RustBuf
 void uniffi_cy_ffi_fn_method_supercyengine_mark_used(void*_Nonnull ptr, RustBuffer id, uint64_t now_ms, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_MOVE_PIN
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_MOVE_PIN
+void uniffi_cy_ffi_fn_method_supercyengine_move_pin(void*_Nonnull ptr, RustBuffer id, uint32_t to_index, uint64_t now_ms, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_PAUSE
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_PAUSE
 void uniffi_cy_ffi_fn_method_supercyengine_pause(void*_Nonnull ptr, RustBuffer until_ms, RustCallStatus *_Nonnull out_status
@@ -805,6 +810,12 @@ uint16_t uniffi_cy_ffi_checksum_method_supercyengine_list(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_MARK_USED
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_MARK_USED
 uint16_t uniffi_cy_ffi_checksum_method_supercyengine_mark_used(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_MOVE_PIN
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_MOVE_PIN
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_move_pin(void
     
 );
 #endif

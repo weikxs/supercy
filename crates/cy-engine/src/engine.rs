@@ -391,7 +391,7 @@ impl Engine {
                 .sum::<usize>()
     }
 
-    fn stamp(&mut self, now_ms: u64) -> Hlc {
+    pub(crate) fn stamp(&mut self, now_ms: u64) -> Hlc {
         let (clock, stamp) = self.clock.tick(now_ms);
         self.clock = clock;
         stamp

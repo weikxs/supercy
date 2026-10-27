@@ -21,6 +21,7 @@ fn doc(n: u8, text: &str) -> IndexDoc<'_> {
         id: id(n),
         kind: RepKind::Text,
         pinned: false,
+        pinned_at: None,
         last_used: Hlc::new(u64::from(n), 0, DeviceTag::default()),
         first_copied_ms: u64::from(n),
         copy_count: 1,
@@ -315,4 +316,33 @@ fn list_orders_by_last_use_first_copy_or_copy_count() {
         searched.iter().map(|h| h.id).collect::<Vec<_>>(),
         vec![id(1), id(0), id(2)]
     );
+}
+
+#[test]
+fn pinned_items_keep_their_pin_order_whatever_the_use_or_sort() {
+    use cy_search::{PinPosition, SortOrder};
+    let mut index = index(&["demo"]);
+    // Pinned as 3, 4, 5; item 5 used last and copied most, item 3 copied first.
+    for (n, pinned_at) in [(3u8, 30u64), (4, 40), (5, 50)] {
+        index.upsert(&IndexDoc {
+            pinned: true,
+            pinned_at: Some(Hlc::new(pinned_at, 0, DeviceTag::default())),
+            copy_count: u32::from(n),
+            ..doc(n, "demo pinned")
+        });
+    }
+    for sort in [
+        SortOrder::LastUsed,
+        SortOrder::FirstCopied,
+        SortOrder::CopyCount,
+    ] {
+        let order = ListOrder {
+            sort,
+            pins: PinPosition::Top,
+        };
+        assert_eq!(
+            index.list(None, order, 0, 9),
+            vec![id(3), id(4), id(5), id(0)]
+        );
+    }
 }

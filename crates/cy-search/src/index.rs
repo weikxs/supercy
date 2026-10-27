@@ -19,6 +19,9 @@ pub struct IndexDoc<'a> {
     pub kind: RepKind,
     /// Whether it is pinned.
     pub pinned: bool,
+    /// When it was pinned (or moved among the pinned items): pinned items are listed in this
+    /// order.
+    pub pinned_at: Option<Hlc>,
     /// Its last use.
     pub last_used: Hlc,
     /// When it was first copied.
@@ -37,6 +40,7 @@ impl<'a> IndexDoc<'a> {
             id: item.id,
             kind: item.kind(),
             pinned: item.pinned,
+            pinned_at: item.pinned_at,
             last_used: item.last_used,
             first_copied_ms: item.first_copied_ms,
             copy_count: item.copy_count,
@@ -92,6 +96,7 @@ struct Entry {
     id: ItemId,
     kind: RepKind,
     pinned: bool,
+    pinned_at: Option<Hlc>,
     last_used: Hlc,
     first_copied_ms: u64,
     copy_count: u32,
@@ -114,6 +119,7 @@ impl Entry {
             id: doc.id,
             kind: doc.kind,
             pinned: doc.pinned,
+            pinned_at: doc.pinned_at,
             last_used: doc.last_used,
             first_copied_ms: doc.first_copied_ms,
             copy_count: doc.copy_count,
@@ -154,10 +160,16 @@ impl Entry {
             PinPosition::Top => other.pinned.cmp(&self.pinned),
             PinPosition::Bottom => self.pinned.cmp(&other.pinned),
         };
-        let sorted = match order.sort {
-            SortOrder::LastUsed => Ordering::Equal,
-            SortOrder::FirstCopied => other.first_copied_ms.cmp(&self.first_copied_ms),
-            SortOrder::CopyCount => other.copy_count.cmp(&self.copy_count),
+        let sorted = if self.pinned && other.pinned {
+            // Pinned items keep their place (the order they were pinned or arranged in): using
+            // one never moves it.
+            self.pinned_at.cmp(&other.pinned_at)
+        } else {
+            match order.sort {
+                SortOrder::LastUsed => Ordering::Equal,
+                SortOrder::FirstCopied => other.first_copied_ms.cmp(&self.first_copied_ms),
+                SortOrder::CopyCount => other.copy_count.cmp(&self.copy_count),
+            }
         };
         group
             .then(sorted)
@@ -216,6 +228,16 @@ impl SearchIndex {
     /// ids are unique); use [`SearchIndex::upsert`] otherwise.
     pub fn push(&mut self, doc: &IndexDoc<'_>) {
         self.entries.push(Entry::new(doc));
+    }
+
+    /// Sets when item `id` was pinned (its place among the pinned items); returns whether it is
+    /// in the index.
+    pub fn set_pinned_at(&mut self, id: ItemId, at: Hlc) -> bool {
+        self.entries
+            .iter_mut()
+            .find(|e| e.id == id)
+            .map(|e| e.pinned_at = Some(at))
+            .is_some()
     }
 
     /// Adds `doc`, or replaces the entry with the same id.

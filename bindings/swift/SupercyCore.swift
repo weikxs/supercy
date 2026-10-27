@@ -884,6 +884,16 @@ public protocol SupercyEngineProtocol: AnyObject, Sendable {
     func markUsed(id: String, nowMs: UInt64) throws 
     
     /**
+     * Moves pinned item `id` to place `to_index` among the pinned items (0 is the first; past
+     * the end means last).
+     *
+     * # Errors
+     *
+     * `InvalidId`, `NotFound`, `InvalidPinKey` (not pinned) or `Internal`.
+     */
+    func movePin(id: String, toIndex: UInt32, nowMs: UInt64) throws 
+    
+    /**
      * Pauses recording until `until_ms`, or until `resume` when `nil`. Copies made while
      * paused are never read.
      *
@@ -1167,6 +1177,23 @@ open func list(kind: ItemKind?, offset: UInt32, limit: UInt32)throws  -> [ItemSu
 open func markUsed(id: String, nowMs: UInt64)throws   {try rustCallWithError(FfiConverterTypeSupercyError_lift) {
     uniffi_cy_ffi_fn_method_supercyengine_mark_used(self.uniffiClonePointer(),
         FfiConverterString.lower(id),
+        FfiConverterUInt64.lower(nowMs),$0
+    )
+}
+}
+    
+    /**
+     * Moves pinned item `id` to place `to_index` among the pinned items (0 is the first; past
+     * the end means last).
+     *
+     * # Errors
+     *
+     * `InvalidId`, `NotFound`, `InvalidPinKey` (not pinned) or `Internal`.
+     */
+open func movePin(id: String, toIndex: UInt32, nowMs: UInt64)throws   {try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_move_pin(self.uniffiClonePointer(),
+        FfiConverterString.lower(id),
+        FfiConverterUInt32.lower(toIndex),
         FfiConverterUInt64.lower(nowMs),$0
     )
 }
@@ -4631,6 +4658,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_mark_used() != 21140) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_move_pin() != 29261) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_pause() != 42536) {

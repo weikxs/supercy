@@ -90,6 +90,36 @@ final class HistoryViewModelTests: XCTestCase {
         model.perform(.choose(plainText: true, copyOnly: false), nowMs: demoNow)
         XCTAssertEqual(rig.paster.pasteCount, 1)
     }
+
+    func testPinnedItemsMoveByKeyAndByDropButNotInSearchResults() throws {
+        let (_, model) = try filled(["plain", "c", "b", "a"])
+        for (offset, text) in ["a", "b", "c"].enumerated() {
+            model.selectedIndex = try XCTUnwrap(model.items.firstIndex { $0.preview == text })
+            model.perform(.togglePin, nowMs: demoNow + 10 + UInt64(offset))
+        }
+        XCTAssertEqual(model.items.map(\.preview), ["a", "b", "c", "plain"])
+        XCTAssertEqual(model.pinnedRows, 0...2)
+
+        model.selectedIndex = 2
+        model.perform(.movePinUp, nowMs: demoNow + 20)
+        XCTAssertEqual(model.items.map(\.preview), ["a", "c", "b", "plain"])
+        XCTAssertEqual(model.selected?.preview, "c")
+        model.perform(.movePinUp, nowMs: demoNow + 21)
+        model.perform(.movePinUp, nowMs: demoNow + 22) // already first
+        XCTAssertEqual(model.items.map(\.preview), ["c", "a", "b", "plain"])
+        model.perform(.movePinDown, nowMs: demoNow + 23)
+        XCTAssertEqual(model.items.map(\.preview), ["a", "c", "b", "plain"])
+
+        XCTAssertTrue(model.movePin(fromRow: 0, toRow: 3, nowMs: demoNow + 24)) // dropped after the last pin
+        XCTAssertEqual(model.items.map(\.preview), ["c", "b", "a", "plain"])
+        XCTAssertFalse(model.movePin(fromRow: 3, toRow: 0, nowMs: demoNow + 25)) // not pinned
+        XCTAssertFalse(model.movePin(fromRow: 0, toRow: 4, nowMs: demoNow + 25)) // among the unpinned
+
+        model.query = "a"
+        XCTAssertNil(model.pinnedRows)
+        XCTAssertEqual(KeyCommand.from(keyCode: 126, modifiers: [.option, .command]), .movePinUp)
+        XCTAssertEqual(KeyCommand.from(keyCode: 125, modifiers: [.option, .command]), .movePinDown)
+    }
 }
 
 final class KeyCommandTests: XCTestCase {

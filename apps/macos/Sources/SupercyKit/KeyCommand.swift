@@ -4,6 +4,8 @@ import AppKit
 /// tested without a window.
 public enum KeyCommand: Equatable {
     case moveUp, moveDown, close, togglePin, delete, clearHistory, clearAll, openSettings
+    /// ⌥⌘↑ / ⌥⌘↓: move the selected pinned item among the pinned items.
+    case movePinUp, movePinDown
     /// Choose the selected item; `plainText` and `copyOnly` from the modifiers.
     case choose(plainText: Bool?, copyOnly: Bool)
     /// ⌘1–⌘9.
@@ -22,6 +24,8 @@ public enum KeyCommand: Equatable {
     public static func from(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) -> KeyCommand? {
         let flags = modifiers.intersection([.command, .option, .shift, .control])
         switch keyCode {
+        case Code.up where flags == [.option, .command]: return .movePinUp
+        case Code.down where flags == [.option, .command]: return .movePinDown
         case Code.up: return .moveUp
         case Code.down: return .moveDown
         case Code.escape: return .close
@@ -66,6 +70,8 @@ extension HistoryViewModel {
         case .moveDown: moveSelection(by: 1)
         case .close: onClose?()
         case .togglePin: togglePinSelected(nowMs: nowMs)
+        case .movePinUp: moveSelectedPin(by: -1, nowMs: nowMs)
+        case .movePinDown: moveSelectedPin(by: 1, nowMs: nowMs)
         case .delete: deleteSelected()
         case .clearHistory: clear(keepPinned: true)
         case .clearAll: clear(keepPinned: false)

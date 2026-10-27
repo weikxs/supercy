@@ -660,3 +660,45 @@ fn image_thumbnails_from_the_shell_are_kept_and_text_ones_ignored() {
     );
     assert_eq!(engine.thumbnail(text_id).unwrap(), None);
 }
+
+#[test]
+fn pinned_items_keep_their_place_and_can_be_moved() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+    let a = stored(&mut engine, "pin a", T0);
+    let b = stored(&mut engine, "pin b", T0 + 1);
+    let c = stored(&mut engine, "pin c", T0 + 2);
+    let plain = stored(&mut engine, "not pinned", T0 + 3);
+    for (n, id) in [a, b, c].into_iter().enumerate() {
+        engine.set_pinned(id, true, T0 + 10 + n as u64).unwrap();
+    }
+    let ids = |engine: &Engine| -> Vec<ItemId> {
+        engine.list(None, 0, 10).into_iter().map(|s| s.id).collect()
+    };
+    assert_eq!(ids(&engine), vec![a, b, c, plain]);
+
+    // Using a pinned item does not move it.
+    engine.mark_used(c, T0 + 20).unwrap();
+    assert_eq!(ids(&engine), vec![a, b, c, plain]);
+
+    engine.move_pin(c, 0, T0 + 21).unwrap();
+    assert_eq!(ids(&engine), vec![c, a, b, plain]);
+    engine.move_pin(c, 99, T0 + 22).unwrap();
+    assert_eq!(ids(&engine), vec![a, b, c, plain]);
+    engine.move_pin(a, 1, T0 + 23).unwrap();
+    assert_eq!(ids(&engine), vec![b, a, c, plain]);
+    assert!(matches!(
+        engine.move_pin(plain, 0, T0 + 24),
+        Err(EngineError::NotPinned)
+    ));
+    assert!(matches!(
+        engine.move_pin(ItemId::from_bytes([0xee; 16]), 0, T0 + 24),
+        Err(EngineError::NotFound)
+    ));
+
+    // A newly pinned item goes last; the order survives reopening.
+    engine.set_pinned(plain, true, T0 + 25).unwrap();
+    drop(engine);
+    let engine = fixture.open(T0 + 30);
+    assert_eq!(ids(&engine), vec![b, a, c, plain]);
+}

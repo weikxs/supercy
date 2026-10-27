@@ -268,6 +268,17 @@ impl SupercyEngine {
         Ok(self.engine()?.set_pin_key(parse_id(&id)?, key)?)
     }
 
+    /// Moves pinned item `id` to place `to_index` among the pinned items (0 is the first; past
+    /// the end means last).
+    ///
+    /// # Errors
+    ///
+    /// `InvalidId`, `NotFound`, `InvalidPinKey` (not pinned) or `Internal`.
+    pub fn move_pin(&self, id: String, to_index: u32, now_ms: u64) -> Result<(), SupercyError> {
+        let to = usize::try_from(to_index).unwrap_or(usize::MAX);
+        Ok(self.engine()?.move_pin(parse_id(&id)?, to, now_ms)?)
+    }
+
     /// The pinned item with letter `key`, if any.
     ///
     /// # Errors

@@ -41,7 +41,7 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
             self?.onOpenSettings?()
         }
         model.onNeedsAccessibility = { [weak self] in self?.onNeedsAccessibility?() }
-        let view = HistoryPanelView(model: model, isPaused: controller.isPaused)
+        let view = HistoryPanelView(model: model, isPaused: controller.isPaused, clock: clock)
         let panel = KeyPanel(contentRect: NSRect(origin: .zero, size: view.frame.size),
                              styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
                              backing: .buffered, defer: false)
@@ -50,6 +50,8 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         panel.isFloatingPanel = true
         panel.level = .popUpMenu
         panel.hidesOnDeactivate = false
+        // Kept out of screenshots, screen recordings and screen sharing: the history is private.
+        panel.sharingType = .none
         panel.isReleasedWhenClosed = false
         panel.contentView = view
         panel.delegate = self

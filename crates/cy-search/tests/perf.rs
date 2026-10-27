@@ -72,6 +72,7 @@ fn build(count: u64) -> SearchIndex {
             id: ItemId::from_bytes(id),
             kind: RepKind::Text,
             pinned: false,
+            pinned_at: None,
             last_used: Hlc::new(n, 0, DeviceTag::default()),
             first_copied_ms: n,
             copy_count: 1,

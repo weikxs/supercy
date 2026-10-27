@@ -109,6 +109,18 @@ final class PreviewFormatterTests: XCTestCase {
         XCTAssertEqual(PreviewFormatter.title(String(repeating: "x", count: 200), showSpecialChars: false).count, 121)
     }
 
+    func testObjectReplacementAndControlCharactersAreNeverRendered() {
+        // Several U+FFFC in a title hang CoreText in other clipboard managers; NUL and escape
+        // codes have no glyph. Each becomes one visible symbol, so highlight ranges stay valid.
+        let raw = "a\u{FFFC}\u{FFFC}\u{FFFC}b\u{0}c\u{1B}[0md\u{7F}"
+        let title = PreviewFormatter.title(raw, showSpecialChars: false)
+        XCTAssertEqual(title, "a□□□b□c□[0md□")
+        XCTAssertEqual(title.count, raw.count)
+        XCTAssertEqual(PreviewFormatter.displayable("line\nnext\ttab\u{FFFC}"), "line\nnext\ttab□")
+        let long = String(repeating: "\u{FFFC}", count: 5_000)
+        XCTAssertFalse(PreviewFormatter.displayable(long).contains("\u{FFFC}"))
+    }
+
     func testHighlightsMarkTheMatchedRangesInBold() {
         let attributed = RowPresentation.highlighted("Hello from Supercy", matches: [TextRange(location: 6, length: 4),
                                                                                        TextRange(location: 40, length: 2)],

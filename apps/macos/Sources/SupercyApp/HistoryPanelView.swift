@@ -6,6 +6,7 @@ import Combine
 /// keys are handled by the panel controller (`KeyCommand`).
 final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate {
     private let model: HistoryViewModel
+    private let clock: Clock
     private let settings: Settings?
     private var subscriptions: Set<AnyCancellable> = []
 
@@ -23,9 +24,12 @@ final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate
     private static let maxPreviewChars = 4_000
     /// Measurement diagnosis only (isolated mode): no thumbnails.
     private static let thumbnailsOff = ProcessInfo.processInfo.environment["SUPERCY_MEASURE_NO_THUMBNAILS"] == "1"
+    /// Drag type of a pinned row being rearranged; carries only the row number, never content.
+    private static let pinnedRowType = NSPasteboard.PasteboardType("io.github.weikxs.Supercy.pinned-row")
 
-    init(model: HistoryViewModel, isPaused: Bool) {
+    init(model: HistoryViewModel, isPaused: Bool, clock: Clock) {
         self.model = model
+        self.clock = clock
         settings = model.settings
         let rows = CGFloat(settings?.visibleItems ?? 20)
         super.init(frame: NSRect(x: 0, y: 0, width: Self.panelWidth, height: rows * RowPresentation.rowHeight + 110))
@@ -70,6 +74,8 @@ final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate
         table.delegate = self
         table.target = self
         table.action = #selector(clicked)
+        table.registerForDraggedTypes([Self.pinnedRowType])
+        table.draggingDestinationFeedbackStyle = .gap
         table.style = .plain
         table.intercellSpacing = .zero
         let listScroll = NSScrollView()
@@ -153,7 +159,8 @@ final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate
             previewText.stringValue = L10n.text(.kindImage)
         } else {
             let payload = model.payload(of: item)
-            previewText.stringValue = String((PasteboardWriter.plainTextOf(payload) ?? "").prefix(Self.maxPreviewChars))
+            previewText.stringValue = PreviewFormatter.displayable(
+                String((PasteboardWriter.plainTextOf(payload) ?? "").prefix(Self.maxPreviewChars)))
         }
         detailsLabel.stringValue = RowPresentation.details(for: item)
     }
@@ -171,6 +178,30 @@ final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate
 
     func numberOfRows(in tableView: NSTableView) -> Int {
         model.items.count
+    }
+
+    // MARK: Rearranging pinned items by drag and drop
+
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        guard model.pinnedRows?.contains(row) == true else { return nil }
+        let item = NSPasteboardItem()
+        item.setString(String(row), forType: Self.pinnedRowType)
+        return item
+    }
+
+    func tableView(_ tableView: NSTableView, validateDrop info: NSDraggingInfo, proposedRow row: Int,
+                   proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
+        guard dropOperation == .above, info.draggingSource as? NSTableView === table,
+              let rows = model.pinnedRows, (rows.lowerBound...rows.upperBound + 1).contains(row) else { return [] }
+        return .move
+    }
+
+    func tableView(_ tableView: NSTableView, acceptDrop info: NSDraggingInfo, row: Int,
+                   dropOperation: NSTableView.DropOperation) -> Bool {
+        guard let text = info.draggingPasteboard.string(forType: Self.pinnedRowType), let from = Int(text) else {
+            return false
+        }
+        return model.movePin(fromRow: from, toRow: row, nowMs: clock.nowMs())
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {

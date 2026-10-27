@@ -678,3 +678,57 @@ fn thumbnails_are_sealed_bounded_and_go_with_their_item() {
     store.delete(it.id).unwrap();
     assert_eq!(store.thumbnail(it.id).unwrap(), None);
 }
+
+/// The sealed body of `id`, read straight from the file (the store must be closed).
+fn sealed_body(dir: &Path, id: ItemId) -> Vec<u8> {
+    let raw = rusqlite::Connection::open(dir.join(DATABASE_FILE)).unwrap();
+    raw.query_row(
+        "SELECT body FROM items WHERE id = ?1",
+        [id.as_bytes().as_slice()],
+        |r| r.get(0),
+    )
+    .unwrap()
+}
+
+#[test]
+fn deleting_evicting_and_expiring_leave_no_ciphertext_in_the_files() {
+    type Remove = fn(&mut Store, ItemId);
+    let ways: [(&str, Remove); 3] = [
+        ("delete", |store, id| assert!(store.delete(id).unwrap())),
+        ("eviction", |store, id| {
+            let limits = Limits {
+                max_image_total_bytes: 5_000,
+                ..Limits::default()
+            };
+            let newer = item(store, 99, image(4096, 0x11));
+            assert_eq!(store.save(&newer, &limits).unwrap(), vec![id]);
+        }),
+        ("expiry", |store, id| {
+            assert_eq!(store.expire(10_000).unwrap(), vec![id]);
+        }),
+    ];
+    for (way, remove) in ways {
+        let dir = temp_dir();
+        let keys = MemoryKeyStore::new();
+        let mut store = Store::open(dir.path(), &keys).unwrap();
+        let victim = Item {
+            sensitivity: Sensitivity::Sensitive {
+                expires_at_ms: 5_000,
+                reason: SensitiveReason::HighEntropy,
+            },
+            ..item(&store, 1, image(4096, 0xa7))
+        };
+        store.save(&victim, &Limits::default()).unwrap();
+        drop(store);
+        let sealed = sealed_body(dir.path(), victim.id);
+        let mut store = Store::open(dir.path(), &keys).unwrap();
+
+        remove(&mut store, victim.id);
+
+        // Checked while the store is still open: closing would checkpoint and hide a leftover.
+        assert!(
+            !files_contain(dir.path(), &sealed[24..88]),
+            "{way} left the ciphertext behind"
+        );
+    }
+}

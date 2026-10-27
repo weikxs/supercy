@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use cy_model::{Fingerprint, FingerprintKey, Item, ItemId, SecretBytes};
+use cy_model::{Fingerprint, FingerprintKey, Hlc, Item, ItemId, SecretBytes};
 use cy_platform::KeyStore;
 use rusqlite::{Connection, OptionalExtension, params};
 
@@ -177,6 +177,7 @@ impl Store {
         upsert(&tx, &self.keys, item)?;
         let removed = enforce_limits(&tx, limits)?;
         tx.commit().map_err(StoreError::from_sql)?;
+        self.purge_if(!removed.is_empty())?;
         Ok(removed)
     }
 
@@ -193,7 +194,19 @@ impl Store {
                 params![id.as_bytes().as_slice()],
             )
             .map_err(StoreError::from_sql)?;
+        self.purge_if(changed > 0)?;
         Ok(changed > 0)
+    }
+
+    /// After a removal, moves the write-ahead log into the file and empties it: with
+    /// `secure_delete` the removed rows are then zeroed on disk, not left in old log frames.
+    fn purge_if(&self, removed: bool) -> Result<(), StoreError> {
+        if removed {
+            self.conn
+                .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()))
+                .map_err(StoreError::from_sql)?;
+        }
+        Ok(())
     }
 
     /// Deletes all items (or all unpinned ones) and compacts the file so deleted data does not
@@ -236,6 +249,7 @@ impl Store {
         let tx = self.conn.transaction().map_err(StoreError::from_sql)?;
         delete_ids(&tx, &ids)?;
         tx.commit().map_err(StoreError::from_sql)?;
+        self.purge_if(true)?;
         Ok(ids)
     }
 
@@ -248,7 +262,30 @@ impl Store {
         let tx = self.conn.transaction().map_err(StoreError::from_sql)?;
         let removed = enforce_limits(&tx, limits)?;
         tx.commit().map_err(StoreError::from_sql)?;
+        self.purge_if(!removed.is_empty())?;
         Ok(removed)
+    }
+
+    /// Sets `pinned_at` of each pinned item in `stamps` (their place among the pinned items), in
+    /// one transaction. Only that column changes: nothing is sealed again. Returns how many
+    /// pinned items were updated.
+    ///
+    /// # Errors
+    ///
+    /// Database failures; nothing is changed then.
+    pub fn set_pinned_at(&mut self, stamps: &[(ItemId, Hlc)]) -> Result<usize, StoreError> {
+        let tx = self.conn.transaction().map_err(StoreError::from_sql)?;
+        let mut updated = 0;
+        for (id, at) in stamps {
+            updated += tx
+                .execute(
+                    "UPDATE items SET pinned_at = ?1 WHERE id = ?2 AND pinned = 1",
+                    params![at.to_bytes().as_slice(), id.as_bytes().as_slice()],
+                )
+                .map_err(StoreError::from_sql)?;
+        }
+        tx.commit().map_err(StoreError::from_sql)?;
+        Ok(updated)
     }
 
     /// Stores a small thumbnail for item `id` (sealed, at most [`crate::MAX_THUMBNAIL_BYTES`]);

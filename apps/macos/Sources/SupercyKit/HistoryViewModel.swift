@@ -107,6 +107,38 @@ public final class HistoryViewModel: ObservableObject {
         refresh()
     }
 
+    /// Rows of the pinned items when they can be rearranged: in the plain list, not in search
+    /// results (pinned items are listed together, in their own order).
+    public var pinnedRows: ClosedRange<Int>? {
+        guard query.trimmingCharacters(in: .whitespaces).isEmpty,
+              let first = items.firstIndex(where: \.pinned),
+              let last = items.lastIndex(where: \.pinned) else { return nil }
+        return first...last
+    }
+
+    /// Moves the pinned item at `fromRow` to the gap above `toRow` (one past the last pinned row
+    /// means last), as a drop between rows does. Returns whether it moved.
+    @discardableResult
+    public func movePin(fromRow: Int, toRow: Int, nowMs: UInt64) -> Bool {
+        guard let rows = pinnedRows, rows.contains(fromRow),
+              (rows.lowerBound...rows.upperBound + 1).contains(toRow) else { return false }
+        let item = items[fromRow]
+        // The place among the pinned items once the moved one is taken out.
+        let place = (toRow > fromRow ? toRow - 1 : toRow) - rows.lowerBound
+        guard (try? controller.engine.movePin(id: item.id, toIndex: UInt32(place), nowMs: nowMs)) != nil else {
+            return false
+        }
+        refresh()
+        selectedIndex = items.firstIndex { $0.id == item.id } ?? selectedIndex
+        return true
+    }
+
+    /// Moves the selected pinned item one place up (`-1`) or down (`1`) among the pinned items.
+    public func moveSelectedPin(by offset: Int, nowMs: UInt64) {
+        guard let rows = pinnedRows, rows.contains(selectedIndex), rows.contains(selectedIndex + offset) else { return }
+        movePin(fromRow: selectedIndex, toRow: selectedIndex + (offset > 0 ? offset + 1 : offset), nowMs: nowMs)
+    }
+
     public func deleteSelected() {
         guard let item = selected else { return }
         _ = try? controller.engine.delete(id: item.id)
