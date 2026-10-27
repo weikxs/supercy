@@ -1,6 +1,6 @@
 # Common tasks. Every Rust check runs in Docker (scripts/docker-test.sh); nothing is built on the host.
 
-.PHONY: all check privacy test fmt clippy deny audit bench cover fuzz format lock bindings hooks \
+.PHONY: all check privacy test fmt clippy deny audit bench cover fuzz format lock bindings golden hooks \
         macos-project macos-test macos-measure macos-app macos-trial macos-trial-clean
 
 all: check
@@ -45,6 +45,10 @@ format:
 
 lock:
 	scripts/docker-test.sh lock
+
+# Regenerate the annotation golden images after an intended rendering change; review them first.
+golden:
+	scripts/docker-test.sh golden-write
 
 # Regenerate the committed Swift bindings after changing the FFI interface.
 bindings:

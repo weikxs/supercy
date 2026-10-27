@@ -28,10 +28,17 @@ impl Engine {
             .entries
             .iter()
             .find(|entry| entry.type_id == THUMBNAIL_TYPE)
-            .and_then(|entry| entry.data.as_ref())
-            .filter(|data| !data.is_empty() && data.len() <= MAX_THUMBNAIL_BYTES);
-        if let Some(data) = thumbnail {
-            self.store.set_thumbnail(id, data.expose())?;
+            .and_then(|entry| entry.data.as_ref());
+        match thumbnail {
+            Some(data) => self.save_thumbnail(id, data.expose()),
+            None => Ok(()),
+        }
+    }
+
+    /// Stores `data` as the thumbnail of image item `id`; empty or oversized data is ignored.
+    pub(crate) fn save_thumbnail(&mut self, id: ItemId, data: &[u8]) -> Result<(), EngineError> {
+        if !data.is_empty() && data.len() <= MAX_THUMBNAIL_BYTES {
+            self.store.set_thumbnail(id, data)?;
         }
         Ok(())
     }

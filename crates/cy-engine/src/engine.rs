@@ -152,7 +152,11 @@ impl Engine {
         })
     }
 
-    fn keep(&mut self, capture: Capture, now_ms: u64) -> Result<IngestOutcome, EngineError> {
+    pub(crate) fn keep(
+        &mut self,
+        capture: Capture,
+        now_ms: u64,
+    ) -> Result<IngestOutcome, EngineError> {
         let fingerprint = Fingerprint::of(self.store.fingerprint_key(), &capture.reps)
             .ok_or(EngineError::Internal)?;
         let at = self.stamp(now_ms);

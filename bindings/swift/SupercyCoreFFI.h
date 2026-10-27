@@ -282,6 +282,121 @@ typedef struct UniffiVTableCallbackInterfaceKeystore {
 } UniffiVTableCallbackInterfaceKeystore;
 
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_CLONE_ANNOTATIONDOCUMENT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_CLONE_ANNOTATIONDOCUMENT
+void*_Nonnull uniffi_cy_ffi_fn_clone_annotationdocument(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FREE_ANNOTATIONDOCUMENT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FREE_ANNOTATIONDOCUMENT
+void uniffi_cy_ffi_fn_free_annotationdocument(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_CONSTRUCTOR_ANNOTATIONDOCUMENT_FROM_PNG
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_CONSTRUCTOR_ANNOTATIONDOCUMENT_FROM_PNG
+void*_Nonnull uniffi_cy_ffi_fn_constructor_annotationdocument_from_png(RustBuffer png, float scale, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_CONSTRUCTOR_ANNOTATIONDOCUMENT_FROM_SAVED
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_CONSTRUCTOR_ANNOTATIONDOCUMENT_FROM_SAVED
+void*_Nonnull uniffi_cy_ffi_fn_constructor_annotationdocument_from_saved(RustBuffer png, float scale, RustBuffer saved, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_APPLY
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_APPLY
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_apply(void*_Nonnull ptr, RustBuffer command, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_CAN_REDO
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_CAN_REDO
+int8_t uniffi_cy_ffi_fn_method_annotationdocument_can_redo(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_CAN_UNDO
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_CAN_UNDO
+int8_t uniffi_cy_ffi_fn_method_annotationdocument_can_undo(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_CROP
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_CROP
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_crop(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_EXPORT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_EXPORT
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_export(void*_Nonnull ptr, RustBuffer format, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_HIT_TEST
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_HIT_TEST
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_hit_test(void*_Nonnull ptr, RustBuffer point, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_IMAGE_HEIGHT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_IMAGE_HEIGHT
+uint32_t uniffi_cy_ffi_fn_method_annotationdocument_image_height(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_IMAGE_SCALE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_IMAGE_SCALE
+float uniffi_cy_ffi_fn_method_annotationdocument_image_scale(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_IMAGE_WIDTH
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_IMAGE_WIDTH
+uint32_t uniffi_cy_ffi_fn_method_annotationdocument_image_width(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_NEXT_STEP_NUMBER
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_NEXT_STEP_NUMBER
+uint32_t uniffi_cy_ffi_fn_method_annotationdocument_next_step_number(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_REDO
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_REDO
+int8_t uniffi_cy_ffi_fn_method_annotationdocument_redo(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_RENDER_REGION
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_RENDER_REGION
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_render_region(void*_Nonnull ptr, RustBuffer region, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SAVE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SAVE
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_save(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SELECTION_BOUNDS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SELECTION_BOUNDS
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_selection_bounds(void*_Nonnull ptr, RustBuffer shape_ids, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SET_FONT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SET_FONT
+void uniffi_cy_ffi_fn_method_annotationdocument_set_font(void*_Nonnull ptr, RustBuffer font, uint32_t index, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SHAPE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SHAPE
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_shape(void*_Nonnull ptr, uint64_t id, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SHAPES
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SHAPES
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_shapes(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SHAPES_IN
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_SHAPES_IN
+RustBuffer uniffi_cy_ffi_fn_method_annotationdocument_shapes_in(void*_Nonnull ptr, RustBuffer area, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_UNDO
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_ANNOTATIONDOCUMENT_UNDO
+int8_t uniffi_cy_ffi_fn_method_annotationdocument_undo(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_CLONE_KEYSTORE
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_CLONE_KEYSTORE
 void*_Nonnull uniffi_cy_ffi_fn_clone_keystore(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
@@ -350,6 +465,11 @@ RustBuffer uniffi_cy_ffi_fn_method_supercyengine_import_pins(void*_Nonnull ptr, 
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_INGEST
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_INGEST
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_ingest(void*_Nonnull ptr, RustBuffer snapshot, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_INGEST_IMAGE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_INGEST_IMAGE
+RustBuffer uniffi_cy_ffi_fn_method_supercyengine_ingest_image(void*_Nonnull ptr, RustBuffer image, uint64_t now_ms, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_ITEM_COUNT
@@ -437,6 +557,28 @@ RustBuffer uniffi_cy_ffi_fn_method_supercyengine_tick(void*_Nonnull ptr, uint64_
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_update_settings(void*_Nonnull ptr, RustBuffer settings, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_ANNOTATION_FILE_NAME
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_ANNOTATION_FILE_NAME
+RustBuffer uniffi_cy_ffi_fn_func_annotation_file_name(RustBuffer template, RustBuffer parts, RustBuffer format, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_ANNOTATION_SOURCE_ID
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_ANNOTATION_SOURCE_ID
+RustBuffer uniffi_cy_ffi_fn_func_annotation_source_id(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_ANNOTATION_STYLE_CONSTANTS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_ANNOTATION_STYLE_CONSTANTS
+RustBuffer uniffi_cy_ffi_fn_func_annotation_style_constants(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_ANNOTATION_TARGET_PATH
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_ANNOTATION_TARGET_PATH
+RustBuffer uniffi_cy_ffi_fn_func_annotation_target_path(RustBuffer folder, RustBuffer file_name, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_CHECK_IGNORE_PATTERN
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_CHECK_IGNORE_PATTERN
 RustBuffer uniffi_cy_ffi_fn_func_check_ignore_pattern(RustBuffer pattern, RustCallStatus *_Nonnull out_status
@@ -448,9 +590,21 @@ RustBuffer uniffi_cy_ffi_fn_func_core_version(RustCallStatus *_Nonnull out_statu
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_MAX_SCREENSHOT_BYTES
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_MAX_SCREENSHOT_BYTES
+uint64_t uniffi_cy_ffi_fn_func_max_screenshot_bytes(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_QUERY_ERROR
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_QUERY_ERROR
 RustBuffer uniffi_cy_ffi_fn_func_query_error(RustBuffer query, RustBuffer mode, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_SCREENSHOT_SOURCE_ID
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_SCREENSHOT_SOURCE_ID
+RustBuffer uniffi_cy_ffi_fn_func_screenshot_source_id(RustCallStatus *_Nonnull out_status
+    
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_THUMBNAIL_TYPE
@@ -739,6 +893,30 @@ void ffi_cy_ffi_rust_future_free_void(uint64_t handle
 void ffi_cy_ffi_rust_future_complete_void(uint64_t handle, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_ANNOTATION_FILE_NAME
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_ANNOTATION_FILE_NAME
+uint16_t uniffi_cy_ffi_checksum_func_annotation_file_name(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_ANNOTATION_SOURCE_ID
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_ANNOTATION_SOURCE_ID
+uint16_t uniffi_cy_ffi_checksum_func_annotation_source_id(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_ANNOTATION_STYLE_CONSTANTS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_ANNOTATION_STYLE_CONSTANTS
+uint16_t uniffi_cy_ffi_checksum_func_annotation_style_constants(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_ANNOTATION_TARGET_PATH
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_ANNOTATION_TARGET_PATH
+uint16_t uniffi_cy_ffi_checksum_func_annotation_target_path(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_CHECK_IGNORE_PATTERN
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_CHECK_IGNORE_PATTERN
 uint16_t uniffi_cy_ffi_checksum_func_check_ignore_pattern(void
@@ -751,15 +929,141 @@ uint16_t uniffi_cy_ffi_checksum_func_core_version(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_MAX_SCREENSHOT_BYTES
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_MAX_SCREENSHOT_BYTES
+uint16_t uniffi_cy_ffi_checksum_func_max_screenshot_bytes(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_QUERY_ERROR
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_QUERY_ERROR
 uint16_t uniffi_cy_ffi_checksum_func_query_error(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_SCREENSHOT_SOURCE_ID
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_SCREENSHOT_SOURCE_ID
+uint16_t uniffi_cy_ffi_checksum_func_screenshot_source_id(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_THUMBNAIL_TYPE
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_THUMBNAIL_TYPE
 uint16_t uniffi_cy_ffi_checksum_func_thumbnail_type(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_APPLY
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_APPLY
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_apply(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_CAN_REDO
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_CAN_REDO
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_can_redo(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_CAN_UNDO
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_CAN_UNDO
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_can_undo(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_CROP
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_CROP
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_crop(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_EXPORT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_EXPORT
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_export(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_HIT_TEST
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_HIT_TEST
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_hit_test(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_IMAGE_HEIGHT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_IMAGE_HEIGHT
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_image_height(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_IMAGE_SCALE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_IMAGE_SCALE
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_image_scale(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_IMAGE_WIDTH
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_IMAGE_WIDTH
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_image_width(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_NEXT_STEP_NUMBER
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_NEXT_STEP_NUMBER
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_next_step_number(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_REDO
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_REDO
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_redo(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_RENDER_REGION
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_RENDER_REGION
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_render_region(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SAVE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SAVE
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_save(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SELECTION_BOUNDS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SELECTION_BOUNDS
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_selection_bounds(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SET_FONT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SET_FONT
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_set_font(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SHAPE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SHAPE
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_shape(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SHAPES
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SHAPES
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_shapes(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SHAPES_IN
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_SHAPES_IN
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_shapes_in(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_UNDO
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_ANNOTATIONDOCUMENT_UNDO
+uint16_t uniffi_cy_ffi_checksum_method_annotationdocument_undo(void
     
 );
 #endif
@@ -808,6 +1112,12 @@ uint16_t uniffi_cy_ffi_checksum_method_supercyengine_import_pins(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_INGEST
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_INGEST
 uint16_t uniffi_cy_ffi_checksum_method_supercyengine_ingest(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_INGEST_IMAGE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_INGEST_IMAGE
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_ingest_image(void
     
 );
 #endif
@@ -910,6 +1220,18 @@ uint16_t uniffi_cy_ffi_checksum_method_supercyengine_tick(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_UPDATE_SETTINGS
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_UPDATE_SETTINGS
 uint16_t uniffi_cy_ffi_checksum_method_supercyengine_update_settings(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_CONSTRUCTOR_ANNOTATIONDOCUMENT_FROM_PNG
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_CONSTRUCTOR_ANNOTATIONDOCUMENT_FROM_PNG
+uint16_t uniffi_cy_ffi_checksum_constructor_annotationdocument_from_png(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_CONSTRUCTOR_ANNOTATIONDOCUMENT_FROM_SAVED
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_CONSTRUCTOR_ANNOTATIONDOCUMENT_FROM_SAVED
+uint16_t uniffi_cy_ffi_checksum_constructor_annotationdocument_from_saved(void
     
 );
 #endif

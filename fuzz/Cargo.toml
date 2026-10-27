@@ -9,6 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
+cy-annotate = { path = "../crates/cy-annotate" }
 cy-filter = { path = "../crates/cy-filter" }
 cy-model = { path = "../crates/cy-model" }
 cy-search = { path = "../crates/cy-search" }
@@ -38,6 +39,13 @@ bench = false
 [[bin]]
 name = "search"
 path = "fuzz_targets/search.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "annotation_document"
+path = "fuzz_targets/annotation_document.rs"
 test = false
 doc = false
 bench = false

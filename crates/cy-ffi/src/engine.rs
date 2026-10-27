@@ -42,7 +42,7 @@ fn to_count(value: u32) -> usize {
 }
 
 impl SupercyEngine {
-    fn engine(&self) -> Result<MutexGuard<'_, Engine>, SupercyError> {
+    pub(crate) fn engine(&self) -> Result<MutexGuard<'_, Engine>, SupercyError> {
         self.inner.lock().map_err(|_| SupercyError::Internal {
             message: "the engine stopped after an earlier failure; restart Supercy".into(),
         })

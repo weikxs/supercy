@@ -16,6 +16,7 @@ fuzz_target!(|input: (Vec<String>, String, u8)| {
             id: ItemId::from_bytes(id),
             kind: RepKind::Text,
             pinned: n % 3 == 0,
+            pinned_at: (n % 3 == 0).then(|| Hlc::new(n as u64, 1, DeviceTag::default())),
             last_used: Hlc::new(n as u64, 0, DeviceTag::default()),
             first_copied_ms: n as u64,
             copy_count: 1,

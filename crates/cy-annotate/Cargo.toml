@@ -1,0 +1,26 @@
+[package]
+name = "cy-annotate"
+description = "Screenshot annotation core: document model, edit commands with undo, rendering and export."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+# Test data only. The font fixture is SIL OFL 1.1 and must never ship (decision D-7); the shell
+# hands the core a system font at run time.
+exclude = ["tests/fixtures", "tests/golden"]
+
+[dependencies]
+ciborium.workspace = true
+png.workspace = true
+serde.workspace = true
+skrifa.workspace = true
+thiserror.workspace = true
+tiny-skia.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+# Decodes the JPEG encoder's output in tests.
+zune-jpeg.workspace = true
+
+[lints]
+workspace = true

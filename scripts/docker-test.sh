@@ -4,8 +4,8 @@
 #
 # The repository is mounted read-only and copied into the container, so the host
 # tree is never written; build output, the crate cache and installed tools live in
-# named volumes. Only the write steps (lock, format, bindings-write) mount it
-# read-write.
+# named volumes. Only the write steps (lock, format, bindings-write, golden-write)
+# mount it read-write.
 #
 # Usage: scripts/docker-test.sh [step]
 #   all (default)   fmt, clippy, deny, audit, test, bindings
@@ -16,6 +16,7 @@
 #   lock            write Cargo.lock files after a dependency change
 #   format          run cargo fmt on the sources
 #   bindings-write  regenerate the committed Swift bindings
+#   golden-write    regenerate the annotation golden images (crates/cy-annotate/tests/golden)
 #   icons           render design/icons/*.svg to the app's PNGs (Debian image with librsvg)
 set -euo pipefail
 
@@ -38,9 +39,9 @@ repo_root=$(git rev-parse --show-toplevel)
 step=${1:-all}
 
 case "$step" in
-  all | fmt | clippy | deny | audit | test | bindings | bench | cover | fuzz | lock | format | bindings-write | icons) ;;
+  all | fmt | clippy | deny | audit | test | bindings | bench | cover | fuzz | lock | format | bindings-write | golden-write | icons) ;;
   *)
-    echo "usage: $0 [all|fmt|clippy|deny|audit|test|bindings|bench|cover|fuzz|lock|format|bindings-write|icons]" >&2
+    echo "usage: $0 [all|fmt|clippy|deny|audit|test|bindings|bench|cover|fuzz|lock|format|bindings-write|golden-write|icons]" >&2
     exit 64
     ;;
 esac
@@ -82,7 +83,7 @@ mount_mode=ro
 image=$IMAGE
 tools_volume=$TOOLS_VOLUME
 case "$step" in
-  lock | format | bindings-write) mount_mode=rw ;;
+  lock | format | bindings-write | golden-write) mount_mode=rw ;;
   icons)
     mount_mode=rw
     image=$ICONS_IMAGE
@@ -123,6 +124,9 @@ case "$STEP" in
     cd /src && generate_bindings
     rm -rf /src/bindings/swift && mkdir -p /src/bindings && cp -r /tmp/bindings /src/bindings/swift
     echo "Swift bindings written to bindings/swift"; exit 0 ;;
+  golden-write)
+    cd /src && SUPERCY_UPDATE_GOLDEN=1 cargo test -p cy-annotate --locked --test golden --quiet
+    echo "golden images written to crates/cy-annotate/tests/golden"; exit 0 ;;
 esac
 
 tar -C /src --exclude=./target --exclude=./.git --exclude=./fuzz/target -cf - . | tar -C /work -xf -

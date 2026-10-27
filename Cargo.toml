@@ -18,21 +18,26 @@ cy-platform = { path = "crates/cy-platform" }
 cy-store = { path = "crates/cy-store" }
 cy-engine = { path = "crates/cy-engine" }
 cy-ffi = { path = "crates/cy-ffi" }
+cy-annotate = { path = "crates/cy-annotate" }
 base64 = "0.22"
 blake3 = "1.8"
 chacha20poly1305 = "0.10"
 ciborium = "0.2"
 getrandom = "0.3"
+png = "0.17"
 regex = "1"
 pinyin = { version = "0.10", default-features = false, features = ["plain", "heteronym"] }
 rusqlite = { version = "0.37", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
+tiny-skia = { version = "0.11", default-features = false, features = ["std", "simd"] }
+skrifa = "0.48"
 zeroize = "1.8"
 proptest = "1"
 tempfile = "3"
 uniffi = "0.29"
+zune-jpeg = "0.5"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

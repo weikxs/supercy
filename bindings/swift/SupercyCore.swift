@@ -406,6 +406,38 @@ private let UNIFFI_CALLBACK_UNEXPECTED_ERROR: Int32 = 2
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt8: FfiConverterPrimitive {
+    typealias FfiType = UInt8
+    typealias SwiftType = UInt8
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt8 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: UInt8, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterUInt16: FfiConverterPrimitive {
+    typealias FfiType = UInt16
+    typealias SwiftType = UInt16
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt16 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterUInt32: FfiConverterPrimitive {
     typealias FfiType = UInt32
     typealias SwiftType = UInt32
@@ -432,6 +464,22 @@ fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
 
     public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
         writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterFloat: FfiConverterPrimitive {
+    typealias FfiType = Float
+    typealias SwiftType = Float
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Float {
+        return try lift(readFloat(&buf))
+    }
+
+    public static func write(_ value: Float, into buf: inout [UInt8]) {
+        writeFloat(&buf, lower(value))
     }
 }
 
@@ -517,6 +565,493 @@ fileprivate struct FfiConverterData: FfiConverterRustBuffer {
         writeBytes(&buf, value)
     }
 }
+
+
+
+
+/**
+ * One screenshot being annotated. Safe to call from any thread; calls are serialized.
+ */
+public protocol AnnotationDocumentProtocol: AnyObject, Sendable {
+    
+    /**
+     * Applies an edit; returns the id of an added shape.
+     *
+     * # Errors
+     *
+     * `InvalidInput`, `UnknownShape` or `LimitExceeded`; nothing changes then.
+     */
+    func apply(command: AnnotationCommand) throws  -> UInt64?
+    
+    /**
+     * Whether there is an edit to redo.
+     */
+    func canRedo()  -> Bool
+    
+    /**
+     * Whether there is an edit to undo.
+     */
+    func canUndo()  -> Bool
+    
+    /**
+     * The crop box, if one is set.
+     */
+    func crop()  -> AnnotationRect?
+    
+    /**
+     * The final image: composited, cropped and encoded.
+     *
+     * # Errors
+     *
+     * `Export`.
+     */
+    func export(format: ExportImageFormat) throws  -> Data
+    
+    /**
+     * The topmost shape at `point` (within the hit tolerance).
+     */
+    func hitTest(point: AnnotationPoint)  -> UInt64?
+    
+    /**
+     * Height of the image in pixels.
+     */
+    func imageHeight()  -> UInt32
+    
+    /**
+     * Pixels per point.
+     */
+    func imageScale()  -> Float
+    
+    /**
+     * Width of the image in pixels.
+     */
+    func imageWidth()  -> UInt32
+    
+    /**
+     * The number the next step marker gets.
+     */
+    func nextStepNumber()  -> UInt32
+    
+    /**
+     * Repeats the last undone edit; returns whether there was one.
+     */
+    func redo()  -> Bool
+    
+    /**
+     * The composite inside `region`, for previews of mosaic, blur and text.
+     *
+     * # Errors
+     *
+     * `InvalidInput` for a region outside the image.
+     */
+    func renderRegion(region: AnnotationRect) throws  -> RenderedRegion
+    
+    /**
+     * The annotation in its saved form (shapes, crop box, counters; not the image).
+     *
+     * # Errors
+     *
+     * `InvalidDocument` when it is too large to save.
+     */
+    func save() throws  -> Data
+    
+    /**
+     * The box around the drawn shapes, for the selection frame.
+     */
+    func selectionBounds(shapeIds: [UInt64])  -> AnnotationRect?
+    
+    /**
+     * Sets the font for text and step numbers (the bytes of a system font; `index` picks a
+     * face in a collection), or clears it with `None`.
+     *
+     * # Errors
+     *
+     * `InvalidFont`; the previous font stays.
+     */
+    func setFont(font: Data?, index: UInt32) throws 
+    
+    /**
+     * One shape.
+     */
+    func shape(id: UInt64)  -> AnnotationShape?
+    
+    /**
+     * Every shape, bottom first.
+     */
+    func shapes()  -> [AnnotationShape]
+    
+    /**
+     * Shapes whose drawn box overlaps `area`, bottom first (rubber-band selection).
+     */
+    func shapesIn(area: AnnotationRect)  -> [UInt64]
+    
+    /**
+     * Goes back one edit; returns whether there was one.
+     */
+    func undo()  -> Bool
+    
+}
+/**
+ * One screenshot being annotated. Safe to call from any thread; calls are serialized.
+ */
+open class AnnotationDocument: AnnotationDocumentProtocol, @unchecked Sendable {
+    fileprivate let pointer: UnsafeMutableRawPointer!
+
+    /// Used to instantiate a [FFIObject] without an actual pointer, for fakes in tests, mostly.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public struct NoPointer {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    required public init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    // This constructor can be used to instantiate a fake object.
+    // - Parameter noPointer: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    //
+    // - Warning:
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing [Pointer] the FFI lower functions will crash.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public init(noPointer: NoPointer) {
+        self.pointer = nil
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public func uniffiClonePointer() -> UnsafeMutableRawPointer {
+        return try! rustCall { uniffi_cy_ffi_fn_clone_annotationdocument(self.pointer, $0) }
+    }
+    // No primary constructor declared for this class.
+
+    deinit {
+        guard let pointer = pointer else {
+            return
+        }
+
+        try! rustCall { uniffi_cy_ffi_fn_free_annotationdocument(pointer, $0) }
+    }
+
+    
+    /**
+     * A new annotation over a PNG; `scale` is pixels per point (2 on Retina).
+     *
+     * # Errors
+     *
+     * `InvalidImage`.
+     */
+public static func fromPng(png: Data, scale: Float)throws  -> AnnotationDocument  {
+    return try  FfiConverterTypeAnnotationDocument_lift(try rustCallWithError(FfiConverterTypeAnnotationError_lift) {
+    uniffi_cy_ffi_fn_constructor_annotationdocument_from_png(
+        FfiConverterData.lower(png),
+        FfiConverterFloat.lower(scale),$0
+    )
+})
+}
+    
+    /**
+     * A saved annotation (from [`AnnotationDocument::save`]) over the PNG it was made on.
+     *
+     * # Errors
+     *
+     * `InvalidImage` or `InvalidDocument`.
+     */
+public static func fromSaved(png: Data, scale: Float, saved: Data)throws  -> AnnotationDocument  {
+    return try  FfiConverterTypeAnnotationDocument_lift(try rustCallWithError(FfiConverterTypeAnnotationError_lift) {
+    uniffi_cy_ffi_fn_constructor_annotationdocument_from_saved(
+        FfiConverterData.lower(png),
+        FfiConverterFloat.lower(scale),
+        FfiConverterData.lower(saved),$0
+    )
+})
+}
+    
+
+    
+    /**
+     * Applies an edit; returns the id of an added shape.
+     *
+     * # Errors
+     *
+     * `InvalidInput`, `UnknownShape` or `LimitExceeded`; nothing changes then.
+     */
+open func apply(command: AnnotationCommand)throws  -> UInt64?  {
+    return try  FfiConverterOptionUInt64.lift(try rustCallWithError(FfiConverterTypeAnnotationError_lift) {
+    uniffi_cy_ffi_fn_method_annotationdocument_apply(self.uniffiClonePointer(),
+        FfiConverterTypeAnnotationCommand_lower(command),$0
+    )
+})
+}
+    
+    /**
+     * Whether there is an edit to redo.
+     */
+open func canRedo() -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_can_redo(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Whether there is an edit to undo.
+     */
+open func canUndo() -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_can_undo(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * The crop box, if one is set.
+     */
+open func crop() -> AnnotationRect?  {
+    return try!  FfiConverterOptionTypeAnnotationRect.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_crop(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * The final image: composited, cropped and encoded.
+     *
+     * # Errors
+     *
+     * `Export`.
+     */
+open func export(format: ExportImageFormat)throws  -> Data  {
+    return try  FfiConverterData.lift(try rustCallWithError(FfiConverterTypeAnnotationError_lift) {
+    uniffi_cy_ffi_fn_method_annotationdocument_export(self.uniffiClonePointer(),
+        FfiConverterTypeExportImageFormat_lower(format),$0
+    )
+})
+}
+    
+    /**
+     * The topmost shape at `point` (within the hit tolerance).
+     */
+open func hitTest(point: AnnotationPoint) -> UInt64?  {
+    return try!  FfiConverterOptionUInt64.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_hit_test(self.uniffiClonePointer(),
+        FfiConverterTypeAnnotationPoint_lower(point),$0
+    )
+})
+}
+    
+    /**
+     * Height of the image in pixels.
+     */
+open func imageHeight() -> UInt32  {
+    return try!  FfiConverterUInt32.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_image_height(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Pixels per point.
+     */
+open func imageScale() -> Float  {
+    return try!  FfiConverterFloat.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_image_scale(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Width of the image in pixels.
+     */
+open func imageWidth() -> UInt32  {
+    return try!  FfiConverterUInt32.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_image_width(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * The number the next step marker gets.
+     */
+open func nextStepNumber() -> UInt32  {
+    return try!  FfiConverterUInt32.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_next_step_number(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Repeats the last undone edit; returns whether there was one.
+     */
+open func redo() -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_redo(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * The composite inside `region`, for previews of mosaic, blur and text.
+     *
+     * # Errors
+     *
+     * `InvalidInput` for a region outside the image.
+     */
+open func renderRegion(region: AnnotationRect)throws  -> RenderedRegion  {
+    return try  FfiConverterTypeRenderedRegion_lift(try rustCallWithError(FfiConverterTypeAnnotationError_lift) {
+    uniffi_cy_ffi_fn_method_annotationdocument_render_region(self.uniffiClonePointer(),
+        FfiConverterTypeAnnotationRect_lower(region),$0
+    )
+})
+}
+    
+    /**
+     * The annotation in its saved form (shapes, crop box, counters; not the image).
+     *
+     * # Errors
+     *
+     * `InvalidDocument` when it is too large to save.
+     */
+open func save()throws  -> Data  {
+    return try  FfiConverterData.lift(try rustCallWithError(FfiConverterTypeAnnotationError_lift) {
+    uniffi_cy_ffi_fn_method_annotationdocument_save(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * The box around the drawn shapes, for the selection frame.
+     */
+open func selectionBounds(shapeIds: [UInt64]) -> AnnotationRect?  {
+    return try!  FfiConverterOptionTypeAnnotationRect.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_selection_bounds(self.uniffiClonePointer(),
+        FfiConverterSequenceUInt64.lower(shapeIds),$0
+    )
+})
+}
+    
+    /**
+     * Sets the font for text and step numbers (the bytes of a system font; `index` picks a
+     * face in a collection), or clears it with `None`.
+     *
+     * # Errors
+     *
+     * `InvalidFont`; the previous font stays.
+     */
+open func setFont(font: Data?, index: UInt32)throws   {try rustCallWithError(FfiConverterTypeAnnotationError_lift) {
+    uniffi_cy_ffi_fn_method_annotationdocument_set_font(self.uniffiClonePointer(),
+        FfiConverterOptionData.lower(font),
+        FfiConverterUInt32.lower(index),$0
+    )
+}
+}
+    
+    /**
+     * One shape.
+     */
+open func shape(id: UInt64) -> AnnotationShape?  {
+    return try!  FfiConverterOptionTypeAnnotationShape.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_shape(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(id),$0
+    )
+})
+}
+    
+    /**
+     * Every shape, bottom first.
+     */
+open func shapes() -> [AnnotationShape]  {
+    return try!  FfiConverterSequenceTypeAnnotationShape.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_shapes(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Shapes whose drawn box overlaps `area`, bottom first (rubber-band selection).
+     */
+open func shapesIn(area: AnnotationRect) -> [UInt64]  {
+    return try!  FfiConverterSequenceUInt64.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_shapes_in(self.uniffiClonePointer(),
+        FfiConverterTypeAnnotationRect_lower(area),$0
+    )
+})
+}
+    
+    /**
+     * Goes back one edit; returns whether there was one.
+     */
+open func undo() -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_method_annotationdocument_undo(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationDocument: FfiConverter {
+
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = AnnotationDocument
+
+    public static func lift(_ pointer: UnsafeMutableRawPointer) throws -> AnnotationDocument {
+        return AnnotationDocument(unsafeFromRawPointer: pointer)
+    }
+
+    public static func lower(_ value: AnnotationDocument) -> UnsafeMutableRawPointer {
+        return value.uniffiClonePointer()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationDocument {
+        let v: UInt64 = try readInt(&buf)
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    public static func write(_ value: AnnotationDocument, into buf: inout [UInt8]) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        writeInt(&buf, UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationDocument_lift(_ pointer: UnsafeMutableRawPointer) throws -> AnnotationDocument {
+    return try FfiConverterTypeAnnotationDocument.lift(pointer)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationDocument_lower(_ value: AnnotationDocument) -> UnsafeMutableRawPointer {
+    return FfiConverterTypeAnnotationDocument.lower(value)
+}
+
+
 
 
 
@@ -867,6 +1402,16 @@ public protocol SupercyEngineProtocol: AnyObject, Sendable {
     func ingest(snapshot: ClipboardSnapshot) throws  -> IngestResult
     
     /**
+     * Stores a screenshot or an edited export as an image item. Kept while recording is paused
+     * and regardless of the clipboard rules (the user asked for it), up to 20 MB (D-10).
+     *
+     * # Errors
+     *
+     * `Internal` when storage fails.
+     */
+    func ingestImage(image: CapturedImage, nowMs: UInt64) throws  -> IngestResult
+    
+    /**
      * Number of items in the history.
      *
      * # Errors
@@ -1168,6 +1713,23 @@ open func ingest(snapshot: ClipboardSnapshot)throws  -> IngestResult  {
     return try  FfiConverterTypeIngestResult_lift(try rustCallWithError(FfiConverterTypeSupercyError_lift) {
     uniffi_cy_ffi_fn_method_supercyengine_ingest(self.uniffiClonePointer(),
         FfiConverterTypeClipboardSnapshot_lower(snapshot),$0
+    )
+})
+}
+    
+    /**
+     * Stores a screenshot or an edited export as an image item. Kept while recording is paused
+     * and regardless of the clipboard rules (the user asked for it), up to 20 MB (D-10).
+     *
+     * # Errors
+     *
+     * `Internal` when storage fails.
+     */
+open func ingestImage(image: CapturedImage, nowMs: UInt64)throws  -> IngestResult  {
+    return try  FfiConverterTypeIngestResult_lift(try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_ingest_image(self.uniffiClonePointer(),
+        FfiConverterTypeCapturedImage_lower(image),
+        FfiConverterUInt64.lower(nowMs),$0
     )
 })
 }
@@ -1487,6 +2049,883 @@ public func FfiConverterTypeSupercyEngine_lower(_ value: SupercyEngine) -> Unsaf
 
 
 /**
+ * A colour with straight alpha.
+ */
+public struct AnnotationColor {
+    /**
+     * Red.
+     */
+    public var r: UInt8
+    /**
+     * Green.
+     */
+    public var g: UInt8
+    /**
+     * Blue.
+     */
+    public var b: UInt8
+    /**
+     * Alpha (255 is opaque).
+     */
+    public var a: UInt8
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Red.
+         */r: UInt8, 
+        /**
+         * Green.
+         */g: UInt8, 
+        /**
+         * Blue.
+         */b: UInt8, 
+        /**
+         * Alpha (255 is opaque).
+         */a: UInt8) {
+        self.r = r
+        self.g = g
+        self.b = b
+        self.a = a
+    }
+}
+
+#if compiler(>=6)
+extension AnnotationColor: Sendable {}
+#endif
+
+
+extension AnnotationColor: Equatable, Hashable {
+    public static func ==(lhs: AnnotationColor, rhs: AnnotationColor) -> Bool {
+        if lhs.r != rhs.r {
+            return false
+        }
+        if lhs.g != rhs.g {
+            return false
+        }
+        if lhs.b != rhs.b {
+            return false
+        }
+        if lhs.a != rhs.a {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(r)
+        hasher.combine(g)
+        hasher.combine(b)
+        hasher.combine(a)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationColor: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationColor {
+        return
+            try AnnotationColor(
+                r: FfiConverterUInt8.read(from: &buf), 
+                g: FfiConverterUInt8.read(from: &buf), 
+                b: FfiConverterUInt8.read(from: &buf), 
+                a: FfiConverterUInt8.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AnnotationColor, into buf: inout [UInt8]) {
+        FfiConverterUInt8.write(value.r, into: &buf)
+        FfiConverterUInt8.write(value.g, into: &buf)
+        FfiConverterUInt8.write(value.b, into: &buf)
+        FfiConverterUInt8.write(value.a, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationColor_lift(_ buf: RustBuffer) throws -> AnnotationColor {
+    return try FfiConverterTypeAnnotationColor.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationColor_lower(_ value: AnnotationColor) -> RustBuffer {
+    return FfiConverterTypeAnnotationColor.lower(value)
+}
+
+
+/**
+ * A point in base-image pixels.
+ */
+public struct AnnotationPoint {
+    /**
+     * Horizontal position.
+     */
+    public var x: Float
+    /**
+     * Vertical position (down).
+     */
+    public var y: Float
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Horizontal position.
+         */x: Float, 
+        /**
+         * Vertical position (down).
+         */y: Float) {
+        self.x = x
+        self.y = y
+    }
+}
+
+#if compiler(>=6)
+extension AnnotationPoint: Sendable {}
+#endif
+
+
+extension AnnotationPoint: Equatable, Hashable {
+    public static func ==(lhs: AnnotationPoint, rhs: AnnotationPoint) -> Bool {
+        if lhs.x != rhs.x {
+            return false
+        }
+        if lhs.y != rhs.y {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(x)
+        hasher.combine(y)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationPoint: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationPoint {
+        return
+            try AnnotationPoint(
+                x: FfiConverterFloat.read(from: &buf), 
+                y: FfiConverterFloat.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AnnotationPoint, into buf: inout [UInt8]) {
+        FfiConverterFloat.write(value.x, into: &buf)
+        FfiConverterFloat.write(value.y, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationPoint_lift(_ buf: RustBuffer) throws -> AnnotationPoint {
+    return try FfiConverterTypeAnnotationPoint.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationPoint_lower(_ value: AnnotationPoint) -> RustBuffer {
+    return FfiConverterTypeAnnotationPoint.lower(value)
+}
+
+
+/**
+ * A rectangle in base-image pixels.
+ */
+public struct AnnotationRect {
+    /**
+     * Left edge.
+     */
+    public var x: Float
+    /**
+     * Top edge.
+     */
+    public var y: Float
+    /**
+     * Width.
+     */
+    public var width: Float
+    /**
+     * Height.
+     */
+    public var height: Float
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Left edge.
+         */x: Float, 
+        /**
+         * Top edge.
+         */y: Float, 
+        /**
+         * Width.
+         */width: Float, 
+        /**
+         * Height.
+         */height: Float) {
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+    }
+}
+
+#if compiler(>=6)
+extension AnnotationRect: Sendable {}
+#endif
+
+
+extension AnnotationRect: Equatable, Hashable {
+    public static func ==(lhs: AnnotationRect, rhs: AnnotationRect) -> Bool {
+        if lhs.x != rhs.x {
+            return false
+        }
+        if lhs.y != rhs.y {
+            return false
+        }
+        if lhs.width != rhs.width {
+            return false
+        }
+        if lhs.height != rhs.height {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(x)
+        hasher.combine(y)
+        hasher.combine(width)
+        hasher.combine(height)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationRect: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationRect {
+        return
+            try AnnotationRect(
+                x: FfiConverterFloat.read(from: &buf), 
+                y: FfiConverterFloat.read(from: &buf), 
+                width: FfiConverterFloat.read(from: &buf), 
+                height: FfiConverterFloat.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AnnotationRect, into buf: inout [UInt8]) {
+        FfiConverterFloat.write(value.x, into: &buf)
+        FfiConverterFloat.write(value.y, into: &buf)
+        FfiConverterFloat.write(value.width, into: &buf)
+        FfiConverterFloat.write(value.height, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationRect_lift(_ buf: RustBuffer) throws -> AnnotationRect {
+    return try FfiConverterTypeAnnotationRect.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationRect_lower(_ value: AnnotationRect) -> RustBuffer {
+    return FfiConverterTypeAnnotationRect.lower(value)
+}
+
+
+/**
+ * One shape of the document.
+ */
+public struct AnnotationShape {
+    /**
+     * Its id.
+     */
+    public var id: UInt64
+    /**
+     * What and where.
+     */
+    public var kind: AnnotationShapeKind
+    /**
+     * How it is drawn.
+     */
+    public var style: AnnotationStyle
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Its id.
+         */id: UInt64, 
+        /**
+         * What and where.
+         */kind: AnnotationShapeKind, 
+        /**
+         * How it is drawn.
+         */style: AnnotationStyle) {
+        self.id = id
+        self.kind = kind
+        self.style = style
+    }
+}
+
+#if compiler(>=6)
+extension AnnotationShape: Sendable {}
+#endif
+
+
+extension AnnotationShape: Equatable, Hashable {
+    public static func ==(lhs: AnnotationShape, rhs: AnnotationShape) -> Bool {
+        if lhs.id != rhs.id {
+            return false
+        }
+        if lhs.kind != rhs.kind {
+            return false
+        }
+        if lhs.style != rhs.style {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(kind)
+        hasher.combine(style)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationShape: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationShape {
+        return
+            try AnnotationShape(
+                id: FfiConverterUInt64.read(from: &buf), 
+                kind: FfiConverterTypeAnnotationShapeKind.read(from: &buf), 
+                style: FfiConverterTypeAnnotationStyle.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AnnotationShape, into buf: inout [UInt8]) {
+        FfiConverterUInt64.write(value.id, into: &buf)
+        FfiConverterTypeAnnotationShapeKind.write(value.kind, into: &buf)
+        FfiConverterTypeAnnotationStyle.write(value.style, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationShape_lift(_ buf: RustBuffer) throws -> AnnotationShape {
+    return try FfiConverterTypeAnnotationShape.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationShape_lower(_ value: AnnotationShape) -> RustBuffer {
+    return FfiConverterTypeAnnotationShape.lower(value)
+}
+
+
+/**
+ * How a shape is drawn.
+ */
+public struct AnnotationStyle {
+    /**
+     * Colour.
+     */
+    public var color: AnnotationColor
+    /**
+     * Line width in points (0.5–100).
+     */
+    public var strokeWidth: Float
+    /**
+     * Opacity, 0–1.
+     */
+    public var opacity: Float
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Colour.
+         */color: AnnotationColor, 
+        /**
+         * Line width in points (0.5–100).
+         */strokeWidth: Float, 
+        /**
+         * Opacity, 0–1.
+         */opacity: Float) {
+        self.color = color
+        self.strokeWidth = strokeWidth
+        self.opacity = opacity
+    }
+}
+
+#if compiler(>=6)
+extension AnnotationStyle: Sendable {}
+#endif
+
+
+extension AnnotationStyle: Equatable, Hashable {
+    public static func ==(lhs: AnnotationStyle, rhs: AnnotationStyle) -> Bool {
+        if lhs.color != rhs.color {
+            return false
+        }
+        if lhs.strokeWidth != rhs.strokeWidth {
+            return false
+        }
+        if lhs.opacity != rhs.opacity {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(color)
+        hasher.combine(strokeWidth)
+        hasher.combine(opacity)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationStyle: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationStyle {
+        return
+            try AnnotationStyle(
+                color: FfiConverterTypeAnnotationColor.read(from: &buf), 
+                strokeWidth: FfiConverterFloat.read(from: &buf), 
+                opacity: FfiConverterFloat.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AnnotationStyle, into buf: inout [UInt8]) {
+        FfiConverterTypeAnnotationColor.write(value.color, into: &buf)
+        FfiConverterFloat.write(value.strokeWidth, into: &buf)
+        FfiConverterFloat.write(value.opacity, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationStyle_lift(_ buf: RustBuffer) throws -> AnnotationStyle {
+    return try FfiConverterTypeAnnotationStyle.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationStyle_lower(_ value: AnnotationStyle) -> RustBuffer {
+    return FfiConverterTypeAnnotationStyle.lower(value)
+}
+
+
+/**
+ * The drawing constants, so the shell's preview matches the export.
+ */
+public struct AnnotationStyleConstants {
+    /**
+     * Arrow head length per point of stroke width.
+     */
+    public var arrowHeadLengthPerWidth: Float
+    /**
+     * Shortest arrow head, in points.
+     */
+    public var arrowHeadMinLength: Float
+    /**
+     * Half the opening angle of the arrow head, in degrees.
+     */
+    public var arrowHeadHalfAngleDegrees: Float
+    /**
+     * Rectangle corner radius per point of stroke width (corners are quadratic curves with
+     * the corner as control point, capped at half the shorter side).
+     */
+    public var rectCornerRadiusPerWidth: Float
+    /**
+     * Highlighter opacity before the style's own; it blends with multiply.
+     */
+    public var highlighterAlpha: Float
+    /**
+     * Highlighter stroke width per point of style width.
+     */
+    public var highlighterWidthFactor: Float
+    /**
+     * Step marker radius at zero stroke width, in points.
+     */
+    public var stepBaseRadius: Float
+    /**
+     * Extra step radius per point of stroke width.
+     */
+    public var stepRadiusPerWidth: Float
+    /**
+     * Step number font size per point of radius (the digits are centred on their outline).
+     */
+    public var stepFontSizePerRadius: Float
+    /**
+     * Text line height per point of font size; the first baseline is at the font's ascent.
+     */
+    public var textLineHeight: Float
+    /**
+     * Click tolerance around shapes, in points.
+     */
+    public var hitTolerance: Float
+    /**
+     * Strokes use round caps and joins.
+     */
+    public var roundCaps: Bool
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Arrow head length per point of stroke width.
+         */arrowHeadLengthPerWidth: Float, 
+        /**
+         * Shortest arrow head, in points.
+         */arrowHeadMinLength: Float, 
+        /**
+         * Half the opening angle of the arrow head, in degrees.
+         */arrowHeadHalfAngleDegrees: Float, 
+        /**
+         * Rectangle corner radius per point of stroke width (corners are quadratic curves with
+         * the corner as control point, capped at half the shorter side).
+         */rectCornerRadiusPerWidth: Float, 
+        /**
+         * Highlighter opacity before the style's own; it blends with multiply.
+         */highlighterAlpha: Float, 
+        /**
+         * Highlighter stroke width per point of style width.
+         */highlighterWidthFactor: Float, 
+        /**
+         * Step marker radius at zero stroke width, in points.
+         */stepBaseRadius: Float, 
+        /**
+         * Extra step radius per point of stroke width.
+         */stepRadiusPerWidth: Float, 
+        /**
+         * Step number font size per point of radius (the digits are centred on their outline).
+         */stepFontSizePerRadius: Float, 
+        /**
+         * Text line height per point of font size; the first baseline is at the font's ascent.
+         */textLineHeight: Float, 
+        /**
+         * Click tolerance around shapes, in points.
+         */hitTolerance: Float, 
+        /**
+         * Strokes use round caps and joins.
+         */roundCaps: Bool) {
+        self.arrowHeadLengthPerWidth = arrowHeadLengthPerWidth
+        self.arrowHeadMinLength = arrowHeadMinLength
+        self.arrowHeadHalfAngleDegrees = arrowHeadHalfAngleDegrees
+        self.rectCornerRadiusPerWidth = rectCornerRadiusPerWidth
+        self.highlighterAlpha = highlighterAlpha
+        self.highlighterWidthFactor = highlighterWidthFactor
+        self.stepBaseRadius = stepBaseRadius
+        self.stepRadiusPerWidth = stepRadiusPerWidth
+        self.stepFontSizePerRadius = stepFontSizePerRadius
+        self.textLineHeight = textLineHeight
+        self.hitTolerance = hitTolerance
+        self.roundCaps = roundCaps
+    }
+}
+
+#if compiler(>=6)
+extension AnnotationStyleConstants: Sendable {}
+#endif
+
+
+extension AnnotationStyleConstants: Equatable, Hashable {
+    public static func ==(lhs: AnnotationStyleConstants, rhs: AnnotationStyleConstants) -> Bool {
+        if lhs.arrowHeadLengthPerWidth != rhs.arrowHeadLengthPerWidth {
+            return false
+        }
+        if lhs.arrowHeadMinLength != rhs.arrowHeadMinLength {
+            return false
+        }
+        if lhs.arrowHeadHalfAngleDegrees != rhs.arrowHeadHalfAngleDegrees {
+            return false
+        }
+        if lhs.rectCornerRadiusPerWidth != rhs.rectCornerRadiusPerWidth {
+            return false
+        }
+        if lhs.highlighterAlpha != rhs.highlighterAlpha {
+            return false
+        }
+        if lhs.highlighterWidthFactor != rhs.highlighterWidthFactor {
+            return false
+        }
+        if lhs.stepBaseRadius != rhs.stepBaseRadius {
+            return false
+        }
+        if lhs.stepRadiusPerWidth != rhs.stepRadiusPerWidth {
+            return false
+        }
+        if lhs.stepFontSizePerRadius != rhs.stepFontSizePerRadius {
+            return false
+        }
+        if lhs.textLineHeight != rhs.textLineHeight {
+            return false
+        }
+        if lhs.hitTolerance != rhs.hitTolerance {
+            return false
+        }
+        if lhs.roundCaps != rhs.roundCaps {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(arrowHeadLengthPerWidth)
+        hasher.combine(arrowHeadMinLength)
+        hasher.combine(arrowHeadHalfAngleDegrees)
+        hasher.combine(rectCornerRadiusPerWidth)
+        hasher.combine(highlighterAlpha)
+        hasher.combine(highlighterWidthFactor)
+        hasher.combine(stepBaseRadius)
+        hasher.combine(stepRadiusPerWidth)
+        hasher.combine(stepFontSizePerRadius)
+        hasher.combine(textLineHeight)
+        hasher.combine(hitTolerance)
+        hasher.combine(roundCaps)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationStyleConstants: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationStyleConstants {
+        return
+            try AnnotationStyleConstants(
+                arrowHeadLengthPerWidth: FfiConverterFloat.read(from: &buf), 
+                arrowHeadMinLength: FfiConverterFloat.read(from: &buf), 
+                arrowHeadHalfAngleDegrees: FfiConverterFloat.read(from: &buf), 
+                rectCornerRadiusPerWidth: FfiConverterFloat.read(from: &buf), 
+                highlighterAlpha: FfiConverterFloat.read(from: &buf), 
+                highlighterWidthFactor: FfiConverterFloat.read(from: &buf), 
+                stepBaseRadius: FfiConverterFloat.read(from: &buf), 
+                stepRadiusPerWidth: FfiConverterFloat.read(from: &buf), 
+                stepFontSizePerRadius: FfiConverterFloat.read(from: &buf), 
+                textLineHeight: FfiConverterFloat.read(from: &buf), 
+                hitTolerance: FfiConverterFloat.read(from: &buf), 
+                roundCaps: FfiConverterBool.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AnnotationStyleConstants, into buf: inout [UInt8]) {
+        FfiConverterFloat.write(value.arrowHeadLengthPerWidth, into: &buf)
+        FfiConverterFloat.write(value.arrowHeadMinLength, into: &buf)
+        FfiConverterFloat.write(value.arrowHeadHalfAngleDegrees, into: &buf)
+        FfiConverterFloat.write(value.rectCornerRadiusPerWidth, into: &buf)
+        FfiConverterFloat.write(value.highlighterAlpha, into: &buf)
+        FfiConverterFloat.write(value.highlighterWidthFactor, into: &buf)
+        FfiConverterFloat.write(value.stepBaseRadius, into: &buf)
+        FfiConverterFloat.write(value.stepRadiusPerWidth, into: &buf)
+        FfiConverterFloat.write(value.stepFontSizePerRadius, into: &buf)
+        FfiConverterFloat.write(value.textLineHeight, into: &buf)
+        FfiConverterFloat.write(value.hitTolerance, into: &buf)
+        FfiConverterBool.write(value.roundCaps, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationStyleConstants_lift(_ buf: RustBuffer) throws -> AnnotationStyleConstants {
+    return try FfiConverterTypeAnnotationStyleConstants.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationStyleConstants_lower(_ value: AnnotationStyleConstants) -> RustBuffer {
+    return FfiConverterTypeAnnotationStyleConstants.lower(value)
+}
+
+
+/**
+ * An encoded image made by Supercy.
+ */
+public struct CapturedImage {
+    /**
+     * PNG or JPEG (others are refused as unsupported).
+     */
+    public var format: ImageFormat
+    /**
+     * The encoded image, at most `max_screenshot_bytes()`.
+     */
+    public var bytes: Data
+    /**
+     * Width in pixels.
+     */
+    public var width: UInt32
+    /**
+     * Height in pixels.
+     */
+    public var height: UInt32
+    /**
+     * A small PNG for the history list.
+     */
+    public var thumbnail: Data?
+    /**
+     * Screenshot or edited export.
+     */
+    public var origin: ImageOrigin
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * PNG or JPEG (others are refused as unsupported).
+         */format: ImageFormat, 
+        /**
+         * The encoded image, at most `max_screenshot_bytes()`.
+         */bytes: Data, 
+        /**
+         * Width in pixels.
+         */width: UInt32, 
+        /**
+         * Height in pixels.
+         */height: UInt32, 
+        /**
+         * A small PNG for the history list.
+         */thumbnail: Data?, 
+        /**
+         * Screenshot or edited export.
+         */origin: ImageOrigin) {
+        self.format = format
+        self.bytes = bytes
+        self.width = width
+        self.height = height
+        self.thumbnail = thumbnail
+        self.origin = origin
+    }
+}
+
+#if compiler(>=6)
+extension CapturedImage: Sendable {}
+#endif
+
+
+extension CapturedImage: Equatable, Hashable {
+    public static func ==(lhs: CapturedImage, rhs: CapturedImage) -> Bool {
+        if lhs.format != rhs.format {
+            return false
+        }
+        if lhs.bytes != rhs.bytes {
+            return false
+        }
+        if lhs.width != rhs.width {
+            return false
+        }
+        if lhs.height != rhs.height {
+            return false
+        }
+        if lhs.thumbnail != rhs.thumbnail {
+            return false
+        }
+        if lhs.origin != rhs.origin {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(format)
+        hasher.combine(bytes)
+        hasher.combine(width)
+        hasher.combine(height)
+        hasher.combine(thumbnail)
+        hasher.combine(origin)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCapturedImage: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CapturedImage {
+        return
+            try CapturedImage(
+                format: FfiConverterTypeImageFormat.read(from: &buf), 
+                bytes: FfiConverterData.read(from: &buf), 
+                width: FfiConverterUInt32.read(from: &buf), 
+                height: FfiConverterUInt32.read(from: &buf), 
+                thumbnail: FfiConverterOptionData.read(from: &buf), 
+                origin: FfiConverterTypeImageOrigin.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: CapturedImage, into buf: inout [UInt8]) {
+        FfiConverterTypeImageFormat.write(value.format, into: &buf)
+        FfiConverterData.write(value.bytes, into: &buf)
+        FfiConverterUInt32.write(value.width, into: &buf)
+        FfiConverterUInt32.write(value.height, into: &buf)
+        FfiConverterOptionData.write(value.thumbnail, into: &buf)
+        FfiConverterTypeImageOrigin.write(value.origin, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCapturedImage_lift(_ buf: RustBuffer) throws -> CapturedImage {
+    return try FfiConverterTypeCapturedImage.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCapturedImage_lower(_ value: CapturedImage) -> RustBuffer {
+    return FfiConverterTypeCapturedImage.lower(value)
+}
+
+
+/**
  * One type on the clipboard. Text types are passed as UTF-8. `data` is `nil` for markers and
  * for types larger than the shell reads; `size` is then their size.
  */
@@ -1682,6 +3121,161 @@ public func FfiConverterTypeClipboardSnapshot_lift(_ buf: RustBuffer) throws -> 
 #endif
 public func FfiConverterTypeClipboardSnapshot_lower(_ value: ClipboardSnapshot) -> RustBuffer {
     return FfiConverterTypeClipboardSnapshot.lower(value)
+}
+
+
+/**
+ * Local date, time and counter for file name templates.
+ */
+public struct FileNameParts {
+    /**
+     * Year.
+     */
+    public var year: UInt16
+    /**
+     * Month, 1–12.
+     */
+    public var month: UInt8
+    /**
+     * Day, 1–31.
+     */
+    public var day: UInt8
+    /**
+     * Hour, 0–23.
+     */
+    public var hour: UInt8
+    /**
+     * Minute, 0–59.
+     */
+    public var minute: UInt8
+    /**
+     * Second, 0–60.
+     */
+    public var second: UInt8
+    /**
+     * Running number for `{n}`.
+     */
+    public var n: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Year.
+         */year: UInt16, 
+        /**
+         * Month, 1–12.
+         */month: UInt8, 
+        /**
+         * Day, 1–31.
+         */day: UInt8, 
+        /**
+         * Hour, 0–23.
+         */hour: UInt8, 
+        /**
+         * Minute, 0–59.
+         */minute: UInt8, 
+        /**
+         * Second, 0–60.
+         */second: UInt8, 
+        /**
+         * Running number for `{n}`.
+         */n: UInt32) {
+        self.year = year
+        self.month = month
+        self.day = day
+        self.hour = hour
+        self.minute = minute
+        self.second = second
+        self.n = n
+    }
+}
+
+#if compiler(>=6)
+extension FileNameParts: Sendable {}
+#endif
+
+
+extension FileNameParts: Equatable, Hashable {
+    public static func ==(lhs: FileNameParts, rhs: FileNameParts) -> Bool {
+        if lhs.year != rhs.year {
+            return false
+        }
+        if lhs.month != rhs.month {
+            return false
+        }
+        if lhs.day != rhs.day {
+            return false
+        }
+        if lhs.hour != rhs.hour {
+            return false
+        }
+        if lhs.minute != rhs.minute {
+            return false
+        }
+        if lhs.second != rhs.second {
+            return false
+        }
+        if lhs.n != rhs.n {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(year)
+        hasher.combine(month)
+        hasher.combine(day)
+        hasher.combine(hour)
+        hasher.combine(minute)
+        hasher.combine(second)
+        hasher.combine(n)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFileNameParts: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FileNameParts {
+        return
+            try FileNameParts(
+                year: FfiConverterUInt16.read(from: &buf), 
+                month: FfiConverterUInt8.read(from: &buf), 
+                day: FfiConverterUInt8.read(from: &buf), 
+                hour: FfiConverterUInt8.read(from: &buf), 
+                minute: FfiConverterUInt8.read(from: &buf), 
+                second: FfiConverterUInt8.read(from: &buf), 
+                n: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: FileNameParts, into buf: inout [UInt8]) {
+        FfiConverterUInt16.write(value.year, into: &buf)
+        FfiConverterUInt8.write(value.month, into: &buf)
+        FfiConverterUInt8.write(value.day, into: &buf)
+        FfiConverterUInt8.write(value.hour, into: &buf)
+        FfiConverterUInt8.write(value.minute, into: &buf)
+        FfiConverterUInt8.write(value.second, into: &buf)
+        FfiConverterUInt32.write(value.n, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFileNameParts_lift(_ buf: RustBuffer) throws -> FileNameParts {
+    return try FfiConverterTypeFileNameParts.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFileNameParts_lower(_ value: FileNameParts) -> RustBuffer {
+    return FfiConverterTypeFileNameParts.lower(value)
 }
 
 
@@ -2260,6 +3854,133 @@ public func FfiConverterTypePinsImport_lift(_ buf: RustBuffer) throws -> PinsImp
 #endif
 public func FfiConverterTypePinsImport_lower(_ value: PinsImport) -> RustBuffer {
     return FfiConverterTypePinsImport.lower(value)
+}
+
+
+/**
+ * Pixels of a rendered region, straight-alpha RGBA row by row.
+ */
+public struct RenderedRegion {
+    /**
+     * Left edge in base-image pixels.
+     */
+    public var x: UInt32
+    /**
+     * Top edge.
+     */
+    public var y: UInt32
+    /**
+     * Width in pixels.
+     */
+    public var width: UInt32
+    /**
+     * Height in pixels.
+     */
+    public var height: UInt32
+    /**
+     * `width * height * 4` bytes.
+     */
+    public var rgba: Data
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Left edge in base-image pixels.
+         */x: UInt32, 
+        /**
+         * Top edge.
+         */y: UInt32, 
+        /**
+         * Width in pixels.
+         */width: UInt32, 
+        /**
+         * Height in pixels.
+         */height: UInt32, 
+        /**
+         * `width * height * 4` bytes.
+         */rgba: Data) {
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.rgba = rgba
+    }
+}
+
+#if compiler(>=6)
+extension RenderedRegion: Sendable {}
+#endif
+
+
+extension RenderedRegion: Equatable, Hashable {
+    public static func ==(lhs: RenderedRegion, rhs: RenderedRegion) -> Bool {
+        if lhs.x != rhs.x {
+            return false
+        }
+        if lhs.y != rhs.y {
+            return false
+        }
+        if lhs.width != rhs.width {
+            return false
+        }
+        if lhs.height != rhs.height {
+            return false
+        }
+        if lhs.rgba != rhs.rgba {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(x)
+        hasher.combine(y)
+        hasher.combine(width)
+        hasher.combine(height)
+        hasher.combine(rgba)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRenderedRegion: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RenderedRegion {
+        return
+            try RenderedRegion(
+                x: FfiConverterUInt32.read(from: &buf), 
+                y: FfiConverterUInt32.read(from: &buf), 
+                width: FfiConverterUInt32.read(from: &buf), 
+                height: FfiConverterUInt32.read(from: &buf), 
+                rgba: FfiConverterData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: RenderedRegion, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.x, into: &buf)
+        FfiConverterUInt32.write(value.y, into: &buf)
+        FfiConverterUInt32.write(value.width, into: &buf)
+        FfiConverterUInt32.write(value.height, into: &buf)
+        FfiConverterData.write(value.rgba, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRenderedRegion_lift(_ buf: RustBuffer) throws -> RenderedRegion {
+    return try FfiConverterTypeRenderedRegion.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRenderedRegion_lower(_ value: RenderedRegion) -> RustBuffer {
+    return FfiConverterTypeRenderedRegion.lower(value)
 }
 
 
@@ -2940,6 +4661,698 @@ public func FfiConverterTypeTextRange_lower(_ value: TextRange) -> RustBuffer {
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
+ * One edit.
+ */
+
+public enum AnnotationCommand {
+    
+    /**
+     * Adds a shape on top.
+     */
+    case add(
+        /**
+         * What.
+         */kind: AnnotationShapeKind, 
+        /**
+         * Style.
+         */style: AnnotationStyle
+    )
+    /**
+     * Moves shapes by (`dx`, `dy`) pixels.
+     */
+    case move(
+        /**
+         * The shapes.
+         */ids: [UInt64], 
+        /**
+         * Horizontal offset.
+         */dx: Float, 
+        /**
+         * Vertical offset.
+         */dy: Float
+    )
+    /**
+     * Drags a handle of a shape (not text or steps).
+     */
+    case resize(
+        /**
+         * The shape.
+         */id: UInt64, 
+        /**
+         * The handle.
+         */handle: ResizeHandle, 
+        /**
+         * Where it was dropped.
+         */to: AnnotationPoint
+    )
+    /**
+     * Restyles shapes.
+     */
+    case restyle(
+        /**
+         * The shapes.
+         */ids: [UInt64], 
+        /**
+         * The new style.
+         */style: AnnotationStyle
+    )
+    /**
+     * Replaces the text and size of a text shape.
+     */
+    case editText(
+        /**
+         * The text shape.
+         */id: UInt64, 
+        /**
+         * New text.
+         */text: String, 
+        /**
+         * New font size in points.
+         */fontSize: Float
+    )
+    /**
+     * Deletes shapes.
+     */
+    case delete(
+        /**
+         * The shapes.
+         */ids: [UInt64]
+    )
+    /**
+     * Deletes every shape the eraser path touches.
+     */
+    case erase(
+        /**
+         * The path.
+         */path: [AnnotationPoint], 
+        /**
+         * Eraser radius in points.
+         */radius: Float
+    )
+    /**
+     * Sets or clears the crop box.
+     */
+    case crop(
+        /**
+         * The crop box, or none for the whole image.
+         */rect: AnnotationRect?
+    )
+    /**
+     * Moves shapes above all others.
+     */
+    case bringToFront(
+        /**
+         * The shapes.
+         */ids: [UInt64]
+    )
+    /**
+     * Moves shapes below all others.
+     */
+    case sendToBack(
+        /**
+         * The shapes.
+         */ids: [UInt64]
+    )
+}
+
+
+#if compiler(>=6)
+extension AnnotationCommand: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationCommand: FfiConverterRustBuffer {
+    typealias SwiftType = AnnotationCommand
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationCommand {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .add(kind: try FfiConverterTypeAnnotationShapeKind.read(from: &buf), style: try FfiConverterTypeAnnotationStyle.read(from: &buf)
+        )
+        
+        case 2: return .move(ids: try FfiConverterSequenceUInt64.read(from: &buf), dx: try FfiConverterFloat.read(from: &buf), dy: try FfiConverterFloat.read(from: &buf)
+        )
+        
+        case 3: return .resize(id: try FfiConverterUInt64.read(from: &buf), handle: try FfiConverterTypeResizeHandle.read(from: &buf), to: try FfiConverterTypeAnnotationPoint.read(from: &buf)
+        )
+        
+        case 4: return .restyle(ids: try FfiConverterSequenceUInt64.read(from: &buf), style: try FfiConverterTypeAnnotationStyle.read(from: &buf)
+        )
+        
+        case 5: return .editText(id: try FfiConverterUInt64.read(from: &buf), text: try FfiConverterString.read(from: &buf), fontSize: try FfiConverterFloat.read(from: &buf)
+        )
+        
+        case 6: return .delete(ids: try FfiConverterSequenceUInt64.read(from: &buf)
+        )
+        
+        case 7: return .erase(path: try FfiConverterSequenceTypeAnnotationPoint.read(from: &buf), radius: try FfiConverterFloat.read(from: &buf)
+        )
+        
+        case 8: return .crop(rect: try FfiConverterOptionTypeAnnotationRect.read(from: &buf)
+        )
+        
+        case 9: return .bringToFront(ids: try FfiConverterSequenceUInt64.read(from: &buf)
+        )
+        
+        case 10: return .sendToBack(ids: try FfiConverterSequenceUInt64.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: AnnotationCommand, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .add(kind,style):
+            writeInt(&buf, Int32(1))
+            FfiConverterTypeAnnotationShapeKind.write(kind, into: &buf)
+            FfiConverterTypeAnnotationStyle.write(style, into: &buf)
+            
+        
+        case let .move(ids,dx,dy):
+            writeInt(&buf, Int32(2))
+            FfiConverterSequenceUInt64.write(ids, into: &buf)
+            FfiConverterFloat.write(dx, into: &buf)
+            FfiConverterFloat.write(dy, into: &buf)
+            
+        
+        case let .resize(id,handle,to):
+            writeInt(&buf, Int32(3))
+            FfiConverterUInt64.write(id, into: &buf)
+            FfiConverterTypeResizeHandle.write(handle, into: &buf)
+            FfiConverterTypeAnnotationPoint.write(to, into: &buf)
+            
+        
+        case let .restyle(ids,style):
+            writeInt(&buf, Int32(4))
+            FfiConverterSequenceUInt64.write(ids, into: &buf)
+            FfiConverterTypeAnnotationStyle.write(style, into: &buf)
+            
+        
+        case let .editText(id,text,fontSize):
+            writeInt(&buf, Int32(5))
+            FfiConverterUInt64.write(id, into: &buf)
+            FfiConverterString.write(text, into: &buf)
+            FfiConverterFloat.write(fontSize, into: &buf)
+            
+        
+        case let .delete(ids):
+            writeInt(&buf, Int32(6))
+            FfiConverterSequenceUInt64.write(ids, into: &buf)
+            
+        
+        case let .erase(path,radius):
+            writeInt(&buf, Int32(7))
+            FfiConverterSequenceTypeAnnotationPoint.write(path, into: &buf)
+            FfiConverterFloat.write(radius, into: &buf)
+            
+        
+        case let .crop(rect):
+            writeInt(&buf, Int32(8))
+            FfiConverterOptionTypeAnnotationRect.write(rect, into: &buf)
+            
+        
+        case let .bringToFront(ids):
+            writeInt(&buf, Int32(9))
+            FfiConverterSequenceUInt64.write(ids, into: &buf)
+            
+        
+        case let .sendToBack(ids):
+            writeInt(&buf, Int32(10))
+            FfiConverterSequenceUInt64.write(ids, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationCommand_lift(_ buf: RustBuffer) throws -> AnnotationCommand {
+    return try FfiConverterTypeAnnotationCommand.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationCommand_lower(_ value: AnnotationCommand) -> RustBuffer {
+    return FfiConverterTypeAnnotationCommand.lower(value)
+}
+
+
+extension AnnotationCommand: Equatable, Hashable {}
+
+
+
+
+
+
+
+/**
+ * What went wrong in the editor, with a message the shell can show. Messages never contain
+ * the user's text or pixels.
+ */
+public enum AnnotationError: Swift.Error {
+
+    
+    
+    /**
+     * The image could not be read or is too large.
+     */
+    case InvalidImage(
+        /**
+         * What happened.
+         */message: String
+    )
+    /**
+     * A command, region or style value is not valid; nothing changed.
+     */
+    case InvalidInput(
+        /**
+         * What is wrong.
+         */message: String
+    )
+    /**
+     * The shape no longer exists.
+     */
+    case UnknownShape(
+        /**
+         * What happened.
+         */message: String
+    )
+    /**
+     * Too many shapes, points or steps.
+     */
+    case LimitExceeded(
+        /**
+         * What happened.
+         */message: String
+    )
+    /**
+     * A saved annotation is damaged or from a newer Supercy.
+     */
+    case InvalidDocument(
+        /**
+         * What happened.
+         */message: String
+    )
+    /**
+     * The font could not be read.
+     */
+    case InvalidFont(
+        /**
+         * What happened.
+         */message: String
+    )
+    /**
+     * The image could not be exported, or the file name is not valid.
+     */
+    case Export(
+        /**
+         * What happened.
+         */message: String
+    )
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationError: FfiConverterRustBuffer {
+    typealias SwiftType = AnnotationError
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationError {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        
+
+        
+        case 1: return .InvalidImage(
+            message: try FfiConverterString.read(from: &buf)
+            )
+        case 2: return .InvalidInput(
+            message: try FfiConverterString.read(from: &buf)
+            )
+        case 3: return .UnknownShape(
+            message: try FfiConverterString.read(from: &buf)
+            )
+        case 4: return .LimitExceeded(
+            message: try FfiConverterString.read(from: &buf)
+            )
+        case 5: return .InvalidDocument(
+            message: try FfiConverterString.read(from: &buf)
+            )
+        case 6: return .InvalidFont(
+            message: try FfiConverterString.read(from: &buf)
+            )
+        case 7: return .Export(
+            message: try FfiConverterString.read(from: &buf)
+            )
+
+         default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: AnnotationError, into buf: inout [UInt8]) {
+        switch value {
+
+        
+
+        
+        
+        case let .InvalidImage(message):
+            writeInt(&buf, Int32(1))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case let .InvalidInput(message):
+            writeInt(&buf, Int32(2))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case let .UnknownShape(message):
+            writeInt(&buf, Int32(3))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case let .LimitExceeded(message):
+            writeInt(&buf, Int32(4))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case let .InvalidDocument(message):
+            writeInt(&buf, Int32(5))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case let .InvalidFont(message):
+            writeInt(&buf, Int32(6))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case let .Export(message):
+            writeInt(&buf, Int32(7))
+            FfiConverterString.write(message, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationError_lift(_ buf: RustBuffer) throws -> AnnotationError {
+    return try FfiConverterTypeAnnotationError.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationError_lower(_ value: AnnotationError) -> RustBuffer {
+    return FfiConverterTypeAnnotationError.lower(value)
+}
+
+
+extension AnnotationError: Equatable, Hashable {}
+
+
+
+
+extension AnnotationError: Foundation.LocalizedError {
+    public var errorDescription: String? {
+        String(reflecting: self)
+    }
+}
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * What a shape is and where it sits.
+ */
+
+public enum AnnotationShapeKind {
+    
+    /**
+     * A rectangle.
+     */
+    case rect(
+        /**
+         * The box.
+         */rect: AnnotationRect, 
+        /**
+         * Filled instead of outlined.
+         */filled: Bool
+    )
+    /**
+     * An ellipse in a box.
+     */
+    case ellipse(
+        /**
+         * The bounding box.
+         */rect: AnnotationRect, 
+        /**
+         * Filled instead of outlined.
+         */filled: Bool
+    )
+    /**
+     * A straight line.
+     */
+    case line(
+        /**
+         * Start.
+         */from: AnnotationPoint, 
+        /**
+         * End.
+         */to: AnnotationPoint
+    )
+    /**
+     * An arrow pointing at `to`.
+     */
+    case arrow(
+        /**
+         * Tail.
+         */from: AnnotationPoint, 
+        /**
+         * Head.
+         */to: AnnotationPoint
+    )
+    /**
+     * A freehand stroke.
+     */
+    case pen(
+        /**
+         * Its points.
+         */points: [AnnotationPoint]
+    )
+    /**
+     * A highlighter stroke (multiply blend).
+     */
+    case highlighter(
+        /**
+         * Its points.
+         */points: [AnnotationPoint]
+    )
+    /**
+     * Text; `\n` starts a new line.
+     */
+    case text(
+        /**
+         * Top-left corner of the first line.
+         */origin: AnnotationPoint, 
+        /**
+         * The text.
+         */text: String, 
+        /**
+         * Font size in points.
+         */fontSize: Float
+    )
+    /**
+     * A numbered circle; the number is assigned when it is added.
+     */
+    case step(
+        /**
+         * Centre.
+         */center: AnnotationPoint, 
+        /**
+         * The number.
+         */number: UInt32
+    )
+    /**
+     * Pixelation.
+     */
+    case mosaic(
+        /**
+         * The area.
+         */rect: AnnotationRect, 
+        /**
+         * Block size in points.
+         */block: UInt32
+    )
+    /**
+     * Blur.
+     */
+    case blur(
+        /**
+         * The area.
+         */rect: AnnotationRect, 
+        /**
+         * Radius in points.
+         */radius: Float
+    )
+}
+
+
+#if compiler(>=6)
+extension AnnotationShapeKind: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnnotationShapeKind: FfiConverterRustBuffer {
+    typealias SwiftType = AnnotationShapeKind
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnnotationShapeKind {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .rect(rect: try FfiConverterTypeAnnotationRect.read(from: &buf), filled: try FfiConverterBool.read(from: &buf)
+        )
+        
+        case 2: return .ellipse(rect: try FfiConverterTypeAnnotationRect.read(from: &buf), filled: try FfiConverterBool.read(from: &buf)
+        )
+        
+        case 3: return .line(from: try FfiConverterTypeAnnotationPoint.read(from: &buf), to: try FfiConverterTypeAnnotationPoint.read(from: &buf)
+        )
+        
+        case 4: return .arrow(from: try FfiConverterTypeAnnotationPoint.read(from: &buf), to: try FfiConverterTypeAnnotationPoint.read(from: &buf)
+        )
+        
+        case 5: return .pen(points: try FfiConverterSequenceTypeAnnotationPoint.read(from: &buf)
+        )
+        
+        case 6: return .highlighter(points: try FfiConverterSequenceTypeAnnotationPoint.read(from: &buf)
+        )
+        
+        case 7: return .text(origin: try FfiConverterTypeAnnotationPoint.read(from: &buf), text: try FfiConverterString.read(from: &buf), fontSize: try FfiConverterFloat.read(from: &buf)
+        )
+        
+        case 8: return .step(center: try FfiConverterTypeAnnotationPoint.read(from: &buf), number: try FfiConverterUInt32.read(from: &buf)
+        )
+        
+        case 9: return .mosaic(rect: try FfiConverterTypeAnnotationRect.read(from: &buf), block: try FfiConverterUInt32.read(from: &buf)
+        )
+        
+        case 10: return .blur(rect: try FfiConverterTypeAnnotationRect.read(from: &buf), radius: try FfiConverterFloat.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: AnnotationShapeKind, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .rect(rect,filled):
+            writeInt(&buf, Int32(1))
+            FfiConverterTypeAnnotationRect.write(rect, into: &buf)
+            FfiConverterBool.write(filled, into: &buf)
+            
+        
+        case let .ellipse(rect,filled):
+            writeInt(&buf, Int32(2))
+            FfiConverterTypeAnnotationRect.write(rect, into: &buf)
+            FfiConverterBool.write(filled, into: &buf)
+            
+        
+        case let .line(from,to):
+            writeInt(&buf, Int32(3))
+            FfiConverterTypeAnnotationPoint.write(from, into: &buf)
+            FfiConverterTypeAnnotationPoint.write(to, into: &buf)
+            
+        
+        case let .arrow(from,to):
+            writeInt(&buf, Int32(4))
+            FfiConverterTypeAnnotationPoint.write(from, into: &buf)
+            FfiConverterTypeAnnotationPoint.write(to, into: &buf)
+            
+        
+        case let .pen(points):
+            writeInt(&buf, Int32(5))
+            FfiConverterSequenceTypeAnnotationPoint.write(points, into: &buf)
+            
+        
+        case let .highlighter(points):
+            writeInt(&buf, Int32(6))
+            FfiConverterSequenceTypeAnnotationPoint.write(points, into: &buf)
+            
+        
+        case let .text(origin,text,fontSize):
+            writeInt(&buf, Int32(7))
+            FfiConverterTypeAnnotationPoint.write(origin, into: &buf)
+            FfiConverterString.write(text, into: &buf)
+            FfiConverterFloat.write(fontSize, into: &buf)
+            
+        
+        case let .step(center,number):
+            writeInt(&buf, Int32(8))
+            FfiConverterTypeAnnotationPoint.write(center, into: &buf)
+            FfiConverterUInt32.write(number, into: &buf)
+            
+        
+        case let .mosaic(rect,block):
+            writeInt(&buf, Int32(9))
+            FfiConverterTypeAnnotationRect.write(rect, into: &buf)
+            FfiConverterUInt32.write(block, into: &buf)
+            
+        
+        case let .blur(rect,radius):
+            writeInt(&buf, Int32(10))
+            FfiConverterTypeAnnotationRect.write(rect, into: &buf)
+            FfiConverterFloat.write(radius, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationShapeKind_lift(_ buf: RustBuffer) throws -> AnnotationShapeKind {
+    return try FfiConverterTypeAnnotationShapeKind.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnnotationShapeKind_lower(_ value: AnnotationShapeKind) -> RustBuffer {
+    return FfiConverterTypeAnnotationShapeKind.lower(value)
+}
+
+
+extension AnnotationShapeKind: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
  * Why a copy was not kept.
  */
 
@@ -3099,6 +5512,91 @@ extension DropReason: Equatable, Hashable {}
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
+ * The encoded format of an export.
+ */
+
+public enum ExportImageFormat {
+    
+    /**
+     * PNG.
+     */
+    case png
+    /**
+     * JPEG; transparent areas become white.
+     */
+    case jpeg(
+        /**
+         * 1–100.
+         */quality: UInt8
+    )
+}
+
+
+#if compiler(>=6)
+extension ExportImageFormat: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeExportImageFormat: FfiConverterRustBuffer {
+    typealias SwiftType = ExportImageFormat
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ExportImageFormat {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .png
+        
+        case 2: return .jpeg(quality: try FfiConverterUInt8.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: ExportImageFormat, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .png:
+            writeInt(&buf, Int32(1))
+        
+        
+        case let .jpeg(quality):
+            writeInt(&buf, Int32(2))
+            FfiConverterUInt8.write(quality, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeExportImageFormat_lift(_ buf: RustBuffer) throws -> ExportImageFormat {
+    return try FfiConverterTypeExportImageFormat.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeExportImageFormat_lower(_ value: ExportImageFormat) -> RustBuffer {
+    return FfiConverterTypeExportImageFormat.lower(value)
+}
+
+
+extension ExportImageFormat: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
  * Image encodings.
  */
 
@@ -3189,6 +5687,85 @@ public func FfiConverterTypeImageFormat_lower(_ value: ImageFormat) -> RustBuffe
 
 
 extension ImageFormat: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * Where an image made by Supercy comes from.
+ */
+
+public enum ImageOrigin {
+    
+    /**
+     * A screen capture.
+     */
+    case screenshot
+    /**
+     * An annotated image exported from the editor (always a new item).
+     */
+    case edited
+}
+
+
+#if compiler(>=6)
+extension ImageOrigin: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeImageOrigin: FfiConverterRustBuffer {
+    typealias SwiftType = ImageOrigin
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ImageOrigin {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .screenshot
+        
+        case 2: return .edited
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: ImageOrigin, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .screenshot:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .edited:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeImageOrigin_lift(_ buf: RustBuffer) throws -> ImageOrigin {
+    return try FfiConverterTypeImageOrigin.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeImageOrigin_lower(_ value: ImageOrigin) -> RustBuffer {
+    return FfiConverterTypeImageOrigin.lower(value)
+}
+
+
+extension ImageOrigin: Equatable, Hashable {}
 
 
 
@@ -4061,6 +6638,165 @@ extension PopupPosition: Equatable, Hashable {}
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
+ * A grip used to resize a shape.
+ */
+
+public enum ResizeHandle {
+    
+    /**
+     * Top-left corner.
+     */
+    case topLeft
+    /**
+     * Top edge.
+     */
+    case top
+    /**
+     * Top-right corner.
+     */
+    case topRight
+    /**
+     * Right edge.
+     */
+    case right
+    /**
+     * Bottom-right corner.
+     */
+    case bottomRight
+    /**
+     * Bottom edge.
+     */
+    case bottom
+    /**
+     * Bottom-left corner.
+     */
+    case bottomLeft
+    /**
+     * Left edge.
+     */
+    case left
+    /**
+     * Start of a line or arrow.
+     */
+    case start
+    /**
+     * End of a line or arrow.
+     */
+    case end
+}
+
+
+#if compiler(>=6)
+extension ResizeHandle: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeResizeHandle: FfiConverterRustBuffer {
+    typealias SwiftType = ResizeHandle
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ResizeHandle {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .topLeft
+        
+        case 2: return .top
+        
+        case 3: return .topRight
+        
+        case 4: return .right
+        
+        case 5: return .bottomRight
+        
+        case 6: return .bottom
+        
+        case 7: return .bottomLeft
+        
+        case 8: return .left
+        
+        case 9: return .start
+        
+        case 10: return .end
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: ResizeHandle, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .topLeft:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .top:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .topRight:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .right:
+            writeInt(&buf, Int32(4))
+        
+        
+        case .bottomRight:
+            writeInt(&buf, Int32(5))
+        
+        
+        case .bottom:
+            writeInt(&buf, Int32(6))
+        
+        
+        case .bottomLeft:
+            writeInt(&buf, Int32(7))
+        
+        
+        case .left:
+            writeInt(&buf, Int32(8))
+        
+        
+        case .start:
+            writeInt(&buf, Int32(9))
+        
+        
+        case .end:
+            writeInt(&buf, Int32(10))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeResizeHandle_lift(_ buf: RustBuffer) throws -> ResizeHandle {
+    return try FfiConverterTypeResizeHandle.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeResizeHandle_lower(_ value: ResizeHandle) -> RustBuffer {
+    return FfiConverterTypeResizeHandle.lower(value)
+}
+
+
+extension ResizeHandle: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
  * How search matches.
  */
 
@@ -4574,6 +7310,54 @@ fileprivate struct FfiConverterOptionData: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeAnnotationRect: FfiConverterRustBuffer {
+    typealias SwiftType = AnnotationRect?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeAnnotationRect.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeAnnotationRect.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeAnnotationShape: FfiConverterRustBuffer {
+    typealias SwiftType = AnnotationShape?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeAnnotationShape.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeAnnotationShape.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeSourceApp: FfiConverterRustBuffer {
     typealias SwiftType = SourceApp?
 
@@ -4622,6 +7406,31 @@ fileprivate struct FfiConverterOptionTypeItemKind: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceUInt64: FfiConverterRustBuffer {
+    typealias SwiftType = [UInt64]
+
+    public static func write(_ value: [UInt64], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterUInt64.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [UInt64] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [UInt64]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterUInt64.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
     typealias SwiftType = [String]
 
@@ -4639,6 +7448,56 @@ fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterString.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeAnnotationPoint: FfiConverterRustBuffer {
+    typealias SwiftType = [AnnotationPoint]
+
+    public static func write(_ value: [AnnotationPoint], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeAnnotationPoint.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [AnnotationPoint] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [AnnotationPoint]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeAnnotationPoint.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeAnnotationShape: FfiConverterRustBuffer {
+    typealias SwiftType = [AnnotationShape]
+
+    public static func write(_ value: [AnnotationShape], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeAnnotationShape.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [AnnotationShape] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [AnnotationShape]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeAnnotationShape.read(from: &buf))
         }
         return seq
     }
@@ -4744,6 +7603,56 @@ fileprivate struct FfiConverterSequenceTypePasteRepresentation: FfiConverterRust
     }
 }
 /**
+ * Expands a file name template (`{date}`, `{time}`, `{n}`) into a safe file name with the
+ * format's extension.
+ *
+ * # Errors
+ *
+ * `Export` for an impossible date or time.
+ */
+public func annotationFileName(template: String, parts: FileNameParts, format: ExportImageFormat)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeAnnotationError_lift) {
+    uniffi_cy_ffi_fn_func_annotation_file_name(
+        FfiConverterString.lower(template),
+        FfiConverterTypeFileNameParts_lower(parts),
+        FfiConverterTypeExportImageFormat_lower(format),$0
+    )
+})
+}
+/**
+ * The source bundle id recorded on edited exports.
+ */
+public func annotationSourceId() -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_func_annotation_source_id($0
+    )
+})
+}
+/**
+ * The drawing constants of the core's renderer.
+ */
+public func annotationStyleConstants() -> AnnotationStyleConstants  {
+    return try!  FfiConverterTypeAnnotationStyleConstants_lift(try! rustCall() {
+    uniffi_cy_ffi_fn_func_annotation_style_constants($0
+    )
+})
+}
+/**
+ * Joins an absolute folder and a plain file name, after checking both.
+ *
+ * # Errors
+ *
+ * `Export` for a relative folder or a name with separators.
+ */
+public func annotationTargetPath(folder: String, fileName: String)throws  -> String  {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeAnnotationError_lift) {
+    uniffi_cy_ffi_fn_func_annotation_target_path(
+        FfiConverterString.lower(folder),
+        FfiConverterString.lower(fileName),$0
+    )
+})
+}
+/**
  * Why an ignore pattern is not valid, if it is not (for the settings screen).
  */
 public func checkIgnorePattern(pattern: String) -> String?  {
@@ -4763,6 +7672,15 @@ public func coreVersion() -> String  {
 })
 }
 /**
+ * Largest screenshot or edited export the history keeps, in bytes.
+ */
+public func maxScreenshotBytes() -> UInt64  {
+    return try!  FfiConverterUInt64.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_func_max_screenshot_bytes($0
+    )
+})
+}
+/**
  * Why `query` is not a valid regular expression in `mode`, if it is not (for the search field).
  */
 public func queryError(query: String, mode: SearchMode) -> String?  {
@@ -4770,6 +7688,15 @@ public func queryError(query: String, mode: SearchMode) -> String?  {
     uniffi_cy_ffi_fn_func_query_error(
         FfiConverterString.lower(query),
         FfiConverterTypeSearchMode_lower(mode),$0
+    )
+})
+}
+/**
+ * The source bundle id recorded on screenshot items (show a localized name for it).
+ */
+public func screenshotSourceId() -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_func_screenshot_source_id($0
     )
 })
 }
@@ -4798,16 +7725,91 @@ private let initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
+    if (uniffi_cy_ffi_checksum_func_annotation_file_name() != 55602) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_func_annotation_source_id() != 54324) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_func_annotation_style_constants() != 46299) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_func_annotation_target_path() != 51922) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_cy_ffi_checksum_func_check_ignore_pattern() != 3421) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_func_core_version() != 24397) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_cy_ffi_checksum_func_max_screenshot_bytes() != 19459) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_cy_ffi_checksum_func_query_error() != 8522) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_cy_ffi_checksum_func_screenshot_source_id() != 60000) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_cy_ffi_checksum_func_thumbnail_type() != 47285) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_apply() != 18110) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_can_redo() != 64846) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_can_undo() != 25088) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_crop() != 11654) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_export() != 62555) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_hit_test() != 32244) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_image_height() != 61352) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_image_scale() != 43391) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_image_width() != 16546) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_next_step_number() != 21604) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_redo() != 50027) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_render_region() != 22273) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_save() != 45504) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_selection_bounds() != 55913) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_set_font() != 19526) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_shape() != 50476) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_shapes() != 18329) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_shapes_in() != 31863) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_annotationdocument_undo() != 57021) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_keystore_read() != 22629) {
@@ -4832,6 +7834,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_ingest() != 40694) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_ingest_image() != 25610) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_item_count() != 46290) {
@@ -4883,6 +7888,12 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_update_settings() != 59074) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_constructor_annotationdocument_from_png() != 33475) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_constructor_annotationdocument_from_saved() != 40507) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_constructor_supercyengine_open() != 17919) {

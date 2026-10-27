@@ -11,6 +11,7 @@ mod error;
 mod pause;
 mod persist;
 mod pins;
+mod screenshot;
 mod settings;
 mod summary;
 mod thumbnails;
@@ -22,6 +23,9 @@ pub use cy_search::{PinPosition, SortOrder};
 pub use engine::{Engine, IngestOutcome, IngestReport};
 pub use error::EngineError;
 pub use pause::PauseState;
+pub use screenshot::{
+    ANNOTATION_SOURCE_ID, ImageOrigin, MAX_SCREENSHOT_BYTES, OwnImage, SCREENSHOT_SOURCE_ID,
+};
 pub use settings::{
     DEFAULT_IGNORED_APPS, Language, MenuIcon, PinPositionSetting, PopupPosition, SearchModeSetting,
     Settings, SettingsError, SortSetting, check_pattern,
