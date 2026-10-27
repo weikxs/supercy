@@ -13,5 +13,11 @@ docs/prd/
 # Local privacy denylist (real identifiers checked by scripts/check-privacy.sh); never publish.
 .privacy-denylist
 
+# Fuzzing: build output, generated corpus and crash artifacts
+/fuzz/target/
+/fuzz/corpus/
+/fuzz/artifacts/
+/fuzz/coverage/
+
 # Local test output
 /tmp-test/

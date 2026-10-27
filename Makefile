@@ -1,10 +1,10 @@
 # Common tasks. Every Rust check runs in Docker (scripts/docker-test.sh); nothing is built on the host.
 
-.PHONY: all check privacy test fmt clippy licenses bench cover format lock hooks
+.PHONY: all check privacy test fmt clippy deny audit bench cover fuzz format lock bindings hooks
 
 all: check
 
-check: privacy test bench cover
+check: privacy test bench cover fuzz
 
 privacy:
 	scripts/check-privacy.sh
@@ -19,9 +19,16 @@ fmt:
 clippy:
 	scripts/docker-test.sh clippy
 
-# Every dependency must offer a permissive license.
-licenses:
-	scripts/docker-test.sh licenses
+# Licenses, advisories, sources (cargo deny) and known vulnerabilities (cargo audit).
+deny:
+	scripts/docker-test.sh deny
+
+audit:
+	scripts/docker-test.sh audit
+
+# Each fuzz target for FUZZ_SECONDS (default 30) in a nightly container.
+fuzz:
+	scripts/docker-test.sh fuzz
 
 # Search performance and memory budgets, release build.
 bench:
@@ -37,6 +44,10 @@ format:
 
 lock:
 	scripts/docker-test.sh lock
+
+# Regenerate the committed Swift bindings after changing the FFI interface.
+bindings:
+	scripts/docker-test.sh bindings-write
 
 # Use the repository's hooks: privacy check before commit, Conventional Commits on the message.
 hooks:

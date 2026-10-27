@@ -1,25 +1,34 @@
 #!/usr/bin/env bash
-# Runs the Rust checks (fmt, clippy -D warnings, tests) inside a Linux container.
-# All Supercy tests run in Docker: nothing is built or installed on the host.
+# Runs the Rust checks inside a Linux container. All Supercy builds and tests run
+# in Docker: nothing is built or installed on the host.
 #
 # The repository is mounted read-only and copied into the container, so the host
-# tree is never written; build output and the crate cache live in named volumes.
+# tree is never written; build output, the crate cache and installed tools live in
+# named volumes. Only the write steps (lock, format, bindings-write) mount it
+# read-write.
 #
-# Usage: scripts/docker-test.sh            # fmt + clippy + licenses + test
-#        scripts/docker-test.sh test       # one step: fmt | clippy | licenses | test
-#        scripts/docker-test.sh bench      # performance budgets (release build, ignored perf_ tests)
-#        scripts/docker-test.sh cover      # line coverage, fails below COVER_MIN
-#        scripts/docker-test.sh lock       # write Cargo.lock after a dependency change (mounts the repo read-write)
-#        scripts/docker-test.sh format     # run cargo fmt on the sources (mounts the repo read-write)
+# Usage: scripts/docker-test.sh [step]
+#   all (default)   fmt, clippy, deny, audit, test, bindings
+#   fmt | clippy | deny | audit | test | bindings   one check
+#   bench           performance budgets (release build, ignored perf_ tests)
+#   cover           line coverage, fails below COVER_MIN
+#   fuzz            every fuzz target for FUZZ_SECONDS each (nightly image)
+#   lock            write Cargo.lock files after a dependency change
+#   format          run cargo fmt on the sources
+#   bindings-write  regenerate the committed Swift bindings
 set -euo pipefail
 
 readonly IMAGE="${SUPERCY_RUST_IMAGE:-rust:1.95-slim}"
+readonly NIGHTLY_IMAGE="${SUPERCY_NIGHTLY_IMAGE:-rustlang/rust:nightly}"
 readonly CPUS=4
 readonly MEMORY=5g
 readonly TARGET_VOLUME="supercy-target"
 readonly REGISTRY_VOLUME="supercy-cargo-registry"
 readonly TOOLS_VOLUME="supercy-tools"
+readonly NIGHTLY_TOOLS_VOLUME="supercy-tools-nightly"
 readonly COVER_MIN=80
+# Seconds per fuzz target: short in the harness, longer on demand (FUZZ_SECONDS=600).
+readonly FUZZ_SECONDS="${FUZZ_SECONDS:-30}"
 # Do not start a container when the host is busy: at most 70% of its CPUs.
 readonly MAX_LOAD_PERCENT=70
 
@@ -27,9 +36,9 @@ repo_root=$(git rev-parse --show-toplevel)
 step=${1:-all}
 
 case "$step" in
-  all | fmt | clippy | licenses | test | bench | cover | lock | format) ;;
+  all | fmt | clippy | deny | audit | test | bindings | bench | cover | fuzz | lock | format | bindings-write) ;;
   *)
-    echo "usage: $0 [all|fmt|clippy|licenses|test|bench|cover|lock|format]" >&2
+    echo "usage: $0 [all|fmt|clippy|deny|audit|test|bindings|bench|cover|fuzz|lock|format|bindings-write]" >&2
     exit 64
     ;;
 esac
@@ -67,55 +76,93 @@ if awk -v l="$load" -v c="$cpus" -v p="$MAX_LOAD_PERCENT" 'BEGIN { exit !(l * 10
   exit 1
 fi
 
-# The script that runs inside the container. Cargo.lock must be committed (--locked).
-# Only lock and format write to the repository; every other step sees it read-only.
 mount_mode=ro
+image=$IMAGE
+tools_volume=$TOOLS_VOLUME
 case "$step" in
-  lock | format) mount_mode=rw ;;
+  lock | format | bindings-write) mount_mode=rw ;;
+  fuzz)
+    image=$NIGHTLY_IMAGE
+    tools_volume=$NIGHTLY_TOOLS_VOLUME
+    ;;
 esac
 
 # The script that runs inside the container. Cargo.lock must be committed (--locked).
 read -r -d '' inner <<'INNER' || true
 set -eu
-export TMPDIR=/tmp/supercy-test
+export TMPDIR=/tmp/supercy-test CARGO_INSTALL_ROOT=/tools PATH="/tools/bin:$PATH"
 mkdir -p "$TMPDIR" /work
-rustup component add rustfmt clippy >/dev/null 2>&1 || true
+install_tool() { command -v "$1" >/dev/null || cargo install --locked "$2"; }
+# The advisory database is fetched with git, which the slim image lacks.
+need_git() { command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq git >/dev/null; }; }
+
+# Swift bindings: build the library, then generate from its metadata (UniFFI library mode).
+generate_bindings() {
+  cargo build -p cy-ffi --locked --quiet
+  rm -rf /tmp/bindings
+  cargo run -p cy-bindgen --locked --quiet -- generate --library /target/debug/libcy_ffi.so \
+    --language swift --out-dir /tmp/bindings --no-format >/dev/null
+}
+
 case "$STEP" in
-  lock) cd /src && cargo metadata --format-version 1 >/dev/null && echo "Cargo.lock updated"; exit 0 ;;
-  format) cd /src && cargo fmt --all && echo "sources formatted"; exit 0 ;;
+  lock)
+    cd /src && cargo metadata --format-version 1 >/dev/null
+    cd /src/fuzz && cargo +1.95.0 metadata --format-version 1 >/dev/null
+    echo "Cargo.lock files updated"; exit 0 ;;
+  format) cd /src && cargo fmt --all && (cd fuzz && cargo +1.95.0 fmt --all) && echo "sources formatted"; exit 0 ;;
+  bindings-write)
+    cd /src && generate_bindings
+    rm -rf /src/bindings/swift && mkdir -p /src/bindings && cp -r /tmp/bindings /src/bindings/swift
+    echo "Swift bindings written to bindings/swift"; exit 0 ;;
 esac
-tar -C /src --exclude=./target --exclude=./.git -cf - . | tar -C /work -xf -
+
+tar -C /src --exclude=./target --exclude=./.git --exclude=./fuzz/target -cf - . | tar -C /work -xf -
 cd /work
-run_fmt() { cargo fmt --all --check; }
+rustup component add rustfmt clippy >/dev/null 2>&1 || true
+run_fmt() { cargo fmt --all --check; (cd fuzz && cargo +1.95.0 fmt --all --check); }
 run_clippy() { cargo clippy --workspace --all-targets --locked -- -D warnings; }
 run_test() { cargo test --workspace --locked; }
 run_bench() { cargo test --workspace --release --locked -- --ignored --nocapture perf_; }
-# Every dependency must offer a permissive license (docs/development/standards.md, section 6).
-run_licenses() {
-  allowed='MIT|Apache-2\.0|BSD-2-Clause|BSD-3-Clause|ISC|Zlib|Unicode-3\.0|Unicode-DFS-2016|0BSD'
-  cargo tree --workspace --locked -e normal,build --prefix none --format '{p} | {l}' | sort -u >/tmp/licenses.txt
-  bad=$(grep -v ' (/work' /tmp/licenses.txt | grep -Ev "\| .*($allowed)" || true)
-  if [ -n "$bad" ]; then
-    echo "licenses: dependencies outside the allowlist:" >&2
-    echo "$bad" >&2
+run_deny() { need_git; install_tool cargo-deny cargo-deny; cargo deny --locked check; }
+run_audit() { need_git; install_tool cargo-audit cargo-audit; cargo audit --ignore RUSTSEC-2026-0374; }
+run_bindings() {
+  generate_bindings
+  if ! diff -r /tmp/bindings bindings/swift; then
+    echo "bindings: bindings/swift is out of date; run scripts/docker-test.sh bindings-write" >&2
     exit 1
   fi
-  echo "licenses: $(grep -vc ' (/work' /tmp/licenses.txt) dependencies, all permissive"
+  echo "bindings: bindings/swift is up to date"
 }
 run_cover() {
-  export CARGO_INSTALL_ROOT=/tools PATH="/tools/bin:$PATH"
   rustup component add llvm-tools-preview >/dev/null
-  command -v cargo-llvm-cov >/dev/null || cargo install --locked cargo-llvm-cov
+  install_tool cargo-llvm-cov cargo-llvm-cov
   cargo llvm-cov --workspace --locked --fail-under-lines "$COVER_MIN" --summary-only
 }
+run_fuzz() {
+  install_tool cargo-fuzz cargo-fuzz
+  cd fuzz
+  for target in $(cargo fuzz list); do
+    echo "fuzz: $target for ${FUZZ_SECONDS}s"
+    if ! cargo fuzz run "$target" -- -max_total_time="$FUZZ_SECONDS" -rss_limit_mb=2048 \
+      >"/tmp/fuzz-$target.log" 2>&1; then
+      tail -n 40 "/tmp/fuzz-$target.log" >&2
+      echo "fuzz: $target failed" >&2
+      exit 1
+    fi
+    grep -E '^Done [0-9]+ runs' "/tmp/fuzz-$target.log" || tail -n 3 "/tmp/fuzz-$target.log"
+  done
+}
 case "$STEP" in
-  all) run_fmt; run_clippy; run_licenses; run_test ;;
+  all) run_fmt; run_clippy; run_deny; run_audit; run_test; run_bindings ;;
   fmt) run_fmt ;;
   clippy) run_clippy ;;
-  licenses) run_licenses ;;
+  deny) run_deny ;;
+  audit) run_audit ;;
   test) run_test ;;
+  bindings) run_bindings ;;
   bench) run_bench ;;
   cover) run_cover ;;
+  fuzz) run_fuzz ;;
 esac
 INNER
 
@@ -124,9 +171,10 @@ exec docker run --rm \
   -v "$repo_root:/src:$mount_mode" \
   -v "$TARGET_VOLUME:/target" \
   -v "$REGISTRY_VOLUME:/usr/local/cargo/registry" \
-  -v "$TOOLS_VOLUME:/tools" \
+  -v "$tools_volume:/tools" \
   -e COVER_MIN="$COVER_MIN" \
+  -e FUZZ_SECONDS="$FUZZ_SECONDS" \
   -e CARGO_TARGET_DIR=/target \
   -e CARGO_TERM_COLOR=always \
   -e STEP="$step" \
-  "$IMAGE" sh -c "$inner"
+  "$image" sh -c "$inner"

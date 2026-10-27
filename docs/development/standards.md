@@ -98,8 +98,9 @@ Enforced by `make privacy` (pre-commit hook) and review.
 | Rule | Level | Enforced by |
 |---|---|---|
 | `Cargo.lock` is committed; checks run with `--locked` | MUST | `scripts/docker-test.sh` |
-| A new dependency needs a reason in the pull request: maintenance, size, permissive license (MIT, Apache-2.0, BSD, ISC, Zlib, Unicode); any other license needs a recorded decision | MUST | `make licenses` (part of `make test`), review |
-| Known vulnerabilities in dependencies are checked | MUST | `cargo audit` (planned; not yet in the container) |
+| A new dependency needs a reason in the pull request: maintenance, size, permissive license (MIT, MIT-0, Apache-2.0, BSD, ISC, Zlib, Unicode, CC0, BSL-1.0); any other license needs a recorded decision and a named exception in `deny.toml` | MUST | `cargo deny` in `make test`, review |
+| MPL-2.0 is allowed only for the UniFFI crates (`uniffi*`): they are used unmodified, and MPL-2.0 is file-level copyleft, so it binds only changes to UniFFI's own files | MUST | `deny.toml` exceptions |
+| Known vulnerabilities in dependencies are checked | MUST | `cargo deny` advisories and `cargo audit` in `make test` |
 | Release packages are built in CI only, never on a developer's machine, and published with SHA-256 checksums | MUST | release workflow (later) |
 
 ## 7. Code
@@ -137,6 +138,10 @@ the default history size; a change that breaks a budget needs a recorded decisio
 - **Test first:** write a failing test, make it pass, then refactor.
 - **Coverage:** at least 80% of lines across the Rust workspace (`make cover` fails below it); core crates aim at 90%.
 - **Budgets:** search speed and index memory have release-mode benchmarks with hard limits (`make bench`).
+- **Fuzzing:** every parser of outside data and the capture filter have a `cargo-fuzz` target (`fuzz/`, nightly
+  image). `make fuzz` runs each briefly; `FUZZ_SECONDS=600 make fuzz` before a release.
+- **Bindings:** the generated Swift bindings are committed (`bindings/swift`); `make test` fails when they are
+  out of date (`make bindings` regenerates them).
 - **Style:** descriptive test names; Arrange–Act–Assert; property tests (`proptest`) for parsers and merge.
 - **All tests run in Docker** (`make test`, `scripts/docker-test.sh`): `cargo fmt --check`, `clippy -D warnings`
   and `cargo test` in a Linux container with a CPU and memory limit. The Rust core must be fully testable on
