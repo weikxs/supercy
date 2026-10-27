@@ -8,7 +8,7 @@
 ![许可证](https://img.shields.io/badge/许可证-待定-lightgrey)
 
 > [!NOTE]
-> Supercy 处于**早期开发**阶段，还没有可下载的应用；本仓库目前有 Rust 核心（历史模型、过滤、搜索、加密存储、引擎及其 Swift 接口）、开发规范和测试框架。下一步是 macOS 应用。
+> Supercy 处于**早期开发**阶段，还没有可下载的版本。macOS 剪贴板应用（0.1 范围）已可从源码构建，正在人工检查；截图、标注与贴图是下一步。
 
 ## 它将是什么
 
@@ -57,6 +57,16 @@ make bench     # 搜索速度与内存预算（release 构建）
 make cover     # 行覆盖率，至少 80%
 make fuzz      # 对解析器和采集过滤器做模糊测试（nightly 容器）
 ```
+
+macOS 应用（`apps/macos`，Xcode 工程由 `make macos-project` 生成）在 Mac 上构建和测试，隔离在 `/tmp/supercy`：
+
+```sh
+make macos-test      # 构建 Rust 库和应用，运行单元测试
+make macos-measure   # 空闲内存与 CPU，使用内存中的剪贴板（不会读取你的剪贴板）
+make macos-app       # 把 Supercy.app 构建到 /tmp/supercy-build
+```
+
+运行构建出的应用会把你真实的剪贴板记录到 `~/Library/Application Support/Supercy`（加密），密钥保存在登录钥匙串中。
 
 参与开发前请先阅读 [docs/development/standards.md](docs/development/standards.md)（英文）。
 

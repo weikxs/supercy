@@ -1,0 +1,112 @@
+import AppKit
+import XCTest
+
+final class HistoryViewModelTests: XCTestCase {
+    private func filled(_ texts: [String]) throws -> (Rig, HistoryViewModel) {
+        let rig = try Rig(self)
+        rig.controller.start()
+        for (offset, text) in texts.enumerated() {
+            rig.clock.now = demoNow + UInt64(offset)
+            rig.copy(text)
+            rig.scheduler.fireRepeating()
+        }
+        return (rig, HistoryViewModel(controller: rig.controller))
+    }
+
+    func testListsNewestFirstAndSearchesWithPinyin() throws {
+        let (_, model) = try filled(["会议纪要", "lorem ipsum", "Hello from Supercy"])
+
+        XCTAssertEqual(model.items.map(\.preview), ["Hello from Supercy", "lorem ipsum", "会议纪要"])
+        model.query = "hyjy"
+        XCTAssertEqual(model.items.map(\.preview), ["会议纪要"])
+        model.query = "zzz"
+        XCTAssertTrue(model.items.isEmpty)
+    }
+
+    func testSelectionMovesWithinTheListAndNumbersChoose() throws {
+        let (rig, model) = try filled(["a", "b", "c"])
+        var closed = 0
+        model.onClose = { closed += 1 }
+
+        model.perform(.moveDown, nowMs: demoNow)
+        model.perform(.moveDown, nowMs: demoNow)
+        model.perform(.moveDown, nowMs: demoNow)
+        XCTAssertEqual(model.selectedIndex, 2)
+        model.perform(.moveUp, nowMs: demoNow)
+        XCTAssertEqual(model.selected?.preview, "b")
+
+        XCTAssertTrue(model.perform(.selectNumber(3), nowMs: demoNow))
+        XCTAssertFalse(model.perform(.selectNumber(9), nowMs: demoNow))
+        XCTAssertEqual(closed, 1)
+        XCTAssertEqual(rig.pasteboard.readItems().first?.first?.data, Data("a".utf8))
+    }
+
+    func testPinningGivesALetterThatChoosesTheItem() throws {
+        let (rig, model) = try filled(["pin me", "other"])
+        model.selectedIndex = 1
+
+        model.perform(.togglePin, nowMs: demoNow + 10)
+        let pinned = try XCTUnwrap(model.items.first)
+
+        XCTAssertTrue(pinned.pinned)
+        XCTAssertEqual(pinned.pinKey, "a")
+        XCTAssertTrue(model.perform(.pinKey("a"), nowMs: demoNow))
+        XCTAssertFalse(model.perform(.pinKey("b"), nowMs: demoNow))
+        XCTAssertEqual(rig.pasteboard.readItems().first?.first?.data, Data("pin me".utf8))
+    }
+
+    func testDeleteAndClearKeepPins() throws {
+        let (_, model) = try filled(["a", "b", "c"])
+        model.perform(.togglePin, nowMs: demoNow + 10)
+
+        model.selectedIndex = 1
+        model.perform(.delete, nowMs: demoNow)
+        XCTAssertEqual(model.items.count, 2)
+        model.perform(.clearHistory, nowMs: demoNow)
+        XCTAssertEqual(model.items.map(\.preview), ["c"])
+        model.perform(.clearAll, nowMs: demoNow)
+        XCTAssertTrue(model.items.isEmpty)
+    }
+
+    func testInvalidRegexIsReportedInRegexMode() throws {
+        let (rig, model) = try filled(["order 123456"])
+        var settings = try rig.engine.settings()
+        settings.searchMode = .regex
+        _ = try rig.engine.updateSettings(settings: settings)
+
+        model.query = "("
+        XCTAssertNotNil(model.queryProblem)
+        model.query = "\\d{6}"
+        XCTAssertNil(model.queryProblem)
+        XCTAssertEqual(model.items.first?.matches, [TextRange(location: 6, length: 6)])
+    }
+
+    func testCopyOnlyAndPlainTextChoices() throws {
+        let (rig, model) = try filled(["demo"])
+        rig.paster.isTrusted = true
+
+        model.perform(.choose(plainText: nil, copyOnly: true), nowMs: demoNow)
+        XCTAssertEqual(rig.paster.pasteCount, 0)
+        model.perform(.choose(plainText: true, copyOnly: false), nowMs: demoNow)
+        XCTAssertEqual(rig.paster.pasteCount, 1)
+    }
+}
+
+final class KeyCommandTests: XCTestCase {
+    func testMapsTheDocumentedKeys() {
+        let cases: [(UInt16, NSEvent.ModifierFlags, KeyCommand?)] = [
+            (126, [], .moveUp), (125, [], .moveDown), (53, [], .close),
+            (36, [], .choose(plainText: nil, copyOnly: false)),
+            (36, .option, .choose(plainText: nil, copyOnly: true)),
+            (36, [.option, .shift], .choose(plainText: true, copyOnly: false)),
+            (35, .option, .togglePin), (51, .option, .delete), (51, [.option, .command], .clearHistory),
+            (51, [.option, .command, .shift], .clearAll), (43, .command, .openSettings),
+            (18, .command, .selectNumber(1)), (25, .command, .selectNumber(9)),
+            (0, .control, .pinKey("a")), (40, .control, .pinKey("k")),
+            (0, [], nil), (51, [], nil), (18, [], nil), (36, .command, nil),
+        ]
+        for (code, flags, expected) in cases {
+            XCTAssertEqual(KeyCommand.from(keyCode: code, modifiers: flags), expected, "key \(code) \(flags)")
+        }
+    }
+}

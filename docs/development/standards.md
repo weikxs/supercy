@@ -150,8 +150,13 @@ the default history size; a change that breaks a budget needs a recorded decisio
   the machine is at 70% CPU or more (the script checks both).
 - **Isolation:** no network outside loopback and in-memory test networks; no real home directory, clipboard or
   keystore. Tests wait for conditions, never for a fixed time that a slow machine may miss.
-- **Platform shells** cannot be tested in a Linux container; how each shell is verified is written in the
-  development plan and agreed before the shell is built.
+- **Platform shells** cannot be tested in a Linux container. The macOS app is built and its unit tests run on
+  the Mac (`make macos-test`), strictly isolated: `HOME`, `CFFIXED_USER_HOME`, `TMPDIR` and Xcode's derived
+  data live under `/tmp/supercy` and are removed afterwards; tests use an in-memory pasteboard and keystore and
+  never touch the real clipboard, keychain, login items or keyboard. Code that does (`Sources/SupercyApp`) is
+  not compiled into the tests, and `make macos-test` fails if such APIs appear in shared or test code.
+- **The real app is never started against the user's clipboard by a script.** Measurements use `--isolated`
+  (`make macos-measure`); a check with real data is done by the user, by hand.
 
 ## 10. Git workflow
 

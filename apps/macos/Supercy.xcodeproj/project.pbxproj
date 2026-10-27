@@ -1,0 +1,824 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+		03117EDA19B77B580FA02D34 = {
+			isa = PBXBuildFile;
+			fileRef = 9361A571F96E0552648F4DA8;
+		};
+		0519F9BA6645B43646EE9AE3 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Pasting.swift;
+			path = Sources/SupercyKit/Pasting.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		07E4E59CE95AD0AB0D7B5F44 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = ClipboardController.swift;
+			path = Sources/SupercyKit/ClipboardController.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		091A54C5BE2464F8CC5DB6AD = {
+			isa = PBXBuildFile;
+			fileRef = D79A804A17645278414EB9E0;
+		};
+		0E51A6B86EB25DC55FBA5271 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = main.swift;
+			path = Sources/SupercyApp/main.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		0F99DB380BEB5DD9AD09E0CC = {
+			isa = PBXBuildFile;
+			fileRef = 849FA2FFA30F837A7D5209DF;
+		};
+		11A7E023B8688CA40606F745 = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13F5F2AE80828A8E56E54E85 = {
+			isa = PBXBuildFile;
+			fileRef = 3FD35DE70625E12A64B019B8;
+		};
+		15751CDB70DF15E0AB8BFE57 = {
+			isa = PBXBuildFile;
+			fileRef = 8D06EAC446F2E034AF24853B;
+		};
+		179CCAB13E16DD51822CD70F = {
+			isa = PBXBuildFile;
+			fileRef = 7CBCDE4730426D1AC8661B70;
+		};
+		1A2120112BFA0FCC8691C34B = {
+			isa = PBXBuildFile;
+			fileRef = 07E4E59CE95AD0AB0D7B5F44;
+		};
+		1BE32799EFD87E0EC1ED3F0B = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SystemServices.swift;
+			path = Sources/SupercyApp/SystemServices.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		295995B7E7DD7A5042755312 = {
+			isa = PBXBuildFile;
+			fileRef = 3AAF4EDCB83A18469A4AD8C7;
+		};
+		2AC8BA37DAC32D5437812408 = {
+			isa = PBXGroup;
+			children = (
+				93E2A7827D1328C06468E2F2,
+				63EEE1472EDB2C2C0F585BCE,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2D273FF4853AA096BD48A1DE = {
+			isa = PBXBuildFile;
+			fileRef = CD2B32BEAFE23494565A6405;
+		};
+		2E15BE4A6BE7AB3AE6DE5BFB = {
+			isa = PBXBuildFile;
+			fileRef = 55BA82D026AD73406D266CFD;
+		};
+		33BD50CF20918BC05EEB4F0B = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = LaunchOptions.swift;
+			path = Sources/SupercyKit/LaunchOptions.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		3679F0E2298215DC3B6F5BF6 = {
+			isa = PBXGroup;
+			children = (
+				A591E88546F54FBEA6F3EAE5,
+				555C4164DB01E24CE853E4A1,
+				753F3E2592D629452688755F,
+				1BE32799EFD87E0EC1ED3F0B,
+				0E51A6B86EB25DC55FBA5271,
+			);
+			name = SupercyApp;
+			sourceTree = "<group>";
+		};
+		37C053271B0E6B77806A4580 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Pasteboard.swift;
+			path = Sources/SupercyKit/Pasteboard.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		39C80DB452A6197FA5B625FD = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A41AFED4A024AF3478BD5674;
+			buildPhases = (
+				581799B5D3814B182B86F851,
+				91B9D196A51BD93A6F51B945,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Supercy;
+			productName = Supercy;
+			productReference = 93E2A7827D1328C06468E2F2;
+			productType = "com.apple.product-type.application";
+		};
+		3AAF4EDCB83A18469A4AD8C7 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = PasteboardWriter.swift;
+			path = Sources/SupercyKit/PasteboardWriter.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		3BC5FA48DA372308D0611F30 = {
+			isa = PBXGroup;
+			children = (
+				4BB34665A4A3903180DB3F80,
+				3679F0E2298215DC3B6F5BF6,
+				99A72A448CF5A9DDB939CE4F,
+				CF052370AFDE71D3B7745306,
+				2AC8BA37DAC32D5437812408,
+			);
+			name = Supercy;
+			sourceTree = "<group>";
+		};
+		3E07164BCD13E630CA3F5E5D = {
+			isa = PBXBuildFile;
+			fileRef = C0FF50272609FDB896678AE9;
+		};
+		3FD35DE70625E12A64B019B8 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Scheduling.swift;
+			path = Sources/SupercyKit/Scheduling.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		4143A2E8E43E3011993A3A87 = {
+			isa = PBXBuildFile;
+			fileRef = 9361A571F96E0552648F4DA8;
+		};
+		450A8281EB69E5133704399D = {
+			isa = PBXBuildFile;
+			fileRef = 639DEF8ACED0BB7726735495;
+		};
+		498A8F6C8829BCF6F1BC8C2A = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SupportTests.swift;
+			path = Tests/SupercyKitTests/SupportTests.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		4B5D565C8EC281FE6E5B1E03 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = HistoryViewModel.swift;
+			path = Sources/SupercyKit/HistoryViewModel.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		4BB34665A4A3903180DB3F80 = {
+			isa = PBXGroup;
+			children = (
+				07E4E59CE95AD0AB0D7B5F44,
+				E7D51568CA3A1B5BC1FDF0E5,
+				4B5D565C8EC281FE6E5B1E03,
+				CBE3ABB6E7B7E3F9ADC5BCE4,
+				55BA82D026AD73406D266CFD,
+				33BD50CF20918BC05EEB4F0B,
+				37C053271B0E6B77806A4580,
+				9361A571F96E0552648F4DA8,
+				3AAF4EDCB83A18469A4AD8C7,
+				0519F9BA6645B43646EE9AE3,
+				639DEF8ACED0BB7726735495,
+				3FD35DE70625E12A64B019B8,
+				F1D411B7AF6339985E96DB1F,
+				849FA2FFA30F837A7D5209DF,
+				CD2B32BEAFE23494565A6405,
+				C0FF50272609FDB896678AE9,
+				8D06EAC446F2E034AF24853B,
+			);
+			name = SupercyKit;
+			sourceTree = "<group>";
+		};
+		4E7B9DD28BE46A32D5136747 = {
+			isa = PBXBuildFile;
+			fileRef = 37C053271B0E6B77806A4580;
+		};
+		53A71791BEFF860001C7219E = {
+			isa = PBXBuildFile;
+			fileRef = 743676AFC5D4EAD2B6406C2C;
+		};
+		5428CF351BA300DEA5BAE5DA = {
+			isa = PBXBuildFile;
+			fileRef = 3FD35DE70625E12A64B019B8;
+		};
+		555C4164DB01E24CE853E4A1 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = HistoryPanel.swift;
+			path = Sources/SupercyApp/HistoryPanel.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		55BA82D026AD73406D266CFD = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = L10n.swift;
+			path = Sources/SupercyKit/L10n.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		581799B5D3814B182B86F851 = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B89CF0428E3093599312C02A,
+				F489AB884F1F3E99CA604A2C,
+				F735AE77198E2E215B8B2163,
+				F32AB9268883F2B005455C27,
+				2E15BE4A6BE7AB3AE6DE5BFB,
+				61D7BC6FC7A16AAC3FD8953F,
+				4E7B9DD28BE46A32D5136747,
+				4143A2E8E43E3011993A3A87,
+				F0F012D91F28B211E869F1A2,
+				87F7E8FB1E4B0196FC277DD4,
+				EE2C1EF29C9EBC3BAFA15003,
+				5428CF351BA300DEA5BAE5DA,
+				D35586CCDD38B2A605585042,
+				8874F642ED8AEC4168E499F6,
+				2D273FF4853AA096BD48A1DE,
+				A484B931B68F91DBA5EDF0EC,
+				15751CDB70DF15E0AB8BFE57,
+				67E1D049080F8688AFDC8FA1,
+				A0318ECA6C5A7AE1448C5E13,
+				D5E367E13B8434FAD779789C,
+				D63D240C4692E6456CA64F5F,
+				ABC436CC4C92B5B05625FF61,
+				D9B32EB9A63819D2FF8451D9,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5FEBD1E4EECC7FA7BD08F95D = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SDKROOT = macosx;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ARCHS = arm64;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "-";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(PROJECT_DIR)/../../bindings/swift/SupercyCoreFFI.modulemap";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../bindings/swift";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../target/aarch64-apple-darwin/release/libcy_ffi.a";
+				MARKETING_VERSION = 0.1.0;
+				CURRENT_PROJECT_VERSION = 1;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				PRODUCT_NAME = Supercy;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.weikxs.Supercy;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Supercy;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+			};
+			name = Release;
+		};
+		61D7BC6FC7A16AAC3FD8953F = {
+			isa = PBXBuildFile;
+			fileRef = 33BD50CF20918BC05EEB4F0B;
+		};
+		639DEF8ACED0BB7726735495 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = PreviewFormatter.swift;
+			path = Sources/SupercyKit/PreviewFormatter.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		63EEE1472EDB2C2C0F585BCE = {
+			isa = PBXFileReference;
+			explicitFileType = wrapper.cfbundle;
+			includeInIndex = 0;
+			path = SupercyKitTests.xctest;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		67E1D049080F8688AFDC8FA1 = {
+			isa = PBXBuildFile;
+			fileRef = A591E88546F54FBEA6F3EAE5;
+		};
+		6AFE22E70BE079CBB63426F8 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SDKROOT = macosx;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ARCHS = arm64;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "-";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(PROJECT_DIR)/../../bindings/swift/SupercyCoreFFI.modulemap";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../bindings/swift";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../target/aarch64-apple-darwin/release/libcy_ffi.a";
+				MARKETING_VERSION = 0.1.0;
+				CURRENT_PROJECT_VERSION = 1;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+			};
+			name = Release;
+		};
+		743676AFC5D4EAD2B6406C2C = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SupercyCore.swift;
+			path = ../../bindings/swift/SupercyCore.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		753F3E2592D629452688755F = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = StatusItemController.swift;
+			path = Sources/SupercyApp/StatusItemController.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		7762E15C936CAC1B48548D61 = {
+			isa = PBXBuildFile;
+			fileRef = E7D51568CA3A1B5BC1FDF0E5;
+		};
+		7A751C76ACCA72AEB16E3A35 = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1A2120112BFA0FCC8691C34B,
+				7762E15C936CAC1B48548D61,
+				EC9EFBB6C1B26C1D3B8C3933,
+				D4B735DD3E4A23FE8FE0F566,
+				D1621B0BB26DAE0176A4924A,
+				FFF1B21347875D7485DBB7CB,
+				9C824E9AC28854818A1A65F7,
+				03117EDA19B77B580FA02D34,
+				295995B7E7DD7A5042755312,
+				A4B59DA6B8F9AC506F7EFEE2,
+				450A8281EB69E5133704399D,
+				13F5F2AE80828A8E56E54E85,
+				EB066EF68B669ABCAF78E973,
+				0F99DB380BEB5DD9AD09E0CC,
+				C5C45D5409A1E8021AC0FEEB,
+				3E07164BCD13E630CA3F5E5D,
+				B3C340B4A4D0A5EBE0FAE5BF,
+				091A54C5BE2464F8CC5DB6AD,
+				179CCAB13E16DD51822CD70F,
+				D19BDD81A3DF0A90243D0A82,
+				BFA4AADF711FCF0ED950C2E0,
+				FAEE6EFAE26CAB5C3D4F26F6,
+				53A71791BEFF860001C7219E,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CBCDE4730426D1AC8661B70 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = HistoryViewModelTests.swift;
+			path = Tests/SupercyKitTests/HistoryViewModelTests.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		814B949D6EF58B5AC987DD7A = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SDKROOT = macosx;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ARCHS = arm64;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "-";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(PROJECT_DIR)/../../bindings/swift/SupercyCoreFFI.modulemap";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../bindings/swift";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../target/aarch64-apple-darwin/release/libcy_ffi.a";
+				MARKETING_VERSION = 0.1.0;
+				CURRENT_PROJECT_VERSION = 1;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				ENABLE_TESTABILITY = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				PRODUCT_NAME = Supercy;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.weikxs.Supercy;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Supercy;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+			};
+			name = Debug;
+		};
+		833C3915CE6966FE92600D81 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = TestSupport.swift;
+			path = Tests/SupercyKitTests/TestSupport.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		849FA2FFA30F837A7D5209DF = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SettingsView.swift;
+			path = Sources/SupercyKit/SettingsView.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		87F7E8FB1E4B0196FC277DD4 = {
+			isa = PBXBuildFile;
+			fileRef = 0519F9BA6645B43646EE9AE3;
+		};
+		8874F642ED8AEC4168E499F6 = {
+			isa = PBXBuildFile;
+			fileRef = 849FA2FFA30F837A7D5209DF;
+		};
+		8D06EAC446F2E034AF24853B = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SystemIntegration.swift;
+			path = Sources/SupercyKit/SystemIntegration.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		8D62F259F583BD914F4A75FD = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SDKROOT = macosx;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ARCHS = arm64;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "-";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(PROJECT_DIR)/../../bindings/swift/SupercyCoreFFI.modulemap";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../bindings/swift";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../target/aarch64-apple-darwin/release/libcy_ffi.a";
+				MARKETING_VERSION = 0.1.0;
+				CURRENT_PROJECT_VERSION = 1;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				ENABLE_TESTABILITY = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				PRODUCT_NAME = SupercyKitTests;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.weikxs.SupercyTests;
+				GENERATE_INFOPLIST_FILE = YES;
+			};
+			name = Debug;
+		};
+		91B9D196A51BD93A6F51B945 = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9361A571F96E0552648F4DA8 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = PasteboardWatcher.swift;
+			path = Sources/SupercyKit/PasteboardWatcher.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		93E2A7827D1328C06468E2F2 = {
+			isa = PBXFileReference;
+			explicitFileType = wrapper.application;
+			includeInIndex = 0;
+			path = Supercy.app;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9706914E1138CDDB028F542E = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A5C31A0D4BCD34A54E0A92B3;
+			buildPhases = (
+				7A751C76ACCA72AEB16E3A35,
+				11A7E023B8688CA40606F745,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SupercyKitTests;
+			productName = SupercyKitTests;
+			productReference = 63EEE1472EDB2C2C0F585BCE;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		99A72A448CF5A9DDB939CE4F = {
+			isa = PBXGroup;
+			children = (
+				743676AFC5D4EAD2B6406C2C,
+			);
+			name = Bindings;
+			sourceTree = "<group>";
+		};
+		9C824E9AC28854818A1A65F7 = {
+			isa = PBXBuildFile;
+			fileRef = 37C053271B0E6B77806A4580;
+		};
+		A0318ECA6C5A7AE1448C5E13 = {
+			isa = PBXBuildFile;
+			fileRef = 555C4164DB01E24CE853E4A1;
+		};
+		A1806D8FE767B99D399E13F3 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D48F58F8CA231B2301441318,
+				6AFE22E70BE079CBB63426F8,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A41AFED4A024AF3478BD5674 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				814B949D6EF58B5AC987DD7A,
+				5FEBD1E4EECC7FA7BD08F95D,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A484B931B68F91DBA5EDF0EC = {
+			isa = PBXBuildFile;
+			fileRef = C0FF50272609FDB896678AE9;
+		};
+		A4B59DA6B8F9AC506F7EFEE2 = {
+			isa = PBXBuildFile;
+			fileRef = 0519F9BA6645B43646EE9AE3;
+		};
+		A591E88546F54FBEA6F3EAE5 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = AppDelegate.swift;
+			path = Sources/SupercyApp/AppDelegate.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		A5C31A0D4BCD34A54E0A92B3 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8D62F259F583BD914F4A75FD,
+				FBB0BAB168CB4D58FF8BBFCA,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		ABC436CC4C92B5B05625FF61 = {
+			isa = PBXBuildFile;
+			fileRef = 0E51A6B86EB25DC55FBA5271;
+		};
+		B2C6509C6F8880D7CC15B692 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = PasteboardTests.swift;
+			path = Tests/SupercyKitTests/PasteboardTests.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		B3C340B4A4D0A5EBE0FAE5BF = {
+			isa = PBXBuildFile;
+			fileRef = 8D06EAC446F2E034AF24853B;
+		};
+		B89CF0428E3093599312C02A = {
+			isa = PBXBuildFile;
+			fileRef = 07E4E59CE95AD0AB0D7B5F44;
+		};
+		BFA4AADF711FCF0ED950C2E0 = {
+			isa = PBXBuildFile;
+			fileRef = 498A8F6C8829BCF6F1BC8C2A;
+		};
+		C0FF50272609FDB896678AE9 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SnapshotReader.swift;
+			path = Sources/SupercyKit/SnapshotReader.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		C5C45D5409A1E8021AC0FEEB = {
+			isa = PBXBuildFile;
+			fileRef = CD2B32BEAFE23494565A6405;
+		};
+		CBE3ABB6E7B7E3F9ADC5BCE4 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = KeyCommand.swift;
+			path = Sources/SupercyKit/KeyCommand.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		CD2B32BEAFE23494565A6405 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Shortcut.swift;
+			path = Sources/SupercyKit/Shortcut.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		CF052370AFDE71D3B7745306 = {
+			isa = PBXGroup;
+			children = (
+				D79A804A17645278414EB9E0,
+				7CBCDE4730426D1AC8661B70,
+				B2C6509C6F8880D7CC15B692,
+				498A8F6C8829BCF6F1BC8C2A,
+				833C3915CE6966FE92600D81,
+			);
+			name = SupercyKitTests;
+			sourceTree = "<group>";
+		};
+		D1621B0BB26DAE0176A4924A = {
+			isa = PBXBuildFile;
+			fileRef = 55BA82D026AD73406D266CFD;
+		};
+		D19BDD81A3DF0A90243D0A82 = {
+			isa = PBXBuildFile;
+			fileRef = B2C6509C6F8880D7CC15B692;
+		};
+		D35586CCDD38B2A605585042 = {
+			isa = PBXBuildFile;
+			fileRef = F1D411B7AF6339985E96DB1F;
+		};
+		D45C7065A44F3AB3A15A577B = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = A1806D8FE767B99D399E13F3;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				"zh-Hans",
+				Base,
+			);
+			mainGroup = 3BC5FA48DA372308D0611F30;
+			productRefGroup = 2AC8BA37DAC32D5437812408;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				39C80DB452A6197FA5B625FD,
+				9706914E1138CDDB028F542E,
+			);
+		};
+		D48F58F8CA231B2301441318 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SDKROOT = macosx;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ARCHS = arm64;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "-";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(PROJECT_DIR)/../../bindings/swift/SupercyCoreFFI.modulemap";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../bindings/swift";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../target/aarch64-apple-darwin/release/libcy_ffi.a";
+				MARKETING_VERSION = 0.1.0;
+				CURRENT_PROJECT_VERSION = 1;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				ENABLE_TESTABILITY = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+			};
+			name = Debug;
+		};
+		D4B735DD3E4A23FE8FE0F566 = {
+			isa = PBXBuildFile;
+			fileRef = CBE3ABB6E7B7E3F9ADC5BCE4;
+		};
+		D5E367E13B8434FAD779789C = {
+			isa = PBXBuildFile;
+			fileRef = 753F3E2592D629452688755F;
+		};
+		D63D240C4692E6456CA64F5F = {
+			isa = PBXBuildFile;
+			fileRef = 1BE32799EFD87E0EC1ED3F0B;
+		};
+		D79A804A17645278414EB9E0 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = ClipboardControllerTests.swift;
+			path = Tests/SupercyKitTests/ClipboardControllerTests.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		D9B32EB9A63819D2FF8451D9 = {
+			isa = PBXBuildFile;
+			fileRef = 743676AFC5D4EAD2B6406C2C;
+		};
+		E7D51568CA3A1B5BC1FDF0E5 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = HistoryView.swift;
+			path = Sources/SupercyKit/HistoryView.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		EB066EF68B669ABCAF78E973 = {
+			isa = PBXBuildFile;
+			fileRef = F1D411B7AF6339985E96DB1F;
+		};
+		EC9EFBB6C1B26C1D3B8C3933 = {
+			isa = PBXBuildFile;
+			fileRef = 4B5D565C8EC281FE6E5B1E03;
+		};
+		EE2C1EF29C9EBC3BAFA15003 = {
+			isa = PBXBuildFile;
+			fileRef = 639DEF8ACED0BB7726735495;
+		};
+		F0F012D91F28B211E869F1A2 = {
+			isa = PBXBuildFile;
+			fileRef = 3AAF4EDCB83A18469A4AD8C7;
+		};
+		F1D411B7AF6339985E96DB1F = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SettingsModel.swift;
+			path = Sources/SupercyKit/SettingsModel.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		F32AB9268883F2B005455C27 = {
+			isa = PBXBuildFile;
+			fileRef = CBE3ABB6E7B7E3F9ADC5BCE4;
+		};
+		F489AB884F1F3E99CA604A2C = {
+			isa = PBXBuildFile;
+			fileRef = E7D51568CA3A1B5BC1FDF0E5;
+		};
+		F735AE77198E2E215B8B2163 = {
+			isa = PBXBuildFile;
+			fileRef = 4B5D565C8EC281FE6E5B1E03;
+		};
+		FAEE6EFAE26CAB5C3D4F26F6 = {
+			isa = PBXBuildFile;
+			fileRef = 833C3915CE6966FE92600D81;
+		};
+		FBB0BAB168CB4D58FF8BBFCA = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SDKROOT = macosx;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ARCHS = arm64;
+				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "-";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				OTHER_SWIFT_FLAGS = "-Xcc -fmodule-map-file=$(PROJECT_DIR)/../../bindings/swift/SupercyCoreFFI.modulemap";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../bindings/swift";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../target/aarch64-apple-darwin/release/libcy_ffi.a";
+				MARKETING_VERSION = 0.1.0;
+				CURRENT_PROJECT_VERSION = 1;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				PRODUCT_NAME = SupercyKitTests;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.weikxs.SupercyTests;
+				GENERATE_INFOPLIST_FILE = YES;
+			};
+			name = Release;
+		};
+		FFF1B21347875D7485DBB7CB = {
+			isa = PBXBuildFile;
+			fileRef = 33BD50CF20918BC05EEB4F0B;
+		};
+	};
+	rootObject = D45C7065A44F3AB3A15A577B;
+}
