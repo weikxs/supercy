@@ -623,3 +623,40 @@ fn copied_files_are_listed_by_name_and_pasted_by_reference() {
         matches!(&engine.payload(id).unwrap()[0], Representation::FileRef { names } if names[0].ends_with("Report.pdf"))
     );
 }
+
+#[test]
+fn image_thumbnails_from_the_shell_are_kept_and_text_ones_ignored() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+    let mut png = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR".to_vec();
+    png.extend_from_slice(&[0, 0, 0, 40, 0, 0, 0, 30]);
+    let image = snapshot_from(
+        "com.example.editor",
+        T0,
+        vec![
+            ClipEntry::with_data("public.png", png),
+            ClipEntry::with_data(cy_engine::THUMBNAIL_TYPE, b"small demo thumbnail".to_vec()),
+        ],
+    );
+    let text = snapshot_from(
+        "com.example.editor",
+        T0 + 1,
+        vec![
+            ClipEntry::with_data("public.utf8-plain-text", b"demo".to_vec()),
+            ClipEntry::with_data(cy_engine::THUMBNAIL_TYPE, b"ignored".to_vec()),
+        ],
+    );
+
+    let IngestOutcome::Stored { id: image_id, .. } = engine.ingest(&image).unwrap().outcome else {
+        panic!("not stored")
+    };
+    let IngestOutcome::Stored { id: text_id, .. } = engine.ingest(&text).unwrap().outcome else {
+        panic!("not stored")
+    };
+
+    assert_eq!(
+        engine.thumbnail(image_id).unwrap().as_deref(),
+        Some(&b"small demo thumbnail"[..])
+    );
+    assert_eq!(engine.thumbnail(text_id).unwrap(), None);
+}

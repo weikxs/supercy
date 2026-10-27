@@ -549,7 +549,8 @@ fn a_version_1_history_is_migrated_and_keeps_its_items() {
     drop(store);
     let raw = rusqlite::Connection::open(dir.path().join(DATABASE_FILE)).unwrap();
     raw.execute_batch(
-        "DROP INDEX items_pin_key; ALTER TABLE items DROP COLUMN pin_key; ALTER TABLE items DROP COLUMN copy_count;
+        "ALTER TABLE items DROP COLUMN thumb;
+         DROP INDEX items_pin_key; ALTER TABLE items DROP COLUMN pin_key; ALTER TABLE items DROP COLUMN copy_count;
          DROP TABLE meta; DROP INDEX items_expiry;
          CREATE INDEX items_expiry ON items(expires_at) WHERE expires_at IS NOT NULL;
          PRAGMA user_version = 1;",
@@ -636,4 +637,44 @@ fn a_damaged_pin_key_makes_the_row_unreadable() {
     let report = Store::open(dir.path(), &keys).unwrap().load().unwrap();
 
     assert_eq!(report.unreadable, vec![it.id]);
+}
+
+#[test]
+fn thumbnails_are_sealed_bounded_and_go_with_their_item() {
+    let dir = temp_dir();
+    let keys = MemoryKeyStore::new();
+    let mut store = Store::open(dir.path(), &keys).unwrap();
+    let it = item(&store, 1, image(64, 3));
+    store.save(&it, &Limits::default()).unwrap();
+    let thumb = b"demo thumbnail bytes, plaintext marker".to_vec();
+
+    assert!(store.set_thumbnail(it.id, &thumb).unwrap());
+    assert!(
+        !store
+            .set_thumbnail(ItemId::from_bytes([0xee; 16]), &thumb)
+            .unwrap()
+    );
+    assert!(store.set_thumbnail(it.id, &[]).is_err());
+    assert!(
+        store
+            .set_thumbnail(it.id, &vec![0; cy_store::MAX_THUMBNAIL_BYTES + 1])
+            .is_err()
+    );
+    assert_eq!(
+        store.thumbnail(it.id).unwrap().unwrap().expose(),
+        thumb.as_slice()
+    );
+    store
+        .save(&it.touched(Hlc::new(9_000, 0, DEVICE)), &Limits::default())
+        .unwrap();
+    assert!(
+        store.thumbnail(it.id).unwrap().is_some(),
+        "saving the item again keeps its thumbnail"
+    );
+    drop(store);
+    assert!(!files_contain(dir.path(), b"plaintext marker"));
+
+    let mut store = Store::open(dir.path(), &keys).unwrap();
+    store.delete(it.id).unwrap();
+    assert_eq!(store.thumbnail(it.id).unwrap(), None);
 }

@@ -966,6 +966,15 @@ public protocol SupercyEngineProtocol: AnyObject, Sendable {
     func skipNext() throws 
     
     /**
+     * The stored thumbnail (PNG) of an image item, if it has one: small, for the history list.
+     *
+     * # Errors
+     *
+     * `InvalidId` or `Internal`.
+     */
+    func thumbnail(id: String) throws  -> Data?
+    
+    /**
      * Deletes expired sensitive items; returns when to call again, if ever. Call it at the time
      * `ingest` or the previous `tick` returned, and when the history window opens.
      *
@@ -1295,6 +1304,21 @@ open func skipNext()throws   {try rustCallWithError(FfiConverterTypeSupercyError
     uniffi_cy_ffi_fn_method_supercyengine_skip_next(self.uniffiClonePointer(),$0
     )
 }
+}
+    
+    /**
+     * The stored thumbnail (PNG) of an image item, if it has one: small, for the history list.
+     *
+     * # Errors
+     *
+     * `InvalidId` or `Internal`.
+     */
+open func thumbnail(id: String)throws  -> Data?  {
+    return try  FfiConverterOptionData.lift(try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_thumbnail(self.uniffiClonePointer(),
+        FfiConverterString.lower(id),$0
+    )
+})
 }
     
     /**
@@ -4542,6 +4566,15 @@ public func queryError(query: String, mode: SearchMode) -> String?  {
     )
 })
 }
+/**
+ * The clipboard type under which the shell passes an image's thumbnail with a snapshot.
+ */
+public func thumbnailType() -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_func_thumbnail_type($0
+    )
+})
+}
 
 private enum InitializationResult {
     case ok
@@ -4565,6 +4598,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_func_query_error() != 8522) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_func_thumbnail_type() != 47285) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_keystore_read() != 22629) {
@@ -4622,6 +4658,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_skip_next() != 25809) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_thumbnail() != 17959) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_tick() != 39053) {

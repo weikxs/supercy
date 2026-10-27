@@ -145,6 +145,7 @@ impl Engine {
                 FilterDecision::Keep(capture) => self.keep(capture, now_ms)?,
             },
         };
+        self.keep_thumbnail(snapshot, &outcome)?;
         Ok(IngestReport {
             outcome,
             next_tick_ms: self.next_tick(),

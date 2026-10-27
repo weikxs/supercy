@@ -251,6 +251,26 @@ impl Store {
         Ok(removed)
     }
 
+    /// Stores a small thumbnail for item `id` (sealed, at most [`crate::MAX_THUMBNAIL_BYTES`]);
+    /// returns whether the item exists. Deleting the item deletes its thumbnail.
+    ///
+    /// # Errors
+    ///
+    /// [`StoreError::OutOfRange`] for an empty or too large thumbnail; encryption or database
+    /// failures.
+    pub fn set_thumbnail(&mut self, id: ItemId, png: &[u8]) -> Result<bool, StoreError> {
+        crate::thumbs::write(&self.conn, &self.keys, id, png)
+    }
+
+    /// The thumbnail of item `id`, if it has one.
+    ///
+    /// # Errors
+    ///
+    /// Database failures, or [`StoreError::Unseal`] when it cannot be decrypted.
+    pub fn thumbnail(&self, id: ItemId) -> Result<Option<SecretBytes>, StoreError> {
+        crate::thumbs::read(&self.conn, &self.keys, id)
+    }
+
     /// The sealed record stored under `key`, if any.
     ///
     /// # Errors

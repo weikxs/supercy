@@ -407,6 +407,11 @@ RustBuffer uniffi_cy_ffi_fn_method_supercyengine_settings(void*_Nonnull ptr, Rus
 void uniffi_cy_ffi_fn_method_supercyengine_skip_next(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_THUMBNAIL
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_THUMBNAIL
+RustBuffer uniffi_cy_ffi_fn_method_supercyengine_thumbnail(void*_Nonnull ptr, RustBuffer id, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_TICK
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_TICK
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_tick(void*_Nonnull ptr, uint64_t now_ms, RustCallStatus *_Nonnull out_status
@@ -431,6 +436,12 @@ RustBuffer uniffi_cy_ffi_fn_func_core_version(RustCallStatus *_Nonnull out_statu
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_QUERY_ERROR
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_QUERY_ERROR
 RustBuffer uniffi_cy_ffi_fn_func_query_error(RustBuffer query, RustBuffer mode, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_THUMBNAIL_TYPE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_THUMBNAIL_TYPE
+RustBuffer uniffi_cy_ffi_fn_func_thumbnail_type(RustCallStatus *_Nonnull out_status
+    
 );
 #endif
 #ifndef UNIFFI_FFIDEF_FFI_CY_FFI_RUSTBUFFER_ALLOC
@@ -731,6 +742,12 @@ uint16_t uniffi_cy_ffi_checksum_func_query_error(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_THUMBNAIL_TYPE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_THUMBNAIL_TYPE
+uint16_t uniffi_cy_ffi_checksum_func_thumbnail_type(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_KEYSTORE_READ
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_KEYSTORE_READ
 uint16_t uniffi_cy_ffi_checksum_method_keystore_read(void
@@ -842,6 +859,12 @@ uint16_t uniffi_cy_ffi_checksum_method_supercyengine_settings(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SKIP_NEXT
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SKIP_NEXT
 uint16_t uniffi_cy_ffi_checksum_method_supercyengine_skip_next(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_THUMBNAIL
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_THUMBNAIL
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_thumbnail(void
     
 );
 #endif

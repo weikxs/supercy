@@ -204,6 +204,15 @@ impl SupercyEngine {
         Ok(self.engine()?.len() as u64)
     }
 
+    /// The stored thumbnail (PNG) of an image item, if it has one: small, for the history list.
+    ///
+    /// # Errors
+    ///
+    /// `InvalidId` or `Internal`.
+    pub fn thumbnail(&self, id: String) -> Result<Option<Vec<u8>>, SupercyError> {
+        Ok(self.engine()?.thumbnail(parse_id(&id)?)?)
+    }
+
     /// Pauses recording until `until_ms`, or until `resume` when `nil`. Copies made while
     /// paused are never read.
     ///
@@ -303,6 +312,13 @@ fn single_char(text: &str) -> Result<char, SupercyError> {
 )]
 pub fn query_error(query: String, mode: SearchMode) -> Option<String> {
     Engine::query_error(&query, mode.into())
+}
+
+/// The clipboard type under which the shell passes an image's thumbnail with a snapshot.
+#[uniffi::export]
+#[must_use]
+pub fn thumbnail_type() -> String {
+    cy_engine::THUMBNAIL_TYPE.to_owned()
 }
 
 /// Why an ignore pattern is not valid, if it is not (for the settings screen).

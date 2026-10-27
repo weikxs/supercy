@@ -5,10 +5,10 @@ use rusqlite::Connection;
 use crate::StoreError;
 
 /// The newest schema this build reads and writes.
-pub const SCHEMA_VERSION: i64 = 3;
+pub const SCHEMA_VERSION: i64 = 4;
 
 /// Migration `n` (0-based) moves the schema from version `n` to `n + 1`.
-const MIGRATIONS: &[&str] = &[V1, V2, V3];
+const MIGRATIONS: &[&str] = &[V1, V2, V3, V4];
 
 const V1: &str = "
 CREATE TABLE items (
@@ -46,6 +46,9 @@ ALTER TABLE items ADD COLUMN copy_count INTEGER NOT NULL DEFAULT 1;
 ALTER TABLE items ADD COLUMN pin_key TEXT;
 CREATE UNIQUE INDEX items_pin_key ON items(pin_key) WHERE pin_key IS NOT NULL;
 ";
+
+/// Version 4: a small sealed thumbnail per image item, for the history list.
+const V4: &str = "ALTER TABLE items ADD COLUMN thumb BLOB;";
 
 /// The schema version stored in the database.
 pub(crate) fn version(conn: &Connection) -> Result<i64, StoreError> {

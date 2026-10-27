@@ -12,6 +12,7 @@ mod meta;
 mod rows;
 mod schema;
 mod store;
+mod thumbs;
 
 pub use error::StoreError;
 
@@ -31,3 +32,4 @@ pub use store::{
     DATABASE_FILE, DEFAULT_MAX_IMAGE_TOTAL_BYTES, DEFAULT_MAX_ITEMS, Limits, LoadReport, MAX_ITEMS,
     MIN_ITEMS, Store,
 };
+pub use thumbs::MAX_THUMBNAIL_BYTES;
