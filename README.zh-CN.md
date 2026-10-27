@@ -8,7 +8,7 @@
 ![许可证](https://img.shields.io/badge/许可证-待定-lightgrey)
 
 > [!NOTE]
-> Supercy 处于**早期开发**阶段，还没有可下载的应用；本仓库目前有 Rust 核心（历史模型、过滤、搜索、加密存储）、开发规范和测试框架。
+> Supercy 处于**早期开发**阶段，还没有可下载的应用；本仓库目前有 Rust 核心（历史模型、过滤、搜索、加密存储、引擎及其 Swift 接口）、开发规范和测试框架。下一步是 macOS 应用。
 
 ## 它将是什么
 
@@ -32,15 +32,18 @@
 | `cy-search` | 内存中的模糊搜索，支持拼音 |
 | `cy-store` | 加密的 SQLite 历史（XChaCha20-Poly1305，密钥在系统钥匙串） |
 | `cy-platform` | 钥匙串与时钟的 trait，及测试用的内存实现 |
+| `cy-engine` | 核心服务：采集、去重、存储、搜索、置顶、过期；不起线程和计时器 |
+| `cy-ffi` | 供 Swift 调用的引擎接口（UniFFI）；生成的绑定提交在 `bindings/swift` |
 
 所有检查都在 Linux 容器里运行，不在你的电脑上编译或安装任何东西：
 
 ```sh
 make hooks     # 启用仓库自带的 git 钩子
 make privacy   # 检查没有本地路径、密钥或真实身份信息
-make test      # 在 Docker 中运行 cargo fmt --check、clippy -D warnings、许可证检查和 cargo test
+make test      # 在 Docker 中运行 fmt、clippy -D warnings、cargo deny、cargo audit、测试和绑定检查
 make bench     # 搜索速度与内存预算（release 构建）
 make cover     # 行覆盖率，至少 80%
+make fuzz      # 对解析器和采集过滤器做模糊测试（nightly 容器）
 ```
 
 参与开发前请先阅读 [docs/development/standards.md](docs/development/standards.md)（英文）。

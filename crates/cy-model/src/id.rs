@@ -20,6 +20,9 @@ pub enum IdError {
     /// The input did not have [`ITEM_ID_LEN`] bytes.
     #[error("an item id has 16 bytes, not {0}")]
     Length(usize),
+    /// The text is not 32 hexadecimal digits.
+    #[error("an item id is written as 32 hexadecimal digits")]
+    Hex,
 }
 
 impl ItemId {
@@ -49,6 +52,23 @@ impl ItemId {
         <[u8; ITEM_ID_LEN]>::try_from(bytes)
             .map(Self)
             .map_err(|_| IdError::Length(bytes.len()))
+    }
+
+    /// Parses the 32-digit hexadecimal form produced by `Display`.
+    ///
+    /// # Errors
+    ///
+    /// [`IdError::Hex`] for anything else.
+    pub fn from_hex(text: &str) -> Result<Self, IdError> {
+        if text.len() != ITEM_ID_LEN * 2 || !text.bytes().all(|b| b.is_ascii_hexdigit()) {
+            return Err(IdError::Hex);
+        }
+        let mut bytes = [0u8; ITEM_ID_LEN];
+        for (byte, pair) in bytes.iter_mut().zip(text.as_bytes().chunks_exact(2)) {
+            let pair = std::str::from_utf8(pair).map_err(|_| IdError::Hex)?;
+            *byte = u8::from_str_radix(pair, 16).map_err(|_| IdError::Hex)?;
+        }
+        Ok(Self(bytes))
     }
 
     /// The id's bytes.
@@ -88,6 +108,23 @@ mod tests {
 
         assert_eq!(ItemId::from_slice(id.as_bytes()), Ok(id));
         assert_eq!(ItemId::from_slice(&[1, 2, 3]), Err(IdError::Length(3)));
+    }
+
+    #[test]
+    fn hex_round_trip_and_rejects_bad_input() {
+        let id = ItemId::from_bytes([0x0f; ITEM_ID_LEN]);
+
+        assert_eq!(ItemId::from_hex(&id.to_string()), Ok(id));
+        assert_eq!(ItemId::from_hex(&id.to_string().to_uppercase()), Ok(id));
+        for bad in [
+            "",
+            "abc",
+            &"g".repeat(32),
+            &"é".repeat(16),
+            &"+f".repeat(16),
+        ] {
+            assert_eq!(ItemId::from_hex(bad), Err(IdError::Hex), "{bad:?}");
+        }
     }
 
     #[test]

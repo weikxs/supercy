@@ -500,3 +500,94 @@ fn the_data_directory_and_database_are_private() {
     assert_eq!(mode(&data), 0o700);
     assert_eq!(mode(&data.join(DATABASE_FILE)), 0o600);
 }
+
+#[test]
+fn meta_records_are_sealed_and_survive_reopening() {
+    let dir = temp_dir();
+    let keys = MemoryKeyStore::new();
+    let mut store = Store::open(dir.path(), &keys).unwrap();
+
+    store.write_meta("settings", MARKER.as_bytes()).unwrap();
+    store.write_meta("settings", b"second value").unwrap();
+    drop(store);
+    let store = Store::open(dir.path(), &keys).unwrap();
+
+    assert_eq!(
+        store.read_meta("settings").unwrap().unwrap().expose(),
+        b"second value"
+    );
+    assert_eq!(store.read_meta("missing").unwrap(), None);
+    drop(store);
+    assert!(!files_contain(dir.path(), b"second value"));
+}
+
+#[test]
+fn a_meta_record_moved_to_another_key_cannot_be_read() {
+    let dir = temp_dir();
+    let keys = MemoryKeyStore::new();
+    let mut store = Store::open(dir.path(), &keys).unwrap();
+    store.write_meta("a", b"demo").unwrap();
+    drop(store);
+    let raw = rusqlite::Connection::open(dir.path().join(DATABASE_FILE)).unwrap();
+    raw.execute("UPDATE meta SET key = 'b'", []).unwrap();
+    drop(raw);
+
+    let store = Store::open(dir.path(), &keys).unwrap();
+
+    assert!(matches!(store.read_meta("b"), Err(StoreError::Unseal)));
+}
+
+#[test]
+fn a_version_1_history_is_migrated_and_keeps_its_items() {
+    let dir = temp_dir();
+    let keys = MemoryKeyStore::new();
+    let mut store = Store::open(dir.path(), &keys).unwrap();
+    let kept = item(&store, 1, text("from version 1"));
+    store.save(&kept, &Limits::default()).unwrap();
+    drop(store);
+    let raw = rusqlite::Connection::open(dir.path().join(DATABASE_FILE)).unwrap();
+    raw.execute_batch("DROP TABLE meta; PRAGMA user_version = 1;")
+        .unwrap();
+    drop(raw);
+
+    let mut store = Store::open(dir.path(), &keys).unwrap();
+    store.write_meta("settings", b"demo").unwrap();
+
+    assert_eq!(store.load().unwrap().items, vec![kept]);
+    let raw_version = || {
+        rusqlite::Connection::open(dir.path().join(DATABASE_FILE))
+            .unwrap()
+            .pragma_query_value(None, "user_version", |r| r.get::<_, i64>(0))
+            .unwrap()
+    };
+    drop(store);
+    assert_eq!(raw_version(), SCHEMA_VERSION);
+}
+
+#[test]
+fn lowering_the_limits_applies_them_at_once() {
+    let dir = temp_dir();
+    let keys = MemoryKeyStore::new();
+    let mut store = Store::open(dir.path(), &keys).unwrap();
+    for n in 1..=60 {
+        store
+            .save(
+                &item(&store, n, text(&format!("demo {n}"))),
+                &Limits {
+                    max_items: 100,
+                    ..Limits::default()
+                },
+            )
+            .unwrap();
+    }
+
+    let removed = store
+        .apply_limits(&Limits {
+            max_items: 50,
+            ..Limits::default()
+        })
+        .unwrap();
+
+    assert_eq!(removed.len(), 10);
+    assert_eq!(store.load().unwrap().items.len(), 50);
+}

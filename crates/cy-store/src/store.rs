@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use cy_model::{Fingerprint, FingerprintKey, Item, ItemId};
+use cy_model::{Fingerprint, FingerprintKey, Item, ItemId, SecretBytes};
 use cy_platform::KeyStore;
 use rusqlite::{Connection, OptionalExtension, params};
 
@@ -213,15 +213,49 @@ impl Store {
     ///
     /// Database failures.
     pub fn expire(&mut self, now_ms: u64) -> Result<Vec<ItemId>, StoreError> {
-        let tx = self.conn.transaction().map_err(StoreError::from_sql)?;
         let ids = select_ids(
-            &tx,
-            "SELECT id FROM items WHERE pinned = 0 AND expires_at <= ?1",
+            &self.conn,
+            "SELECT id FROM items WHERE expires_at IS NOT NULL AND expires_at <= ?1 AND pinned = 0",
             params![to_i64(now_ms)?],
         )?;
+        // Nothing due is the common case: no write transaction then.
+        if ids.is_empty() {
+            return Ok(ids);
+        }
+        let tx = self.conn.transaction().map_err(StoreError::from_sql)?;
         delete_ids(&tx, &ids)?;
         tx.commit().map_err(StoreError::from_sql)?;
         Ok(ids)
+    }
+
+    /// Applies `limits` now (for example after the user lowered them); returns the removed ids.
+    ///
+    /// # Errors
+    ///
+    /// Database failures; nothing is changed then.
+    pub fn apply_limits(&mut self, limits: &Limits) -> Result<Vec<ItemId>, StoreError> {
+        let tx = self.conn.transaction().map_err(StoreError::from_sql)?;
+        let removed = enforce_limits(&tx, limits)?;
+        tx.commit().map_err(StoreError::from_sql)?;
+        Ok(removed)
+    }
+
+    /// The sealed record stored under `key`, if any.
+    ///
+    /// # Errors
+    ///
+    /// Database failures, or [`StoreError::Unseal`] when the record cannot be decrypted.
+    pub fn read_meta(&self, key: &str) -> Result<Option<SecretBytes>, StoreError> {
+        crate::meta::read(&self.conn, &self.keys, key)
+    }
+
+    /// Seals `value` and stores it under `key`, replacing any previous record.
+    ///
+    /// # Errors
+    ///
+    /// Encryption or database failures.
+    pub fn write_meta(&mut self, key: &str, value: &[u8]) -> Result<(), StoreError> {
+        crate::meta::write(&self.conn, &self.keys, key, value)
     }
 
     /// When the next unpinned sensitive item expires, if any. The caller schedules one timer for
@@ -234,7 +268,7 @@ impl Store {
         let next: Option<i64> = self
             .conn
             .query_row(
-                "SELECT MIN(expires_at) FROM items WHERE pinned = 0",
+                "SELECT MIN(expires_at) FROM items WHERE expires_at IS NOT NULL AND pinned = 0",
                 [],
                 |row| row.get(0),
             )

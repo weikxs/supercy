@@ -8,7 +8,7 @@ use zeroize::Zeroizing;
 use crate::StoreError;
 
 /// Largest decoded body accepted; larger input is treated as damaged.
-pub(crate) const MAX_BODY_BYTES: usize = 16 * 1024 * 1024;
+pub(crate) const MAX_BODY_BYTES: usize = 32 * 1024 * 1024;
 
 /// The sealed fields, borrowed for encoding.
 #[derive(Serialize)]

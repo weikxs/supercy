@@ -1,0 +1,43 @@
+[package]
+name = "supercy-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+cy-filter = { path = "../crates/cy-filter" }
+cy-model = { path = "../crates/cy-model" }
+cy-search = { path = "../crates/cy-search" }
+cy-store = { path = "../crates/cy-store", features = ["fuzzing"] }
+
+# Not part of the main workspace: fuzzing needs a nightly toolchain.
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "filter"
+path = "fuzz_targets/filter.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "store_body"
+path = "fuzz_targets/store_body.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "search"
+path = "fuzz_targets/search.rs"
+test = false
+doc = false
+bench = false

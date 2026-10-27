@@ -1,6 +1,8 @@
 [workspace]
 resolver = "3"
 members = ["crates/*"]
+# Fuzzing needs a nightly toolchain and has its own workspace.
+exclude = ["fuzz"]
 
 [workspace.package]
 version = "0.0.0"
@@ -13,6 +15,9 @@ cy-model = { path = "crates/cy-model" }
 cy-filter = { path = "crates/cy-filter" }
 cy-search = { path = "crates/cy-search" }
 cy-platform = { path = "crates/cy-platform" }
+cy-store = { path = "crates/cy-store" }
+cy-engine = { path = "crates/cy-engine" }
+cy-ffi = { path = "crates/cy-ffi" }
 blake3 = "1.8"
 chacha20poly1305 = "0.10"
 ciborium = "0.2"
@@ -24,6 +29,7 @@ thiserror = "2"
 zeroize = "1.8"
 proptest = "1"
 tempfile = "3"
+uniffi = "0.29"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

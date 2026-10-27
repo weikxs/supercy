@@ -9,7 +9,8 @@
 
 > [!NOTE]
 > Supercy is in **early development**. There is no app to download yet: this repository holds the Rust core
-> (history model, filtering, search, encrypted storage), the development standards and the test harness.
+> (history model, filtering, search, encrypted storage, the engine and its Swift interface), the development
+> standards and the test harness. The macOS app comes next.
 
 ## What it will be
 
@@ -39,15 +40,18 @@ The core is written in Rust (`crates/`); each platform has a thin native shell (
 | `cy-search` | In-memory fuzzy search with pinyin |
 | `cy-store` | Encrypted SQLite history (XChaCha20-Poly1305, key in the system keystore) |
 | `cy-platform` | Keystore and clock traits, with in-memory versions for tests |
+| `cy-engine` | The core service: capture, deduplicate, store, search, pin, expire; no threads or timers |
+| `cy-ffi` | The engine for Swift (UniFFI); generated bindings are committed in `bindings/swift` |
 
 All checks run in a Linux container, so nothing is built or installed on your machine:
 
 ```sh
 make hooks     # use the repository's git hooks
 make privacy   # no local paths, secrets or real identifiers
-make test      # cargo fmt --check, clippy -D warnings, license check and cargo test in Docker
+make test      # fmt, clippy -D warnings, cargo deny, cargo audit, tests and a bindings check in Docker
 make bench     # search speed and memory budgets (release build)
 make cover     # line coverage, at least 80%
+make fuzz      # fuzz the parsers and the capture filter (nightly container)
 ```
 
 Read [docs/development/standards.md](docs/development/standards.md) before contributing.

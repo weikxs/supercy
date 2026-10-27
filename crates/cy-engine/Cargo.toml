@@ -1,0 +1,23 @@
+[package]
+name = "cy-engine"
+description = "The Supercy core service: capture, filter, deduplicate, store, search and expire."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+ciborium.workspace = true
+cy-filter.workspace = true
+cy-model.workspace = true
+cy-platform.workspace = true
+cy-search.workspace = true
+cy-store.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

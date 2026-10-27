@@ -5,10 +5,10 @@ use rusqlite::Connection;
 use crate::StoreError;
 
 /// The newest schema this build reads and writes.
-pub const SCHEMA_VERSION: i64 = 1;
+pub const SCHEMA_VERSION: i64 = 2;
 
 /// Migration `n` (0-based) moves the schema from version `n` to `n + 1`.
-const MIGRATIONS: &[&str] = &[V1];
+const MIGRATIONS: &[&str] = &[V1, V2];
 
 const V1: &str = "
 CREATE TABLE items (
@@ -27,6 +27,17 @@ CREATE TABLE items (
 CREATE UNIQUE INDEX items_fingerprint ON items(fingerprint);
 CREATE INDEX items_order ON items(pinned, last_used);
 CREATE INDEX items_expiry ON items(expires_at) WHERE expires_at IS NOT NULL;
+";
+
+/// Version 2: sealed key-value records (settings, device tag), and an expiry index that matches
+/// the expiry queries exactly, so finding due items never scans the history.
+const V2: &str = "
+CREATE TABLE meta (
+    key   TEXT PRIMARY KEY NOT NULL,
+    value BLOB NOT NULL
+) STRICT;
+DROP INDEX items_expiry;
+CREATE INDEX items_expiry ON items(expires_at) WHERE expires_at IS NOT NULL AND pinned = 0;
 ";
 
 /// The schema version stored in the database.

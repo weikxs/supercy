@@ -8,11 +8,23 @@ mod codec;
 mod crypto;
 mod error;
 mod keys;
+mod meta;
 mod rows;
 mod schema;
 mod store;
 
 pub use error::StoreError;
+
+/// Entry points for the fuzz targets; not part of the public interface.
+#[cfg(feature = "fuzzing")]
+#[doc(hidden)]
+pub mod fuzzing {
+    /// Decodes a stored body; returns whether it was valid.
+    #[must_use]
+    pub fn decode_body(bytes: &[u8]) -> bool {
+        crate::codec::decode(bytes).is_ok()
+    }
+}
 pub use keys::DATA_KEY_ACCOUNT;
 pub use schema::SCHEMA_VERSION;
 pub use store::{
