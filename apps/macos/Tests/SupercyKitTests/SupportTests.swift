@@ -32,7 +32,12 @@ final class L10nTests: XCTestCase {
 
     func testLanguageFollowsTheSettingOrTheSystem() {
         XCTAssertEqual(UILanguage.resolve(.system, preferred: ["zh-Hans-CN"]), .chinese)
+        XCTAssertEqual(UILanguage.resolve(.system, preferred: ["zh-CN"]), .chinese)
         XCTAssertEqual(UILanguage.resolve(.system, preferred: ["de-DE"]), .english)
+        XCTAssertEqual(UILanguage.resolve(.system, preferred: ["en-AE", "zh-Hans-AE"]), .english)
+        XCTAssertEqual(UILanguage.resolve(.system, preferred: ["ja-JP", "zh-Hans-CN"]), .chinese)
+        XCTAssertEqual(UILanguage.resolve(.system, preferred: ["zh-Hant-TW"]), .english)
+        XCTAssertEqual(UILanguage.resolve(.system, preferred: []), .english)
         XCTAssertEqual(UILanguage.resolve(.simplifiedChinese, preferred: ["en"]), .chinese)
         XCTAssertEqual(UILanguage.resolve(.english, preferred: ["zh-Hans"]), .english)
         XCTAssertEqual(L10n.text(.paste, .chinese), "粘贴")

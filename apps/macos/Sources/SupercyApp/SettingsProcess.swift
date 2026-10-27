@@ -31,7 +31,8 @@ final class SettingsProcess {
         let input = Pipe()
         let output = Pipe()
         process.executableURL = executable
-        process.arguments = ["--settings-ui"] + extraArguments
+        // AppKit's own texts in the window (text field menus, buttons) use the same language.
+        process.arguments = ["--settings-ui"] + extraArguments + ["-AppleLanguages", "(\(L10n.language.localization))"]
         process.standardInput = input
         process.standardOutput = output
         process.terminationHandler = { [weak self] _ in DispatchQueue.main.async { self?.finished() } }

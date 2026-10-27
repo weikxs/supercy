@@ -66,6 +66,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				11080F6C22D37086B91EB308,
+				5AE3B40CC703C4FF0AA65142,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -142,6 +143,7 @@
 				1BE32799EFD87E0EC1ED3F0B,
 				0E51A6B86EB25DC55FBA5271,
 				2D0ECC818F0BCB4FB9570B41,
+				477D9D91D4DD8846651E6A6A,
 			);
 			name = SupercyApp;
 			sourceTree = "<group>";
@@ -211,6 +213,15 @@
 		450A8281EB69E5133704399D = {
 			isa = PBXBuildFile;
 			fileRef = 639DEF8ACED0BB7726735495;
+		};
+		477D9D91D4DD8846651E6A6A = {
+			isa = PBXVariantGroup;
+			children = (
+				FF4C8B5BA2BAA52E0F77469C,
+				A86E2ED0EE91541B0BA1B184,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
 		};
 		498A8F6C8829BCF6F1BC8C2A = {
 			isa = PBXFileReference;
@@ -330,6 +341,10 @@
 			name = MeasurementScript.swift;
 			path = Sources/SupercyApp/MeasurementScript.swift;
 			sourceTree = SOURCE_ROOT;
+		};
+		5AE3B40CC703C4FF0AA65142 = {
+			isa = PBXBuildFile;
+			fileRef = 477D9D91D4DD8846651E6A6A;
 		};
 		5FEBD1E4EECC7FA7BD08F95D = {
 			isa = XCBuildConfiguration;
@@ -713,6 +728,13 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A86E2ED0EE91541B0BA1B184 = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = "zh-Hans";
+			path = "Resources/zh-Hans.lproj/InfoPlist.strings";
+			sourceTree = SOURCE_ROOT;
+		};
 		ABC436CC4C92B5B05625FF61 = {
 			isa = PBXBuildFile;
 			fileRef = 0E51A6B86EB25DC55FBA5271;
@@ -974,6 +996,13 @@
 				GENERATE_INFOPLIST_FILE = YES;
 			};
 			name = Release;
+		};
+		FF4C8B5BA2BAA52E0F77469C = {
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = en;
+			path = Resources/en.lproj/InfoPlist.strings;
+			sourceTree = SOURCE_ROOT;
 		};
 		FFF1B21347875D7485DBB7CB = {
 			isa = PBXBuildFile;

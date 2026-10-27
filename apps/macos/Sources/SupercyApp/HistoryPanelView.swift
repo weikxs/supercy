@@ -15,9 +15,6 @@ final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate
     /// A plain label, not a text view: text views pull in the Services menu machinery.
     private let previewText = NSTextField(wrappingLabelWithString: "")
     private let previewScroll = NSView()
-    /// The decoded preview image of the selected item, kept while it stays selected.
-    private var previewImageCache: (id: String, image: NSImage?)?
-    private let previewImage = NSImageView()
     private let detailsLabel = NSTextField(wrappingLabelWithString: "")
     private static let listWidth: CGFloat = 380
     private static let panelWidth: CGFloat = 760
@@ -90,7 +87,6 @@ final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate
             previewText.leadingAnchor.constraint(equalTo: previewScroll.leadingAnchor),
             previewText.trailingAnchor.constraint(equalTo: previewScroll.trailingAnchor),
         ])
-        previewImage.imageScaling = .scaleProportionallyDown
         detailsLabel.font = .systemFont(ofSize: 11)
         detailsLabel.textColor = .secondaryLabelColor
         layout(header: header, list: listScroll, hints: hints)
@@ -98,9 +94,9 @@ final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate
 
     private func layout(header: NSView, list: NSScrollView, hints: NSView) {
         let preview = NSView()
-        for view in [previewScroll, previewImage, detailsLabel] { preview.addSubview(view) }
+        for view in [previewScroll, detailsLabel] { preview.addSubview(view) }
         for view in [header, problemLabel, list, preview, hints] { addSubview(view) }
-        for view in [header, problemLabel, list, preview, hints, previewScroll, previewImage, detailsLabel] {
+        for view in [header, problemLabel, list, preview, hints, previewScroll, detailsLabel] {
             view.translatesAutoresizingMaskIntoConstraints = false
         }
         NSLayoutConstraint.activate([
@@ -121,10 +117,6 @@ final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate
             previewScroll.leadingAnchor.constraint(equalTo: preview.leadingAnchor),
             previewScroll.trailingAnchor.constraint(equalTo: preview.trailingAnchor),
             previewScroll.bottomAnchor.constraint(equalTo: detailsLabel.topAnchor, constant: -8),
-            previewImage.topAnchor.constraint(equalTo: previewScroll.topAnchor),
-            previewImage.leadingAnchor.constraint(equalTo: previewScroll.leadingAnchor),
-            previewImage.trailingAnchor.constraint(equalTo: previewScroll.trailingAnchor),
-            previewImage.bottomAnchor.constraint(equalTo: previewScroll.bottomAnchor),
             detailsLabel.leadingAnchor.constraint(equalTo: preview.leadingAnchor),
             detailsLabel.trailingAnchor.constraint(equalTo: preview.trailingAnchor),
             detailsLabel.bottomAnchor.constraint(equalTo: preview.bottomAnchor),
@@ -153,31 +145,17 @@ final class HistoryPanelView: NSView, NSTableViewDataSource, NSTableViewDelegate
     private func showPreview(_ item: ItemSummary?) {
         guard let item else {
             previewText.stringValue = model.query.isEmpty ? L10n.text(.emptyHistory) : L10n.text(.noMatches)
-            previewImage.image = nil
             detailsLabel.stringValue = ""
             return
         }
+        // Images show only their row thumbnail and details: no large preview is decoded.
         if item.kind == .image {
-            previewImage.image = previewImage(for: item)
-            previewText.stringValue = ""
+            previewText.stringValue = L10n.text(.kindImage)
         } else {
-            previewImage.image = nil
             let payload = model.payload(of: item)
             previewText.stringValue = String((PasteboardWriter.plainTextOf(payload) ?? "").prefix(Self.maxPreviewChars))
         }
         detailsLabel.stringValue = RowPresentation.details(for: item)
-    }
-
-    /// The selected image at preview size, decoded once per selection.
-    private func previewImage(for item: ItemSummary) -> NSImage? {
-        if let cached = previewImageCache, cached.id == item.id { return cached.image }
-        let bytes = model.payload(of: item).lazy.compactMap { rep -> Data? in
-            if case let .image(_, _, _, bytes) = rep { return bytes }
-            return nil
-        }.first
-        let image = bytes.flatMap { ThumbnailCache.decode($0, maxPixels: 800) }.map { NSImage(cgImage: $0, size: .zero) }
-        previewImageCache = (item.id, image)
-        return image
     }
 
     @objc private func clicked() {

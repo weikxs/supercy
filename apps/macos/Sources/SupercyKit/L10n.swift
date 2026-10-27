@@ -25,12 +25,22 @@ public enum L10nKey: String, CaseIterable {
 public enum UILanguage: Equatable {
     case english, chinese
 
-    /// Resolves the setting against the system's preferred languages.
+    /// The app's localizations, in the order the bundle declares them.
+    static let localizations = ["en", "zh-Hans"]
+
+    /// The bundle localization for this language.
+    public var localization: String { self == .chinese ? "zh-Hans" : "en" }
+
+    /// Resolves the setting against the system's preferred languages the way macOS picks a
+    /// bundle localization: the first preferred language Supercy has, English when none.
+    /// Traditional Chinese is not Simplified Chinese, so it falls back to English.
     public static func resolve(_ setting: Language, preferred: [String] = Locale.preferredLanguages) -> UILanguage {
         switch setting {
         case .english: return .english
         case .simplifiedChinese: return .chinese
-        case .system: return preferred.first?.hasPrefix("zh") == true ? .chinese : .english
+        case .system:
+            let match = Bundle.preferredLocalizations(from: localizations, forPreferences: preferred).first
+            return match == UILanguage.chinese.localization ? .chinese : .english
         }
     }
 }

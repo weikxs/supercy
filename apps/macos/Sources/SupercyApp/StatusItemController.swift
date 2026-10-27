@@ -8,8 +8,8 @@ final class StatusItemController: NSObject {
     private var item: NSStatusItem?
     private var showRecent = false
     private var style: MenuIcon = .clipboard
-    /// Shown at the top of the menu in trial mode.
-    var trialNotice: String?
+    /// Shows the trial notice at the top of the menu.
+    var isTrial = false
     var onOpenSettings: (() -> Void)?
 
     init(controller: ClipboardController, panel: HistoryPanelController) {
@@ -68,8 +68,8 @@ final class StatusItemController: NSObject {
 
     private func showMenu() {
         let menu = NSMenu()
-        if let trialNotice {
-            let notice = NSMenuItem(title: trialNotice, action: nil, keyEquivalent: "")
+        if isTrial {
+            let notice = NSMenuItem(title: L10n.text(.trialMode), action: nil, keyEquivalent: "")
             notice.isEnabled = false
             menu.addItem(notice)
             menu.addItem(.separator())

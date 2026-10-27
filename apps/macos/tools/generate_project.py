@@ -69,6 +69,19 @@ ASSETS = "Resources/Assets.xcassets"
 refs[ASSETS] = oid("ref", ASSETS)
 objects[refs[ASSETS]] = {"isa": "PBXFileReference", "lastKnownFileType": "folder.assetcatalog",
                          "name": "Assets.xcassets", "path": ASSETS, "sourceTree": "SOURCE_ROOT"}
+# InfoPlist.strings in each language: declares the localizations, so macOS offers both languages
+# (System Settings > Language & Region > Applications) and AppKit's own texts match.
+LANGUAGES = ["en", "zh-Hans"]
+INFOPLIST_STRINGS = "InfoPlist.strings"
+refs[INFOPLIST_STRINGS] = oid("variant", INFOPLIST_STRINGS)
+objects[refs[INFOPLIST_STRINGS]] = {"isa": "PBXVariantGroup", "children": [], "name": INFOPLIST_STRINGS,
+                                    "sourceTree": "<group>"}
+for language in LANGUAGES:
+    path = f"Resources/{language}.lproj/{INFOPLIST_STRINGS}"
+    key = oid("ref", path)
+    objects[key] = {"isa": "PBXFileReference", "lastKnownFileType": "text.plist.strings",
+                    "name": language, "path": path, "sourceTree": "SOURCE_ROOT"}
+    objects[refs[INFOPLIST_STRINGS]]["children"].append(key)
 
 
 def group(name: str, children: list[str]) -> str:
@@ -89,7 +102,7 @@ TEST_PRODUCT = product("SupercyKitTests.xctest", "wrapper.cfbundle")
 PRODUCTS = group("Products", [APP_PRODUCT, TEST_PRODUCT])
 MAIN = group("Supercy", [
     group("SupercyKit", [refs[p] for p in KIT]),
-    group("SupercyApp", [refs[p] for p in APP] + [refs[ASSETS]]),
+    group("SupercyApp", [refs[p] for p in APP] + [refs[ASSETS], refs[INFOPLIST_STRINGS]]),
     group("Bindings", [refs[BINDINGS]]),
     group("SupercyKitTests", [refs[p] for p in TESTS]),
     PRODUCTS,
@@ -184,7 +197,7 @@ def target(name: str, product_ref: str, kind: str, sources: list[str], settings:
 
 
 APP_TARGET = target("Supercy", APP_PRODUCT, "com.apple.product-type.application", KIT + APP + [BINDINGS], APP_SETTINGS,
-                    resources=[ASSETS])
+                    resources=[ASSETS, INFOPLIST_STRINGS])
 TEST_TARGET = target("SupercyKitTests", TEST_PRODUCT, "com.apple.product-type.bundle.unit-test",
                      KIT + TESTS + [BINDINGS], TEST_SETTINGS)
 
@@ -196,7 +209,7 @@ objects[ROOT] = {
     "compatibilityVersion": "Xcode 14.0",
     "developmentRegion": "en",
     "hasScannedForEncodings": "0",
-    "knownRegions": ["en", "zh-Hans", "Base"],
+    "knownRegions": [*LANGUAGES, "Base"],
     "mainGroup": MAIN,
     "productRefGroup": PRODUCTS,
     "projectDirPath": "",

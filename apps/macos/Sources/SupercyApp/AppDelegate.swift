@@ -72,7 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                                              paster: AccessibilityPaster(), scheduler: TimerScheduler(), clock: clock)
         let panel = HistoryPanelController(controller: controller, clock: clock)
         let statusItem = StatusItemController(controller: controller, panel: panel)
-        if mode == .trial { statusItem.trialNotice = L10n.text(.trialMode) }
+        statusItem.isTrial = mode == .trial
         panel.onOpenSettings = { [weak self] in self?.openSettings() }
         panel.onNeedsAccessibility = { [weak self] in self?.explainAccessibility() }
         baseline = mode == .isolated && ProcessInfo.processInfo.environment["SUPERCY_MEASURE_BASELINE"] == "1"
@@ -190,6 +190,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func settingsChanged(_ settings: Settings) {
+        // The menu and the history panel are built when opened, so they show the new language next time.
+        L10n.language = UILanguage.resolve(settings.language)
         controller?.applyPollInterval(settings.pollIntervalMs)
         statusItem?.apply(settings)
         if let shortcut = Shortcut(text: settings.historyShortcut) { hotKey?.register(shortcut) }

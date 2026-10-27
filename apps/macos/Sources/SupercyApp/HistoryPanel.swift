@@ -93,6 +93,9 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
     private func installKeyMonitor() {
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self, let model = self.model, event.window === self.panel else { return event }
+            // While an input method is composing (pinyin not yet committed), its keys are its own:
+            // Return commits the text and arrows choose a candidate instead of driving the list.
+            if let editor = self.panel?.firstResponder as? NSTextInputClient, editor.hasMarkedText() { return event }
             guard let command = KeyCommand.from(keyCode: event.keyCode, modifiers: event.modifierFlags) else { return event }
             return model.perform(command, nowMs: self.clock.nowMs()) ? nil : event
         }

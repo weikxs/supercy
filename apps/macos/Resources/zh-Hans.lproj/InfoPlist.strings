@@ -1,0 +1,2 @@
+/* Supercy declares English and Simplified Chinese, so macOS offers both and AppKit uses the matching one. */
+"CFBundleDisplayName" = "Supercy";
