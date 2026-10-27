@@ -1,20 +1,29 @@
 import AppKit
 
-/// A fixed sequence for `make macos-measure`, run only in the isolated mode with
-/// SUPERCY_MEASURE=1: fill the in-memory history with 500 items, open and close the history,
-/// open and close the settings (both off screen), then stay idle for 60 seconds. Each phase is
-/// printed so the script outside can sample memory and CPU time at that moment.
+/// Fixed sequences for `make macos-measure`, run only in the isolated mode (in-memory
+/// pasteboard, data and key under /tmp):
+///
+/// * `seed`: copies 500 demo items (480 texts, 20 images) a few at a time, then quits.
+/// * `run`: after a relaunch with those items — idle 60 s; open the history, search, paste the
+///   first result (into the in-memory pasteboard), close; open and close the settings (off
+///   screen); idle 10 min. Each phase is printed so the script outside samples memory and CPU.
 final class MeasurementScript {
+    enum Scenario: String {
+        case seed, run
+    }
+
     private let controller: ClipboardController
     private let pasteboard: InMemoryPasteboard
     private let panel: HistoryPanelController
     private let openSettings: () -> Void
     private let closeSettings: () -> Void
-    /// Seconds the outside script gets to sample each phase.
-    private static let settle: TimeInterval = 3
-    private static let idleSeconds: TimeInterval = 60
+    private static let step: TimeInterval = 3
     private static let textItems = 480
     private static let imageItems = 20
+    private static let seedBatch = 20
+    /// The long idle at the end: 10 minutes, shorter with SUPERCY_MEASURE_IDLE for diagnosis.
+    private static let longIdle: TimeInterval =
+        ProcessInfo.processInfo.environment["SUPERCY_MEASURE_IDLE"].flatMap(TimeInterval.init) ?? 600
 
     init(controller: ClipboardController, pasteboard: InMemoryPasteboard, panel: HistoryPanelController,
          openSettings: @escaping () -> Void, closeSettings: @escaping () -> Void) {
@@ -25,37 +34,61 @@ final class MeasurementScript {
         self.closeSettings = closeSettings
     }
 
-    func run() {
-        let steps: [(String, () -> Void)] = [
-            ("idle", {}),
-            ("seeded-500", { self.seed() }),
-            ("popup-open", { self.panel.show(near: nil) }),
-            ("popup-closed", { self.panel.close() }),
-            ("settings-open", { self.openSettings() }),
-            ("settings-closed", { self.closeSettings() }),
-            ("idle-60s-start", {}),
-        ]
-        var delay = Self.settle
-        for (name, action) in steps {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                action()
-                DispatchQueue.main.asyncAfter(deadline: .now() + Self.settle - 0.5) { Self.phase(name) }
-            }
-            delay += Self.settle + 2
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay + 1 + Self.idleSeconds) {
-            Self.phase("idle-60s-end")
-            DispatchQueue.main.asyncAfter(deadline: .now() + Self.settle) { NSApp.terminate(nil) }
+    func run(_ scenario: Scenario) {
+        switch scenario {
+        case .seed: seed(from: 0)
+        case .run: runSteps()
         }
     }
 
-    private func seed() {
-        for n in 0..<Self.textItems {
-            write(PasteboardType.plainText, Data("Demo item \(n): lorem ipsum dolor sit amet, 示例文本 \(n * 7919)".utf8))
+    /// Seconds the outside script gets to take its sample after each phase is printed (vmmap is
+    /// slow); nothing happens in the app meanwhile.
+    private static let sampleGap: TimeInterval = 5
+
+    private lazy var steps: [(phase: String, wait: TimeInterval, action: () -> Void)] = [
+        ("relaunched", Self.step, {}),
+        ("idle-60s-start", 0, {}),
+        ("idle-60s-end", 60, {}),
+        ("history-open", Self.step, { self.panel.show(near: nil) }),
+        ("searched", Self.step, { self.panel.scriptSearch("demo 42") }),
+        ("pasted", Self.step, { self.panel.scriptChooseFirst() }),
+        ("history-closed", Self.step, { self.panel.close() }),
+        ("settings-open", Self.step, { self.openSettings() }),
+        ("settings-closed", Self.step, { self.closeSettings() }),
+        ("idle-10min-start", Self.step, {}),
+        ("idle-10min-end", Self.longIdle, {}),
+    ]
+
+    /// Runs step `index`: its action, its wait, its phase line, then a quiet gap for sampling.
+    private func runSteps(from index: Int = 0) {
+        guard index < steps.count else {
+            NSApp.terminate(nil)
+            return
         }
-        for n in 0..<Self.imageItems {
-            if let png = Self.demoPNG(seed: n) { write(PasteboardType.png, png) }
+        let step = steps[index]
+        step.action()
+        DispatchQueue.main.asyncAfter(deadline: .now() + step.wait) {
+            Self.phase(step.phase)
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.sampleGap) { self.runSteps(from: index + 1) }
         }
+    }
+
+    /// Copies a batch, lets the run loop breathe, and continues, like copies spread over time.
+    private func seed(from start: Int) {
+        let total = Self.textItems + Self.imageItems
+        guard start < total else {
+            Self.phase("seeded")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { NSApp.terminate(nil) }
+            return
+        }
+        for n in start..<min(start + Self.seedBatch, total) {
+            if n < Self.textItems {
+                write(PasteboardType.plainText, Data("Demo item \(n): lorem ipsum dolor sit amet, 示例文本 \(n * 7919)".utf8))
+            } else if let png = Self.demoPNG(seed: n) {
+                write(PasteboardType.png, png)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { self.seed(from: start + Self.seedBatch) }
     }
 
     private func write(_ type: String, _ data: Data) {

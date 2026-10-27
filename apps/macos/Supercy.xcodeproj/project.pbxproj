@@ -27,6 +27,10 @@
 			isa = PBXBuildFile;
 			fileRef = D79A804A17645278414EB9E0;
 		};
+		0BAE5AFE2862C1D7F495C0DB = {
+			isa = PBXBuildFile;
+			fileRef = 866C68F0809EE0FFF55DA1C3;
+		};
 		0D7C502F483E9C412B44994C = {
 			isa = PBXBuildFile;
 			fileRef = 6EA43F133B79FD02264085AF;
@@ -72,6 +76,13 @@
 		179CCAB13E16DD51822CD70F = {
 			isa = PBXBuildFile;
 			fileRef = 7CBCDE4730426D1AC8661B70;
+		};
+		19EFE9DB901B166DDF00FE1A = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SettingsCoding.swift;
+			path = Sources/SupercyKit/SettingsCoding.swift;
+			sourceTree = SOURCE_ROOT;
 		};
 		1A2120112BFA0FCC8691C34B = {
 			isa = PBXBuildFile;
@@ -124,7 +135,9 @@
 			children = (
 				A591E88546F54FBEA6F3EAE5,
 				555C4164DB01E24CE853E4A1,
+				ED84963EE2BCB0455C3E299D,
 				59542C2EE14BB0C1F12F9A7B,
+				866C68F0809EE0FFF55DA1C3,
 				753F3E2592D629452688755F,
 				1BE32799EFD87E0EC1ED3F0B,
 				0E51A6B86EB25DC55FBA5271,
@@ -132,6 +145,10 @@
 			);
 			name = SupercyApp;
 			sourceTree = "<group>";
+		};
+		36865445BBF5E1AFF022893C = {
+			isa = PBXBuildFile;
+			fileRef = FAD44FE9A88644FF5BA811E4;
 		};
 		37C053271B0E6B77806A4580 = {
 			isa = PBXFileReference;
@@ -213,7 +230,6 @@
 			isa = PBXGroup;
 			children = (
 				07E4E59CE95AD0AB0D7B5F44,
-				E7D51568CA3A1B5BC1FDF0E5,
 				4B5D565C8EC281FE6E5B1E03,
 				CBE3ABB6E7B7E3F9ADC5BCE4,
 				55BA82D026AD73406D266CFD,
@@ -224,7 +240,10 @@
 				3AAF4EDCB83A18469A4AD8C7,
 				0519F9BA6645B43646EE9AE3,
 				639DEF8ACED0BB7726735495,
+				94F12836EAABFE2BF12C4A2D,
 				3FD35DE70625E12A64B019B8,
+				FAD44FE9A88644FF5BA811E4,
+				19EFE9DB901B166DDF00FE1A,
 				F1D411B7AF6339985E96DB1F,
 				849FA2FFA30F837A7D5209DF,
 				CD2B32BEAFE23494565A6405,
@@ -266,7 +285,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B89CF0428E3093599312C02A,
-				F489AB884F1F3E99CA604A2C,
 				F735AE77198E2E215B8B2163,
 				F32AB9268883F2B005455C27,
 				2E15BE4A6BE7AB3AE6DE5BFB,
@@ -277,7 +295,10 @@
 				F0F012D91F28B211E869F1A2,
 				87F7E8FB1E4B0196FC277DD4,
 				EE2C1EF29C9EBC3BAFA15003,
+				6735782F83BD6E2844748D16,
 				5428CF351BA300DEA5BAE5DA,
+				DA72D83E61D4B456D26153DD,
+				BDA2F31C758761FB5E5BD111,
 				D35586CCDD38B2A605585042,
 				8874F642ED8AEC4168E499F6,
 				2D273FF4853AA096BD48A1DE,
@@ -286,7 +307,9 @@
 				0D7C502F483E9C412B44994C,
 				67E1D049080F8688AFDC8FA1,
 				A0318ECA6C5A7AE1448C5E13,
+				D2B01304578417F2CD703F35,
 				E7FBB617B99556DE11B83D55,
+				0BAE5AFE2862C1D7F495C0DB,
 				D5E367E13B8434FAD779789C,
 				D63D240C4692E6456CA64F5F,
 				ABC436CC4C92B5B05625FF61,
@@ -362,6 +385,10 @@
 			path = SupercyKitTests.xctest;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		6735782F83BD6E2844748D16 = {
+			isa = PBXBuildFile;
+			fileRef = 94F12836EAABFE2BF12C4A2D;
+		};
 		67E1D049080F8688AFDC8FA1 = {
 			isa = PBXBuildFile;
 			fileRef = A591E88546F54FBEA6F3EAE5;
@@ -406,6 +433,10 @@
 			path = Tests/SupercyKitTests/ThumbnailCacheTests.swift;
 			sourceTree = SOURCE_ROOT;
 		};
+		7047B7054753AF80CB136C45 = {
+			isa = PBXBuildFile;
+			fileRef = B5A803D46E1D27A02C1E9000;
+		};
 		743676AFC5D4EAD2B6406C2C = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -420,16 +451,11 @@
 			path = Sources/SupercyApp/StatusItemController.swift;
 			sourceTree = SOURCE_ROOT;
 		};
-		7762E15C936CAC1B48548D61 = {
-			isa = PBXBuildFile;
-			fileRef = E7D51568CA3A1B5BC1FDF0E5;
-		};
 		7A751C76ACCA72AEB16E3A35 = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				1A2120112BFA0FCC8691C34B,
-				7762E15C936CAC1B48548D61,
 				EC9EFBB6C1B26C1D3B8C3933,
 				D4B735DD3E4A23FE8FE0F566,
 				D1621B0BB26DAE0176A4924A,
@@ -440,7 +466,10 @@
 				295995B7E7DD7A5042755312,
 				A4B59DA6B8F9AC506F7EFEE2,
 				450A8281EB69E5133704399D,
+				8E9F9F3AABE5E48CA605E1DA,
 				13F5F2AE80828A8E56E54E85,
+				36865445BBF5E1AFF022893C,
+				81F75B60530B4CB8FE057EE5,
 				EB066EF68B669ABCAF78E973,
 				0F99DB380BEB5DD9AD09E0CC,
 				C5C45D5409A1E8021AC0FEEB,
@@ -450,6 +479,7 @@
 				091A54C5BE2464F8CC5DB6AD,
 				179CCAB13E16DD51822CD70F,
 				D19BDD81A3DF0A90243D0A82,
+				7047B7054753AF80CB136C45,
 				BFA4AADF711FCF0ED950C2E0,
 				FAEE6EFAE26CAB5C3D4F26F6,
 				D151F9F8B878D9B283B09165,
@@ -502,6 +532,10 @@
 			};
 			name = Debug;
 		};
+		81F75B60530B4CB8FE057EE5 = {
+			isa = PBXBuildFile;
+			fileRef = 19EFE9DB901B166DDF00FE1A;
+		};
 		833C3915CE6966FE92600D81 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -514,6 +548,13 @@
 			lastKnownFileType = sourcecode.swift;
 			name = SettingsView.swift;
 			path = Sources/SupercyKit/SettingsView.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		866C68F0809EE0FFF55DA1C3 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SettingsProcess.swift;
+			path = Sources/SupercyApp/SettingsProcess.swift;
 			sourceTree = SOURCE_ROOT;
 		};
 		87F7E8FB1E4B0196FC277DD4 = {
@@ -562,6 +603,10 @@
 			};
 			name = Debug;
 		};
+		8E9F9F3AABE5E48CA605E1DA = {
+			isa = PBXBuildFile;
+			fileRef = 94F12836EAABFE2BF12C4A2D;
+		};
 		91B9D196A51BD93A6F51B945 = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -582,6 +627,13 @@
 			includeInIndex = 0;
 			path = Supercy.app;
 			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		94F12836EAABFE2BF12C4A2D = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = RowPresentation.swift;
+			path = Sources/SupercyKit/RowPresentation.swift;
+			sourceTree = SOURCE_ROOT;
 		};
 		9706914E1138CDDB028F542E = {
 			isa = PBXNativeTarget;
@@ -676,6 +728,13 @@
 			isa = PBXBuildFile;
 			fileRef = 8D06EAC446F2E034AF24853B;
 		};
+		B5A803D46E1D27A02C1E9000 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SettingsChannelTests.swift;
+			path = Tests/SupercyKitTests/SettingsChannelTests.swift;
+			sourceTree = SOURCE_ROOT;
+		};
 		B89CF0428E3093599312C02A = {
 			isa = PBXBuildFile;
 			fileRef = 07E4E59CE95AD0AB0D7B5F44;
@@ -683,6 +742,10 @@
 		BA117510D6DC958EE24AE442 = {
 			isa = PBXBuildFile;
 			fileRef = 584D785838DCD9E3EBF2F9E2;
+		};
+		BDA2F31C758761FB5E5BD111 = {
+			isa = PBXBuildFile;
+			fileRef = 19EFE9DB901B166DDF00FE1A;
 		};
 		BFA4AADF711FCF0ED950C2E0 = {
 			isa = PBXBuildFile;
@@ -719,6 +782,7 @@
 				D79A804A17645278414EB9E0,
 				7CBCDE4730426D1AC8661B70,
 				B2C6509C6F8880D7CC15B692,
+				B5A803D46E1D27A02C1E9000,
 				498A8F6C8829BCF6F1BC8C2A,
 				833C3915CE6966FE92600D81,
 				6F5FA57B2C1E5E9430A94F00,
@@ -737,6 +801,10 @@
 		D19BDD81A3DF0A90243D0A82 = {
 			isa = PBXBuildFile;
 			fileRef = B2C6509C6F8880D7CC15B692;
+		};
+		D2B01304578417F2CD703F35 = {
+			isa = PBXBuildFile;
+			fileRef = ED84963EE2BCB0455C3E299D;
 		};
 		D35586CCDD38B2A605585042 = {
 			isa = PBXBuildFile;
@@ -821,12 +889,9 @@
 			isa = PBXBuildFile;
 			fileRef = 743676AFC5D4EAD2B6406C2C;
 		};
-		E7D51568CA3A1B5BC1FDF0E5 = {
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.swift;
-			name = HistoryView.swift;
-			path = Sources/SupercyKit/HistoryView.swift;
-			sourceTree = SOURCE_ROOT;
+		DA72D83E61D4B456D26153DD = {
+			isa = PBXBuildFile;
+			fileRef = FAD44FE9A88644FF5BA811E4;
 		};
 		E7FBB617B99556DE11B83D55 = {
 			isa = PBXBuildFile;
@@ -839,6 +904,13 @@
 		EC9EFBB6C1B26C1D3B8C3933 = {
 			isa = PBXBuildFile;
 			fileRef = 4B5D565C8EC281FE6E5B1E03;
+		};
+		ED84963EE2BCB0455C3E299D = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = HistoryPanelView.swift;
+			path = Sources/SupercyApp/HistoryPanelView.swift;
+			sourceTree = SOURCE_ROOT;
 		};
 		EE2C1EF29C9EBC3BAFA15003 = {
 			isa = PBXBuildFile;
@@ -859,13 +931,16 @@
 			isa = PBXBuildFile;
 			fileRef = CBE3ABB6E7B7E3F9ADC5BCE4;
 		};
-		F489AB884F1F3E99CA604A2C = {
-			isa = PBXBuildFile;
-			fileRef = E7D51568CA3A1B5BC1FDF0E5;
-		};
 		F735AE77198E2E215B8B2163 = {
 			isa = PBXBuildFile;
 			fileRef = 4B5D565C8EC281FE6E5B1E03;
+		};
+		FAD44FE9A88644FF5BA811E4 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SettingsChannel.swift;
+			path = Sources/SupercyKit/SettingsChannel.swift;
+			sourceTree = SOURCE_ROOT;
 		};
 		FAEE6EFAE26CAB5C3D4F26F6 = {
 			isa = PBXBuildFile;

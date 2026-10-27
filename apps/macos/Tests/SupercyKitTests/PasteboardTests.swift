@@ -41,7 +41,7 @@ final class SnapshotReaderTests: XCTestCase {
 
         let entries = SnapshotReader(pasteboard: pasteboard, frontApp: frontApp).snapshot(at: demoNow).entries
 
-        XCTAssertEqual(entries.map(\.typeId), [PasteboardType.png])
+        XCTAssertEqual(entries.map(\.typeId), [PasteboardType.png, thumbnailType()])
         XCTAssertEqual(entries[0].data?.prefix(4), Data([0x89, 0x50, 0x4E, 0x47]))
     }
 }

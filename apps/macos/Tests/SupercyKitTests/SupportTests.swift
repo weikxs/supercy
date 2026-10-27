@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 
 final class ShortcutTests: XCTestCase {
@@ -103,12 +104,31 @@ final class PreviewFormatterTests: XCTestCase {
         XCTAssertEqual(PreviewFormatter.title(String(repeating: "x", count: 200), showSpecialChars: false).count, 121)
     }
 
-    func testHighlightsMarkTheMatchedRanges() {
-        let attributed = PreviewFormatter.highlighted("Hello from Supercy", matches: [TextRange(location: 6, length: 4)])
-        let marked = attributed.runs.filter { $0.inlinePresentationIntent == .stronglyEmphasized }
-            .map { String(attributed[$0.range].characters) }
+    func testHighlightsMarkTheMatchedRangesInBold() {
+        let attributed = RowPresentation.highlighted("Hello from Supercy", matches: [TextRange(location: 6, length: 4),
+                                                                                       TextRange(location: 40, length: 2)],
+                                                     fontSize: 13)
+        var bold: [String] = []
+        attributed.enumerateAttribute(.font, in: NSRange(location: 0, length: attributed.length)) { value, range, _ in
+            if let font = value as? NSFont, font.fontDescriptor.symbolicTraits.contains(.bold) {
+                bold.append((attributed.string as NSString).substring(with: range))
+            }
+        }
 
-        XCTAssertEqual(marked, ["from"])
+        XCTAssertEqual(bold, ["from"])
+    }
+
+    func testRowHintsAndDetails() throws {
+        let rig = try Rig(self)
+        rig.controller.start()
+        rig.copy("demo")
+        rig.scheduler.fireRepeating()
+        let item = try XCTUnwrap(rig.engine.list(kind: nil, offset: 0, limit: 1).first)
+
+        XCTAssertEqual(RowPresentation.hint(for: item, index: 0), "⌘1")
+        XCTAssertEqual(RowPresentation.hint(for: item, index: 9), "")
+        XCTAssertTrue(RowPresentation.details(for: item).contains("Demo Editor"))
+        XCTAssertEqual(RowPresentation.symbol(.url), "link")
     }
 }
 
@@ -152,5 +172,35 @@ final class SettingsModelTests: XCTestCase {
         model.launchAtLogin = true
 
         XCTAssertTrue(system.launchAtLogin)
+    }
+}
+
+final class FileKeystoreTests: XCTestCase {
+    func testKeepsTheKeyAcrossInstancesSoAnIsolatedRelaunchReopensTheHistory() throws {
+        let dir = try temporaryDirectory(self)
+        // The first engine lives only inside this closure, so its lock is released before reopening.
+        let id: String? = try {
+            let first = try reopen(dir)
+            return try first.ingest(snapshot: ClipboardSnapshot(
+                entries: [ClipEntry(typeId: PasteboardType.plainText, data: Data("kept".utf8), size: 4)],
+                frontApp: nil, capturedAtMs: demoNow)).outcome.storedID
+        }()
+
+        let reopened = try reopen(dir)
+
+        XCTAssertEqual(try reopened.list(kind: nil, offset: 0, limit: 10).map(\.id), [try XCTUnwrap(id)])
+        let mode = try FileManager.default.attributesOfItem(atPath: dir.appendingPathComponent("isolated-keystore-data-key").path)[.posixPermissions] as? Int
+        XCTAssertEqual(mode, 0o600)
+    }
+
+    private func reopen(_ dir: URL) throws -> SupercyEngine {
+        try SupercyEngine.open(dataDir: dir.path, keystore: FileKeystore(directory: dir), nowMs: demoNow)
+    }
+}
+
+extension IngestOutcome {
+    var storedID: String? {
+        if case let .stored(id, _) = self { return id }
+        return nil
     }
 }

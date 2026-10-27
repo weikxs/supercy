@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import ImageIO
 
 /// The application in front, for "copied from" and the ignore lists.
 public protocol FrontAppProviding {
@@ -12,6 +13,9 @@ public protocol FrontAppProviding {
 public struct SnapshotReader {
     /// Data larger than this is not read into the snapshot; only its size is passed on.
     public static let maxEntryBytes = 16 * 1024 * 1024
+    /// Longer side of the thumbnail stored with an image item, in pixels (40 pt rows at 2×).
+    public static let thumbnailPixels = 160
+    static let imageTypes: Set<String> = [PasteboardType.png, PasteboardType.tiff, PasteboardType.jpeg, PasteboardType.gif]
 
     private let pasteboard: PasteboardReading
     private let frontApp: FrontAppProviding
@@ -23,7 +27,10 @@ public struct SnapshotReader {
 
     public func snapshot(at nowMs: UInt64) -> ClipboardSnapshot {
         let items = pasteboard.readItems()
-        let all = items.flatMap { item in clipEntries(of: item) }
+        var all = items.flatMap { item in clipEntries(of: item) }
+        if let thumbnail = Self.thumbnail(of: all) {
+            all.append(ClipEntry(typeId: thumbnailType(), data: thumbnail, size: UInt64(thumbnail.count)))
+        }
         return ClipboardSnapshot(entries: all, frontApp: frontApp.frontApp(), capturedAtMs: nowMs)
     }
 
@@ -47,6 +54,21 @@ public struct SnapshotReader {
             return ClipEntry(typeId: entry.type, data: nil, size: UInt64(data.count))
         }
         return ClipEntry(typeId: entry.type, data: data, size: UInt64(data.count))
+    }
+
+    /// A small PNG of the first image, made once now so the history never decodes the full image.
+    static func thumbnail(of entries: [ClipEntry]) -> Data? {
+        guard let image = entries.first(where: { imageTypes.contains($0.typeId) })?.data,
+              let small = ThumbnailCache.decode(image, maxPixels: thumbnailPixels)
+        else { return nil }
+        return pngData(small)
+    }
+
+    static func pngData(_ image: CGImage) -> Data? {
+        let data = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil) else { return nil }
+        CGImageDestinationAddImage(destination, image, nil)
+        return CGImageDestinationFinalize(destination) ? data as Data : nil
     }
 
     static func pngData(fromTIFF tiff: Data) -> Data? {

@@ -58,3 +58,37 @@ final class ThumbnailCacheTests: XCTestCase {
         XCTAssertEqual(model.thumbnails.count, 1)
     }
 }
+
+final class StoredThumbnailTests: XCTestCase {
+    private func png(width: Int, height: Int) throws -> Data {
+        let image = try XCTUnwrap(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height,
+                                                   bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                                   colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0))
+        return try XCTUnwrap(image.representation(using: .png, properties: [:]))
+    }
+
+    func testCopiedImagesCarryASmallThumbnailAndTextDoesNot() throws {
+        let pasteboard = InMemoryPasteboard()
+        pasteboard.write(items: [[PasteboardEntry(type: PasteboardType.png, data: try png(width: 1_600, height: 900))]])
+        let image = SnapshotReader(pasteboard: pasteboard, frontApp: FakeFrontApp()).snapshot(at: demoNow)
+        pasteboard.write(items: [[PasteboardEntry(type: PasteboardType.plainText, data: Data("demo".utf8))]])
+        let text = SnapshotReader(pasteboard: pasteboard, frontApp: FakeFrontApp()).snapshot(at: demoNow)
+
+        let thumbnail = try XCTUnwrap(image.entries.first { $0.typeId == thumbnailType() }?.data)
+        let decoded = try XCTUnwrap(ThumbnailCache.decode(thumbnail, maxPixels: 1_000))
+        XCTAssertEqual(max(decoded.width, decoded.height), SnapshotReader.thumbnailPixels)
+        XCTAssertFalse(text.entries.contains { $0.typeId == thumbnailType() })
+    }
+
+    func testTheListUsesTheStoredThumbnail() throws {
+        let rig = try Rig(self)
+        rig.controller.start()
+        rig.pasteboard.write(items: [[PasteboardEntry(type: PasteboardType.png, data: try png(width: 1_600, height: 900))]])
+        rig.scheduler.fireRepeating()
+        let item = try XCTUnwrap(rig.engine.list(kind: nil, offset: 0, limit: 1).first)
+
+        XCTAssertNotNil(try rig.engine.thumbnail(id: item.id))
+        let model = HistoryViewModel(controller: rig.controller)
+        XCTAssertEqual(model.thumbnail(of: item, maxPixels: 80).map { max($0.width, $0.height) }, 80)
+    }
+}

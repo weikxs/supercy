@@ -29,22 +29,6 @@ public enum PreviewFormatter {
         })
     }
 
-    /// The preview with matched ranges marked, for the row title.
-    public static func highlighted(_ title: String, matches: [TextRange]) -> AttributedString {
-        var attributed = AttributedString(title)
-        let nsTitle = title as NSString
-        for range in matches {
-            let nsRange = NSRange(location: Int(range.location), length: Int(range.length))
-            guard NSMaxRange(nsRange) <= nsTitle.length,
-                  let swiftRange = Range(nsRange, in: title),
-                  let lower = AttributedString.Index(swiftRange.lowerBound, within: attributed),
-                  let upper = AttributedString.Index(swiftRange.upperBound, within: attributed)
-            else { continue }
-            attributed[lower..<upper].inlinePresentationIntent = .stronglyEmphasized
-        }
-        return attributed
-    }
-
     /// File size for people: `512 B`, `1.2 KB`, `3.4 MB`.
     public static func size(_ bytes: UInt64) -> String {
         ByteCountFormatter.string(fromByteCount: Int64(clamping: bytes), countStyle: .file)

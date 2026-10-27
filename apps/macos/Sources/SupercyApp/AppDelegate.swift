@@ -18,9 +18,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var baseline = false
     /// One-shot timer that hands freed memory back after a burst of copies.
     private var reliefTimer: Timer?
+    private var settingsProcess: SettingsProcess?
+    private var settingsUI: SettingsUIApp?
+    private var launchMode: LaunchMode = .normal
     private static let reliefDelay: TimeInterval = 1
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if CommandLine.arguments.contains("--settings-ui") {
+            let ui = SettingsUIApp()
+            settingsUI = ui
+            ui.run(arguments: CommandLine.arguments)
+            return
+        }
         let parsed = LaunchOptions.parse(
             arguments: CommandLine.arguments,
             environment: ProcessInfo.processInfo.environment,
@@ -44,7 +53,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func start(_ options: LaunchOptions) throws {
         let mode = options.mode
-        let keystore: Keystore = mode.usesLoginKeychain ? KeychainKeystore() : MemoryKeystore()
+        launchMode = mode
+        let keystore: Keystore
+        switch mode {
+        case .normal: keystore = KeychainKeystore()
+        // Isolated measurements quit and relaunch with the same history: the key sits in a file
+        // in the /tmp data directory.
+        case .isolated: keystore = FileKeystore(directory: options.dataDirectory)
+        case .trial: keystore = MemoryKeystore()
+        }
         let pasteboard: PasteboardReading & PasteboardWriting =
             mode.readsSystemPasteboard ? SystemPasteboard() : InMemoryPasteboard()
         if !mode.allowsLoginItem { system = TrialSystemIntegration(base: system) }
@@ -76,18 +93,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         statusItem.apply(settings)
         controller.start()
-        if mode == .isolated, ProcessInfo.processInfo.environment["SUPERCY_MEASURE"] == "1",
+        if mode == .isolated, let scenario = ProcessInfo.processInfo.environment["SUPERCY_MEASURE"]
+            .flatMap(MeasurementScript.Scenario.init(rawValue:)),
            let memory = pasteboard as? InMemoryPasteboard {
             panel.offscreen = true
             let script = MeasurementScript(controller: controller, pasteboard: memory, panel: panel,
                                            openSettings: { [weak self] in self?.openSettings(offscreen: true) },
-                                           closeSettings: { [weak self] in self?.settingsWindow?.close() })
+                                           closeSettings: { [weak self] in
+                                               self?.settingsWindow?.close()
+                                               self?.settingsProcess?.close()
+                                           })
             measurement = script
-            script.run()
+            script.run(scenario)
         }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        settingsProcess?.close()
         controller?.stop()
         if let controller, (try? controller.engine.settings().clearOnQuit) == true {
             _ = try? controller.engine.clear(keepPinned: true)
@@ -101,8 +123,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return false
     }
 
-    /// Creates the settings window on demand; it is released again when closed.
+    /// Opens the settings in their own short-lived process (in-process only for the
+    /// measurement baseline).
     private func openSettings(offscreen: Bool = false) {
+        guard !baseline else {
+            openSettingsInProcess(offscreen: offscreen)
+            return
+        }
+        guard let controller else { return }
+        let process = settingsProcess ?? SettingsProcess(
+            store: EngineSettingsStore(engine: controller.engine),
+            onSaved: { [weak self] settings in self?.settingsChanged(settings) },
+            onExit: { Self.releaseFreedMemory() }
+        )
+        settingsProcess = process
+        var arguments: [String] = []
+        if launchMode == .trial { arguments.append("--trial") }
+        if offscreen { arguments.append("--offscreen") }
+        process.open(extraArguments: arguments)
+    }
+
+    /// The settings window inside this process (measurement baseline only).
+    private func openSettingsInProcess(offscreen: Bool) {
         guard let controller, let model = try? SettingsModel(engine: controller.engine, system: system) else { return }
         model.onSaved = { [weak self] settings in self?.settingsChanged(settings) }
         let window = settingsWindow ?? NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 520),

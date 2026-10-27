@@ -110,3 +110,28 @@ final class KeyCommandTests: XCTestCase {
         }
     }
 }
+
+final class HistoryPagingTests: XCTestCase {
+    func testTheListLoadsInPagesAndSearchesShowTheBestPage() throws {
+        let rig = try Rig(self)
+        rig.controller.start()
+        for n in 0..<250 {
+            rig.clock.now = demoNow + UInt64(n)
+            rig.copy("demo item \(n)")
+            rig.scheduler.fireRepeating()
+        }
+        let model = HistoryViewModel(controller: rig.controller)
+
+        XCTAssertEqual(model.items.count, 200)
+        XCTAssertTrue(model.hasMore)
+        model.loadMore()
+        XCTAssertEqual(model.items.count, 250)
+        XCTAssertFalse(model.hasMore)
+        model.query = "demo"
+        XCTAssertEqual(model.items.count, 200)
+        model.query = ""
+        model.selectedIndex = 198
+        model.moveSelection(by: 1)
+        XCTAssertEqual(model.items.count, 250, "moving to the last row fetches the next page")
+    }
+}

@@ -12,8 +12,11 @@ public final class HistoryViewModel: ObservableObject {
     @Published public private(set) var queryProblem: String?
 
     private let controller: ClipboardController
-    /// Most rows shown; the list scrolls.
-    public static let maxRows: UInt32 = 10_000
+    /// Rows fetched at a time: the list fetches more while scrolling, a search shows the best
+    /// `pageSize` matches. Keeps the work (and memory) of opening the panel small.
+    public static let pageSize: UInt32 = 200
+    /// Whether the plain list has more rows than fetched so far.
+    public private(set) var hasMore = false
 
     /// Called when the panel should close (after choosing an item).
     public var onClose: (() -> Void)?
@@ -41,15 +44,27 @@ public final class HistoryViewModel: ObservableObject {
         queryProblem = queryError(query: query, mode: mode)
         let trimmed = query.trimmingCharacters(in: .whitespaces)
         if trimmed.isEmpty {
-            items = (try? engine.list(kind: nil, offset: 0, limit: Self.maxRows)) ?? []
+            let page = (try? engine.list(kind: nil, offset: 0, limit: Self.pageSize)) ?? []
+            hasMore = page.count == Int(Self.pageSize)
+            items = page
         } else {
-            items = (try? engine.search(query: trimmed, mode: mode, kind: nil, limit: Self.maxRows)) ?? []
+            hasMore = false
+            items = (try? engine.search(query: trimmed, mode: mode, kind: nil, limit: Self.pageSize)) ?? []
         }
         selectedIndex = items.isEmpty ? 0 : min(selectedIndex, items.count - 1)
     }
 
+    /// Fetches the next page of the plain list (called when scrolling near the end).
+    public func loadMore() {
+        guard hasMore, query.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        let page = (try? controller.engine.list(kind: nil, offset: UInt32(items.count), limit: Self.pageSize)) ?? []
+        hasMore = page.count == Int(Self.pageSize)
+        if !page.isEmpty { items += page }
+    }
+
     public func moveSelection(by offset: Int) {
         guard !items.isEmpty else { return }
+        if selectedIndex + offset >= items.count - 1 { loadMore() }
         selectedIndex = max(0, min(items.count - 1, selectedIndex + offset))
     }
 
@@ -121,6 +136,9 @@ public final class HistoryViewModel: ObservableObject {
     public func thumbnail(of item: ItemSummary, maxPixels: Int) -> CGImage? {
         guard item.kind == .image else { return nil }
         return thumbnails.thumbnail(for: item.id, maxPixels: maxPixels) {
+            // The small thumbnail stored at copy time; only items from before it existed fall
+            // back to the full image.
+            if let stored = try? controller.engine.thumbnail(id: item.id) { return stored }
             let representations = (try? controller.engine.payload(id: item.id)) ?? []
             for case let .image(_, _, _, bytes) in representations { return bytes }
             return nil

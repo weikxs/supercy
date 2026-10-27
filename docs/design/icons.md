@@ -1,5 +1,9 @@
 # Icons
 
+> **Decision (2026-10-27):** three alternative directions were drawn and compared — A "Viewfinder" (capture
+> brackets around a stack of cards), B "Layers" (abstract stacked layers, coral to magenta) and C "Pin" (a note
+> pinned to the screen). All three were rejected; the current icon below is kept.
+
 One identity for the app icon and the menu bar icon: a **clipboard whose board carries an "S"**.
 
 ![Review sheet: app icon at 256 and 32 px; menu bar icon, normal and paused, on light and dark menu bars (4× magnified)](icons-preview.png)

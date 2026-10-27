@@ -10,16 +10,20 @@ public final class SettingsModel: ObservableObject {
         didSet { if launchAtLogin != system.launchAtLogin { system.launchAtLogin = launchAtLogin } }
     }
 
-    private let engine: SupercyEngine
+    private let store: SettingsStore
     private let system: SystemIntegration
     /// Called after settings were saved (the app re-registers shortcuts, intervals, icons).
     public var onSaved: ((Settings) -> Void)?
 
-    public init(engine: SupercyEngine, system: SystemIntegration) throws {
-        self.engine = engine
+    public init(store: SettingsStore, system: SystemIntegration) throws {
+        self.store = store
         self.system = system
-        settings = try engine.settings()
+        settings = try store.load()
         launchAtLogin = system.launchAtLogin
+    }
+
+    public convenience init(engine: SupercyEngine, system: SystemIntegration) throws {
+        try self.init(store: EngineSettingsStore(engine: engine), system: system)
     }
 
     public var isAccessibilityTrusted: Bool { system.isAccessibilityTrusted }
@@ -35,13 +39,13 @@ public final class SettingsModel: ObservableObject {
 
     public func save(_ next: Settings) {
         do {
-            settings = try engine.updateSettings(settings: next)
+            settings = try store.save(next)
             error = nil
             L10n.language = UILanguage.resolve(settings.language)
             onSaved?(settings)
         } catch {
             self.error = Self.message(error)
-            settings = (try? engine.settings()) ?? settings
+            settings = (try? store.load()) ?? settings
         }
     }
 
@@ -68,7 +72,7 @@ public final class SettingsModel: ObservableObject {
              let .InvalidPinKey(message)?, let .InvalidId(message)?, let .Keystore(message)?:
             return message
         case nil:
-            return error.localizedDescription
+            return (error as? SettingsChannelError)?.message ?? error.localizedDescription
         }
     }
 }

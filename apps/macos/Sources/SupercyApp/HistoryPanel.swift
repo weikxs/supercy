@@ -1,5 +1,4 @@
 import AppKit
-import SwiftUI
 
 /// A panel that takes the keyboard without activating Supercy, so the app you were using
 /// stays in front and receives the paste.
@@ -42,9 +41,8 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
             self?.onOpenSettings?()
         }
         model.onNeedsAccessibility = { [weak self] in self?.onNeedsAccessibility?() }
-        let view = HistoryView(model: model, isPaused: controller.isPaused)
-        let hosting = NSHostingView(rootView: view)
-        let panel = KeyPanel(contentRect: NSRect(origin: .zero, size: hosting.fittingSize),
+        let view = HistoryPanelView(model: model, isPaused: controller.isPaused)
+        let panel = KeyPanel(contentRect: NSRect(origin: .zero, size: view.frame.size),
                              styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
                              backing: .buffered, defer: false)
         panel.titleVisibility = .hidden
@@ -53,7 +51,7 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         panel.level = .popUpMenu
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
-        panel.contentView = hosting
+        panel.contentView = view
         panel.delegate = self
         let origin = offscreen ? NSPoint(x: -20_000, y: -20_000)
             : origin(for: panel.frame.size, statusButton: statusButton, settings: model.settings)
@@ -61,6 +59,7 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         self.panel = panel
         self.model = model
         panel.makeKeyAndOrderFront(nil)
+        view.focusSearch()
         installKeyMonitor()
     }
 
@@ -74,6 +73,17 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         // Drop the view model with its previews, thumbnails and cached payloads.
         model = nil
         onClosed?()
+    }
+
+    /// Types `text` into the search field (scripted measurements only).
+    func scriptSearch(_ text: String) {
+        model?.query = text
+    }
+
+    /// Chooses the first result, copy only (scripted measurements only).
+    func scriptChooseFirst() {
+        guard let model, let first = model.items.first else { return }
+        model.choose(first, copyOnly: true)
     }
 
     func windowDidResignKey(_ notification: Notification) {
