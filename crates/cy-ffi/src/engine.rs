@@ -203,4 +203,115 @@ impl SupercyEngine {
     pub fn item_count(&self) -> Result<u64, SupercyError> {
         Ok(self.engine()?.len() as u64)
     }
+
+    /// Pauses recording until `until_ms`, or until `resume` when `nil`. Copies made while
+    /// paused are never read.
+    ///
+    /// # Errors
+    ///
+    /// `Internal` after an earlier failure.
+    pub fn pause(&self, until_ms: Option<u64>) -> Result<(), SupercyError> {
+        self.engine()?.pause(until_ms);
+        Ok(())
+    }
+
+    /// Resumes recording.
+    ///
+    /// # Errors
+    ///
+    /// `Internal` after an earlier failure.
+    pub fn resume(&self) -> Result<(), SupercyError> {
+        self.engine()?.resume();
+        Ok(())
+    }
+
+    /// Ignores the next copy.
+    ///
+    /// # Errors
+    ///
+    /// `Internal` after an earlier failure.
+    pub fn skip_next(&self) -> Result<(), SupercyError> {
+        self.engine()?.skip_next();
+        Ok(())
+    }
+
+    /// Whether recording is paused at `now_ms`, and how many copies will be skipped.
+    ///
+    /// # Errors
+    ///
+    /// `Internal` after an earlier failure.
+    pub fn pause_status(&self, now_ms: u64) -> Result<PauseStatus, SupercyError> {
+        let state = self.engine()?.pause_state(now_ms);
+        Ok(PauseStatus {
+            paused: state.is_paused(now_ms),
+            paused_until_ms: state.paused_until_ms.filter(|until| *until != u64::MAX),
+            skip_next: state.skip_next,
+        })
+    }
+
+    /// Gives pinned item `id` the letter `key` (`a`–`z`), or removes it with `nil`.
+    ///
+    /// # Errors
+    ///
+    /// `InvalidId`, `NotFound`, `InvalidPinKey` (not pinned, not a letter, or taken) or `Internal`.
+    pub fn set_pin_key(&self, id: String, key: Option<String>) -> Result<(), SupercyError> {
+        let key = key.map(|k| single_char(&k)).transpose()?;
+        Ok(self.engine()?.set_pin_key(parse_id(&id)?, key)?)
+    }
+
+    /// The pinned item with letter `key`, if any.
+    ///
+    /// # Errors
+    ///
+    /// `InvalidPinKey` when `key` is not one character; `Internal` after an earlier failure.
+    pub fn item_for_pin_key(&self, key: String) -> Result<Option<String>, SupercyError> {
+        let key = single_char(&key)?;
+        Ok(self
+            .engine()?
+            .item_for_pin_key(key)
+            .map(|id| id.to_string()))
+    }
+}
+
+/// Whether recording is paused.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, uniffi::Record)]
+pub struct PauseStatus {
+    /// Paused now.
+    pub paused: bool,
+    /// When a timed pause ends; `nil` when not paused or paused until resumed.
+    pub paused_until_ms: Option<u64>,
+    /// Coming copies that will be skipped.
+    pub skip_next: u32,
+}
+
+fn single_char(text: &str) -> Result<char, SupercyError> {
+    let mut chars = text.chars();
+    match (chars.next(), chars.next()) {
+        (Some(c), None) => Ok(c),
+        _ => Err(SupercyError::InvalidPinKey {
+            message: "a pin key is a letter from a to z".into(),
+        }),
+    }
+}
+
+/// Why `query` is not a valid regular expression in `mode`, if it is not (for the search field).
+#[uniffi::export]
+#[must_use]
+#[allow(
+    clippy::needless_pass_by_value,
+    reason = "UniFFI hands over owned values"
+)]
+pub fn query_error(query: String, mode: SearchMode) -> Option<String> {
+    Engine::query_error(&query, mode.into())
+}
+
+/// Why an ignore pattern is not valid, if it is not (for the settings screen).
+#[uniffi::export]
+#[must_use]
+#[allow(
+    clippy::needless_pass_by_value,
+    reason = "UniFFI hands over owned values"
+)]
+pub fn check_ignore_pattern(pattern: String) -> Option<String> {
+    cy_engine::check_pattern(&pattern).err()
 }

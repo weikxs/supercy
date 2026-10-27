@@ -80,15 +80,15 @@ fn hash_part(hasher: &mut blake3::Hasher, tag: u8, bytes: &[u8]) {
     hasher.update(bytes);
 }
 
-/// The representation used for previews, search and deduplication: a link first, then text, then
-/// an image, then file references.
+/// The representation used for previews, search and deduplication: a link first, then copied
+/// files (their text form is only their names), then text, then an image.
 #[must_use]
 pub fn primary_rep(reps: &[Representation]) -> Option<&Representation> {
     const ORDER: [&[RepKind]; 4] = [
         &[RepKind::Url],
+        &[RepKind::FileRef],
         &[RepKind::Text, RepKind::RichText],
         &[RepKind::Image],
-        &[RepKind::FileRef],
     ];
     ORDER
         .iter()

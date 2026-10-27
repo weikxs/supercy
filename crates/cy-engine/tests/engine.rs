@@ -148,7 +148,7 @@ fn sensitive_items_expire_when_the_shell_ticks_at_the_reported_time() {
     let pem = format!("-----BEGIN {}PRIVATE KEY-----\ndemo", "EC ");
 
     let report = engine.ingest(&copy(&pem, T0)).unwrap();
-    let due = report.next_expiry_ms.unwrap();
+    let due = report.next_tick_ms.unwrap();
 
     assert_eq!(due, T0 + 120_000);
     assert_eq!(engine.list(None, 0, 10)[0].sensitive_until_ms, Some(due));
@@ -405,4 +405,221 @@ fn a_history_without_its_key_does_not_open() {
         result,
         Err(EngineError::Store(cy_store::StoreError::KeyMissing))
     ));
+}
+
+#[test]
+fn a_paused_engine_reads_nothing_until_resumed_or_the_pause_ends() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+
+    engine.pause(None);
+    let while_paused = engine.ingest(&copy("secret while paused", T0)).unwrap();
+    engine.resume();
+    engine.pause(Some(T0 + 1_000));
+    let report = engine.ingest(&copy("still paused", T0 + 10)).unwrap();
+    let after = engine.ingest(&copy("after the pause", T0 + 1_000)).unwrap();
+
+    assert_eq!(while_paused.outcome, IngestOutcome::Paused);
+    assert_eq!(report.next_tick_ms, Some(T0 + 1_000));
+    assert!(matches!(after.outcome, IngestOutcome::Stored { .. }));
+    assert_eq!(previews(&engine), vec!["after the pause"]);
+    assert!(!engine.pause_state(T0 + 1_000).is_paused(T0 + 1_000));
+}
+
+#[test]
+fn a_timed_pause_ends_on_tick() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+    engine.pause(Some(T0 + 500));
+
+    assert_eq!(engine.tick(T0).unwrap(), Some(T0 + 500));
+    assert_eq!(engine.tick(T0 + 500).unwrap(), None);
+    assert_eq!(engine.pause_state(T0 + 500).paused_until_ms, None);
+}
+
+#[test]
+fn skip_next_ignores_exactly_the_next_copies() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+
+    engine.skip_next();
+    let skipped = engine.ingest(&copy("skipped", T0)).unwrap();
+    let kept = engine.ingest(&copy("kept", T0 + 1)).unwrap();
+
+    assert_eq!(skipped.outcome, IngestOutcome::Skipped);
+    assert!(matches!(kept.outcome, IngestOutcome::Stored { .. }));
+    assert_eq!(engine.pause_state(T0).skip_next, 0);
+}
+
+#[test]
+fn pinning_assigns_letters_which_can_be_changed_and_are_freed_on_unpin() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+    let a = stored(&mut engine, "a", T0);
+    let b = stored(&mut engine, "b", T0 + 1);
+
+    engine.set_pinned(a, true, T0 + 2).unwrap();
+    engine.set_pinned(b, true, T0 + 3).unwrap();
+    let taken = engine.set_pin_key(b, Some('a'));
+    engine.set_pin_key(b, Some('q')).unwrap();
+    engine.set_pinned(a, false, T0 + 4).unwrap();
+    let c = stored(&mut engine, "c", T0 + 5);
+    engine.set_pinned(c, true, T0 + 6).unwrap();
+
+    assert!(matches!(taken, Err(EngineError::PinKeyTaken)));
+    assert_eq!(engine.item_for_pin_key('q'), Some(b));
+    assert_eq!(engine.item_for_pin_key('a'), Some(c));
+    assert!(matches!(
+        engine.set_pin_key(a, Some('z')),
+        Err(EngineError::NotPinned)
+    ));
+    assert!(matches!(
+        engine.set_pin_key(b, Some('Z')),
+        Err(EngineError::InvalidPinKey)
+    ));
+    let summary = engine
+        .list(None, 0, 10)
+        .into_iter()
+        .find(|s| s.id == b)
+        .unwrap();
+    assert_eq!(summary.pin_key, Some('q'));
+}
+
+#[test]
+fn copy_counts_drive_the_copy_count_sort_and_pins_can_go_to_the_bottom() {
+    use cy_engine::{PinPositionSetting, SortSetting};
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+    let pinned = stored(&mut engine, "pinned", T0);
+    stored(&mut engine, "often", T0 + 1);
+    stored(&mut engine, "once", T0 + 2);
+    engine.ingest(&copy("often", T0 + 3)).unwrap();
+    engine.ingest(&copy("often", T0 + 4)).unwrap();
+    engine.set_pinned(pinned, true, T0 + 5).unwrap();
+    stored(&mut engine, "newest", T0 + 6);
+
+    engine
+        .update_settings(Settings {
+            sort: SortSetting::CopyCount,
+            pin_position: PinPositionSetting::Bottom,
+            ..Settings::default()
+        })
+        .unwrap();
+
+    assert_eq!(previews(&engine), vec!["often", "newest", "once", "pinned"]);
+    assert_eq!(engine.list(None, 0, 1)[0].copy_count, 3);
+}
+
+#[test]
+fn regex_and_mixed_search_with_highlights() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+    stored(&mut engine, "order 123456 shipped", T0);
+    stored(&mut engine, "Hello from Supercy", T0 + 1);
+
+    let regex = engine.search(r"\d{6}", MatchMode::Regex, None, 10);
+    let mixed = engine.search("from", MatchMode::Mixed, None, 10);
+    let fuzzy = engine.search("hfs", MatchMode::Fuzzy, None, 10);
+
+    assert_eq!(regex.len(), 1);
+    assert_eq!(regex[0].matches, vec![(6, 12)]);
+    assert_eq!(mixed[0].matches, vec![(6, 10)]);
+    assert_eq!(fuzzy[0].matches, vec![(0, 1), (6, 7), (11, 12)]);
+    assert!(Engine::query_error("(", MatchMode::Regex).is_some());
+    assert!(Engine::query_error("(", MatchMode::Fuzzy).is_none());
+}
+
+#[test]
+fn ignore_rules_from_the_settings_apply_to_new_copies() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+    engine
+        .update_settings(Settings {
+            ignore_patterns: vec!["^otp".into()],
+            ignored_types: vec!["com.example.private-type".into()],
+            ..Settings::default()
+        })
+        .unwrap();
+    let typed = snapshot_from(
+        "com.example.editor",
+        T0,
+        vec![
+            ClipEntry::with_data("public.utf8-plain-text", b"demo".to_vec()),
+            ClipEntry::marker("com.example.private-type"),
+        ],
+    );
+
+    let pattern = engine.ingest(&copy("OTP 123456", T0)).unwrap();
+    let ignored_type = engine.ingest(&typed).unwrap();
+
+    assert_eq!(
+        pattern.outcome,
+        IngestOutcome::Dropped {
+            reason: DropReason::IgnoredPattern
+        }
+    );
+    assert_eq!(
+        ignored_type.outcome,
+        IngestOutcome::Dropped {
+            reason: DropReason::IgnoredType
+        }
+    );
+}
+
+#[test]
+fn allow_list_mode_keeps_only_listed_apps() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+    engine
+        .update_settings(Settings {
+            allow_list_mode: true,
+            allowed_apps: vec!["com.example.notes".into()],
+            ..Settings::default()
+        })
+        .unwrap();
+
+    let other = engine.ingest(&copy("from the editor", T0)).unwrap();
+    let listed = engine
+        .ingest(&snapshot_from(
+            "com.example.notes",
+            T0 + 1,
+            vec![ClipEntry::with_data(
+                "public.utf8-plain-text",
+                b"from notes".to_vec(),
+            )],
+        ))
+        .unwrap();
+
+    assert_eq!(
+        other.outcome,
+        IngestOutcome::Dropped {
+            reason: DropReason::NotAllowedApp
+        }
+    );
+    assert!(matches!(listed.outcome, IngestOutcome::Stored { .. }));
+}
+
+#[test]
+fn copied_files_are_listed_by_name_and_pasted_by_reference() {
+    let fixture = Fixture::new();
+    let mut engine = fixture.open(T0);
+    let snapshot = snapshot_from(
+        "com.example.files",
+        T0,
+        vec![ClipEntry::with_data(
+            "public.file-url",
+            b"file:///tmp/supercy-test/Demo%20Report.pdf".to_vec(),
+        )],
+    );
+
+    let IngestOutcome::Stored { id, .. } = engine.ingest(&snapshot).unwrap().outcome else {
+        panic!("not stored")
+    };
+    let summary = &engine.list(None, 0, 1)[0];
+
+    assert_eq!(summary.kind, RepKind::FileRef);
+    assert_eq!(summary.preview, "Demo Report.pdf");
+    assert!(
+        matches!(&engine.payload(id).unwrap()[0], Representation::FileRef { names } if names[0].ends_with("Report.pdf"))
+    );
 }

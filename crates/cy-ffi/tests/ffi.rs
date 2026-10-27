@@ -12,8 +12,8 @@ use std::sync::{Arc, Mutex};
 
 use cy_ffi::{
     ClipEntry, ClipboardSnapshot, DropReason, IngestOutcome, ItemKind, Keystore, KeystoreError,
-    PasteRepresentation, SearchMode, Settings, SourceApp, SupercyEngine, SupercyError,
-    core_version,
+    PasteRepresentation, SearchMode, Settings, SourceApp, SupercyEngine, SupercyError, TextRange,
+    check_ignore_pattern, core_version, query_error,
 };
 
 const T0: u64 = 1_700_000_000_000;
@@ -283,4 +283,73 @@ fn rich_text_images_and_links_cross_the_boundary() {
         }
     ));
     assert!(!core_version().is_empty());
+}
+
+#[test]
+fn pause_skip_and_resume_through_the_interface() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = open(&dir, &Arc::new(DemoKeychain::default())).unwrap();
+
+    engine.pause(None).unwrap();
+    let paused = engine.ingest(copy("while paused", T0)).unwrap();
+    let status = engine.pause_status(T0).unwrap();
+    engine.resume().unwrap();
+    engine.skip_next().unwrap();
+    let skipped = engine.ingest(copy("skipped", T0 + 1)).unwrap();
+    engine.pause(Some(T0 + 100)).unwrap();
+    let timed = engine.pause_status(T0 + 2).unwrap();
+
+    assert_eq!(paused.outcome, IngestOutcome::Paused);
+    assert!(status.paused && status.paused_until_ms.is_none());
+    assert_eq!(skipped.outcome, IngestOutcome::Skipped);
+    assert_eq!(timed.paused_until_ms, Some(T0 + 100));
+    assert_eq!(engine.item_count().unwrap(), 0);
+}
+
+#[test]
+fn pin_keys_through_the_interface() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = open(&dir, &Arc::new(DemoKeychain::default())).unwrap();
+    let id = stored_id(&engine, "pinned", T0);
+
+    engine.set_pinned(id.clone(), true, T0 + 1).unwrap();
+    let assigned = engine.list(None, 0, 1).unwrap()[0].pin_key.clone();
+    engine.set_pin_key(id.clone(), Some("k".into())).unwrap();
+
+    assert_eq!(assigned.as_deref(), Some("a"));
+    assert_eq!(
+        engine.item_for_pin_key("k".into()).unwrap(),
+        Some(id.clone())
+    );
+    assert!(matches!(
+        engine.set_pin_key(id.clone(), Some("kk".into())),
+        Err(SupercyError::InvalidPinKey { .. })
+    ));
+    assert!(matches!(
+        engine.set_pin_key(id, Some("K".into())),
+        Err(SupercyError::InvalidPinKey { .. })
+    ));
+}
+
+#[test]
+fn search_matches_come_back_as_utf16_ranges() {
+    let dir = tempfile::tempdir().unwrap();
+    let engine = open(&dir, &Arc::new(DemoKeychain::default())).unwrap();
+    stored_id(&engine, "😀 order 123456", T0);
+
+    let found = engine
+        .search(r"\d+".into(), SearchMode::Regex, None, 10)
+        .unwrap();
+
+    assert_eq!(
+        found[0].matches,
+        vec![TextRange {
+            location: 9,
+            length: 6
+        }]
+    );
+    assert!(query_error("(".into(), SearchMode::Regex).is_some());
+    assert!(query_error("(".into(), SearchMode::Exact).is_none());
+    assert!(check_ignore_pattern("(".into()).is_some());
+    assert!(check_ignore_pattern("^otp".into()).is_none());
 }

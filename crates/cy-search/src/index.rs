@@ -6,7 +6,7 @@ use std::cmp::Ordering;
 use cy_model::{Hlc, Item, ItemId, RepKind, Representation};
 
 use crate::fold::fold;
-use crate::matcher::{MatchMode, Query, char_mask, score};
+use crate::matcher::{MatchMode, Query, char_mask, regex_score, score};
 use crate::pinyin_forms::{PinyinForms, pinyin_forms};
 use crate::{INDEX_TEXT_BYTES, PINYIN_BYTES};
 
@@ -19,8 +19,12 @@ pub struct IndexDoc<'a> {
     pub kind: RepKind,
     /// Whether it is pinned.
     pub pinned: bool,
-    /// Its last use, for ordering.
+    /// Its last use.
     pub last_used: Hlc,
+    /// When it was first copied.
+    pub first_copied_ms: u64,
+    /// How many times it was copied.
+    pub copy_count: u32,
     /// Its searchable text (cut and folded by the index).
     pub text: Cow<'a, str>,
 }
@@ -34,11 +38,44 @@ impl<'a> IndexDoc<'a> {
             kind: item.kind(),
             pinned: item.pinned,
             last_used: item.last_used,
+            first_copied_ms: item.first_copied_ms,
+            copy_count: item.copy_count,
             text: item
                 .primary()
                 .map_or(Cow::Borrowed(""), Representation::search_text),
         }
     }
+}
+
+/// How unpinned items are ordered.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum SortOrder {
+    /// Most recently copied or pasted first.
+    #[default]
+    LastUsed,
+    /// Most recently first copied first.
+    FirstCopied,
+    /// Most often copied first.
+    CopyCount,
+}
+
+/// Where pinned items go.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum PinPosition {
+    /// Above the other items.
+    #[default]
+    Top,
+    /// Below the other items.
+    Bottom,
+}
+
+/// The list order: pinned items as a group at the top or bottom, each group sorted.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub struct ListOrder {
+    /// How items are sorted within their group.
+    pub sort: SortOrder,
+    /// Where the pinned group goes.
+    pub pins: PinPosition,
 }
 
 /// A search result.
@@ -56,6 +93,8 @@ struct Entry {
     kind: RepKind,
     pinned: bool,
     last_used: Hlc,
+    first_copied_ms: u64,
+    copy_count: u32,
     text: Box<str>,
     pinyin: Option<Box<PinyinForms>>,
     mask: u64,
@@ -76,24 +115,27 @@ impl Entry {
             kind: doc.kind,
             pinned: doc.pinned,
             last_used: doc.last_used,
+            first_copied_ms: doc.first_copied_ms,
+            copy_count: doc.copy_count,
             text: text.into_boxed_str(),
             pinyin,
             mask,
         }
     }
 
-    fn haystacks(&self, mode: MatchMode) -> impl Iterator<Item = &str> {
-        let pinyin = self.pinyin.iter().filter(move |_| mode == MatchMode::Fuzzy);
+    fn haystacks(&self, with_pinyin: bool) -> impl Iterator<Item = &str> {
+        let pinyin = self.pinyin.iter().filter(move |_| with_pinyin);
         std::iter::once(&*self.text)
             .chain(pinyin.clone().map(|p| &*p.primary))
             .chain(pinyin.filter_map(|p| p.alternate.as_deref()))
     }
 
-    fn score(&self, query: &Query) -> Option<u32> {
+    /// Every term matches the text (or, for subsequence matching, a pinyin form).
+    fn term_score(&self, query: &Query, subsequence: bool) -> Option<u32> {
         query.terms().iter().try_fold(0u32, |total, term| {
             let best = self
-                .haystacks(query.mode())
-                .filter_map(|hay| score(hay, term, query.mode()))
+                .haystacks(subsequence)
+                .filter_map(|hay| score(hay, term, subsequence))
                 .max()?;
             Some(total.saturating_add(best))
         })
@@ -107,11 +149,18 @@ impl Entry {
                 .map_or(0, |p| std::mem::size_of::<PinyinForms>() + p.heap_bytes())
     }
 
-    /// List order: pinned first, then most recently used.
-    fn list_order(&self, other: &Self) -> Ordering {
-        other
-            .pinned
-            .cmp(&self.pinned)
+    fn compare(&self, other: &Self, order: ListOrder) -> Ordering {
+        let group = match order.pins {
+            PinPosition::Top => other.pinned.cmp(&self.pinned),
+            PinPosition::Bottom => self.pinned.cmp(&other.pinned),
+        };
+        let sorted = match order.sort {
+            SortOrder::LastUsed => Ordering::Equal,
+            SortOrder::FirstCopied => other.first_copied_ms.cmp(&self.first_copied_ms),
+            SortOrder::CopyCount => other.copy_count.cmp(&self.copy_count),
+        };
+        group
+            .then(sorted)
             .then(other.last_used.cmp(&self.last_used))
     }
 }
@@ -178,15 +227,21 @@ impl SearchIndex {
         position.map(|at| self.entries.swap_remove(at)).is_some()
     }
 
-    /// Items in list order (pinned first, then most recent), optionally of one kind.
+    /// Items in list order, optionally of one kind.
     #[must_use]
-    pub fn list(&self, kind: Option<RepKind>, offset: usize, limit: usize) -> Vec<ItemId> {
+    pub fn list(
+        &self,
+        kind: Option<RepKind>,
+        order: ListOrder,
+        offset: usize,
+        limit: usize,
+    ) -> Vec<ItemId> {
         let mut entries: Vec<&Entry> = self
             .entries
             .iter()
             .filter(|e| kind_matches(kind, e.kind))
             .collect();
-        entries.sort_unstable_by(|a, b| a.list_order(b));
+        entries.sort_unstable_by(|a, b| a.compare(b, order));
         entries
             .into_iter()
             .skip(offset)
@@ -195,32 +250,74 @@ impl SearchIndex {
             .collect()
     }
 
-    /// The best `limit` matches for `query`: by score, then pinned, then most recent. An empty
-    /// query returns the list order.
+    /// The best `limit` matches for `query`: by score, then in list order. An empty query
+    /// returns the list order.
     #[must_use]
-    pub fn search(&self, query: &Query, kind: Option<RepKind>, limit: usize) -> Vec<Hit> {
+    pub fn search(
+        &self,
+        query: &Query,
+        kind: Option<RepKind>,
+        order: ListOrder,
+        limit: usize,
+    ) -> Vec<Hit> {
         if query.is_empty() {
             return self
-                .list(kind, 0, limit)
+                .list(kind, order, 0, limit)
                 .into_iter()
                 .map(|id| Hit { id, score: 0 })
                 .collect();
         }
+        let mut hits = match query.mode() {
+            MatchMode::Fuzzy => self.scored(query, kind, |e| e.term_score(query, true)),
+            MatchMode::Exact => self.scored(query, kind, |e| e.term_score(query, false)),
+            MatchMode::Regex => self.regex_hits(query, kind),
+            MatchMode::Mixed => {
+                let exact = self.scored(query, kind, |e| e.term_score(query, false));
+                if exact.is_empty() {
+                    let regex = self.regex_hits(query, kind);
+                    if regex.is_empty() {
+                        self.scored(query, kind, |e| e.term_score(query, true))
+                    } else {
+                        regex
+                    }
+                } else {
+                    exact
+                }
+            }
+        };
+        hits.sort_unstable_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.compare(b.1, order)));
+        hits.into_iter()
+            .take(limit)
+            .map(|(score, e)| Hit { id: e.id, score })
+            .collect()
+    }
+
+    fn scored<'a>(
+        &'a self,
+        query: &Query,
+        kind: Option<RepKind>,
+        score_of: impl Fn(&Entry) -> Option<u32>,
+    ) -> Vec<(u32, &'a Entry)> {
         let masks: Vec<u64> = query
             .terms()
             .iter()
             .map(|t| char_mask(t.iter().copied()))
             .collect();
-        let mut hits: Vec<(u32, &Entry)> = self
-            .entries
+        self.entries
             .iter()
             .filter(|e| kind_matches(kind, e.kind) && masks.iter().all(|m| e.mask & m == *m))
-            .filter_map(|e| e.score(query).map(|s| (s, e)))
-            .collect();
-        hits.sort_unstable_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.list_order(b.1)));
-        hits.into_iter()
-            .take(limit)
-            .map(|(score, e)| Hit { id: e.id, score })
+            .filter_map(|e| score_of(e).map(|s| (s, e)))
+            .collect()
+    }
+
+    fn regex_hits(&self, query: &Query, kind: Option<RepKind>) -> Vec<(u32, &Entry)> {
+        let Some(regex) = query.regex() else {
+            return Vec::new();
+        };
+        self.entries
+            .iter()
+            .filter(|e| kind_matches(kind, e.kind))
+            .filter_map(|e| regex_score(&e.text, regex).map(|s| (s, e)))
             .collect()
     }
 

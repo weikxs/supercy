@@ -15,7 +15,7 @@ use std::borrow::Cow;
 use std::time::{Duration, Instant};
 
 use cy_model::{DeviceTag, Hlc, ItemId, RepKind};
-use cy_search::{IndexDoc, MatchMode, Query, SearchIndex};
+use cy_search::{IndexDoc, ListOrder, MatchMode, Query, SearchIndex};
 
 /// Per-keystroke budget with the default history size.
 const BUDGET_500: Duration = Duration::from_millis(10);
@@ -73,6 +73,8 @@ fn build(count: u64) -> SearchIndex {
             kind: RepKind::Text,
             pinned: false,
             last_used: Hlc::new(n, 0, DeviceTag::default()),
+            first_copied_ms: n,
+            copy_count: 1,
             text: Cow::Owned(text(n)),
         });
     }
@@ -86,7 +88,12 @@ fn slowest_keystroke(index: &SearchIndex) -> Duration {
         .flat_map(|query| (1..=query.len()).map(move |end| &query[..end]))
         .map(|typed| {
             let start = Instant::now();
-            let hits = index.search(&Query::parse(typed, MatchMode::Fuzzy), None, 50);
+            let hits = index.search(
+                &Query::parse(typed, MatchMode::Fuzzy),
+                None,
+                ListOrder::default(),
+                50,
+            );
             std::hint::black_box(hits);
             start.elapsed()
         })

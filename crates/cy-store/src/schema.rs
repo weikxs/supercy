@@ -5,10 +5,10 @@ use rusqlite::Connection;
 use crate::StoreError;
 
 /// The newest schema this build reads and writes.
-pub const SCHEMA_VERSION: i64 = 2;
+pub const SCHEMA_VERSION: i64 = 3;
 
 /// Migration `n` (0-based) moves the schema from version `n` to `n + 1`.
-const MIGRATIONS: &[&str] = &[V1, V2];
+const MIGRATIONS: &[&str] = &[V1, V2, V3];
 
 const V1: &str = "
 CREATE TABLE items (
@@ -38,6 +38,13 @@ CREATE TABLE meta (
 ) STRICT;
 DROP INDEX items_expiry;
 CREATE INDEX items_expiry ON items(expires_at) WHERE expires_at IS NOT NULL AND pinned = 0;
+";
+
+/// Version 3: how often each item was copied (for sorting) and the letter keys of pinned items.
+const V3: &str = "
+ALTER TABLE items ADD COLUMN copy_count INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE items ADD COLUMN pin_key TEXT;
+CREATE UNIQUE INDEX items_pin_key ON items(pin_key) WHERE pin_key IS NOT NULL;
 ";
 
 /// The schema version stored in the database.

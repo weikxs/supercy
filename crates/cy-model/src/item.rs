@@ -66,6 +66,10 @@ pub struct Item {
     pub sensitivity: Sensitivity,
     /// Whether text was cut to the size limit.
     pub truncated: bool,
+    /// How many times this content was copied (at least 1).
+    pub copy_count: u32,
+    /// The letter key of a pinned item (`a`–`z`), if it has one.
+    pub pin_key: Option<char>,
 }
 
 impl Item {
@@ -96,17 +100,28 @@ impl Item {
         }
     }
 
-    /// A copy with `pinned` set at `at`.
+    /// A copy with `pinned` set at `at`. Unpinning drops the letter key.
     #[must_use]
     pub fn with_pinned(&self, pinned: bool, at: Hlc) -> Self {
         Self {
             pinned,
             pinned_at: Some(at),
+            pin_key: if pinned { self.pin_key } else { None },
             ..self.clone()
         }
     }
 
-    /// A copy used again at `at` that also holds the kinds from `reps` it was missing.
+    /// A copy with the letter key `key`.
+    #[must_use]
+    pub fn with_pin_key(&self, key: Option<char>) -> Self {
+        Self {
+            pin_key: key,
+            ..self.clone()
+        }
+    }
+
+    /// The same content copied again at `at`: counted once more, and holding the kinds from
+    /// `reps` it was missing.
     #[must_use]
     pub fn merged_with(&self, reps: &[Representation], at: Hlc) -> Self {
         let missing = reps
@@ -115,6 +130,7 @@ impl Item {
         Self {
             reps: self.reps.iter().chain(missing).cloned().collect(),
             last_used: at,
+            copy_count: self.copy_count.saturating_add(1),
             ..self.clone()
         }
     }
@@ -153,6 +169,8 @@ mod tests {
             pinned_at: None,
             sensitivity: Sensitivity::Normal,
             truncated: false,
+            copy_count: 1,
+            pin_key: None,
         }
     }
 
@@ -189,6 +207,19 @@ mod tests {
 
         assert_eq!(merged.reps, vec![plain("demo"), html]);
         assert_eq!(merged.last_used, later);
+        assert_eq!(merged.copy_count, 2);
+    }
+
+    #[test]
+    fn unpinning_drops_the_letter_key() {
+        let at = Hlc::new(2_000, 0, DEVICE);
+        let pinned = demo_item(vec![plain("demo")])
+            .with_pinned(true, at)
+            .with_pin_key(Some('a'));
+
+        assert_eq!(pinned.pin_key, Some('a'));
+        assert_eq!(pinned.with_pinned(true, at).pin_key, Some('a'));
+        assert_eq!(pinned.with_pinned(false, at).pin_key, None);
     }
 
     #[test]

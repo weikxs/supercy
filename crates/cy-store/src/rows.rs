@@ -12,8 +12,7 @@ use crate::keys::Keys;
 const BODY_VERSION: u32 = 1;
 
 /// Columns read by [`read_item`], in order.
-pub(crate) const ITEM_COLUMNS: &str =
-    "id, fingerprint, first_copied, last_used, pinned, pinned_at, expires_at, origin, body";
+pub(crate) const ITEM_COLUMNS: &str = "id, fingerprint, first_copied, last_used, pinned, pinned_at, expires_at, origin, body, copy_count, pin_key";
 
 /// Associated data: the item id and the body version, so a body cannot move to another row.
 fn aad(id: ItemId) -> Vec<u8> {
@@ -45,10 +44,11 @@ pub(crate) fn upsert(tx: &Transaction<'_>, keys: &Keys, item: &Item) -> Result<(
     })?;
     let sealed = seal(&keys.content, &aad(item.id), &body)?;
     tx.execute(
-        "INSERT INTO items (id, fingerprint, kind, first_copied, last_used, pinned, pinned_at, expires_at, origin, size, body)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+        "INSERT INTO items (id, fingerprint, kind, first_copied, last_used, pinned, pinned_at, expires_at, origin, size,
+             body, copy_count, pin_key)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
          ON CONFLICT(id) DO UPDATE SET fingerprint = ?2, kind = ?3, first_copied = ?4, last_used = ?5, pinned = ?6,
-             pinned_at = ?7, expires_at = ?8, origin = ?9, size = ?10, body = ?11",
+             pinned_at = ?7, expires_at = ?8, origin = ?9, size = ?10, body = ?11, copy_count = ?12, pin_key = ?13",
         params![
             item.id.as_bytes().as_slice(),
             item.fingerprint.0.as_slice(),
@@ -61,6 +61,8 @@ pub(crate) fn upsert(tx: &Transaction<'_>, keys: &Keys, item: &Item) -> Result<(
             item.origin.0.as_slice(),
             to_i64(item.size() as u64)?,
             sealed,
+            item.copy_count,
+            item.pin_key.map(String::from),
         ],
     )
     .map_err(StoreError::from_sql)?;
@@ -108,5 +110,17 @@ fn decode_row(row: &Row<'_>, keys: &Keys, id: ItemId) -> Result<Item, StoreError
         pinned_at,
         sensitivity,
         truncated: body.truncated,
+        copy_count: row.get(9).map_err(StoreError::from_sql)?,
+        pin_key: read_pin_key(row.get(10).map_err(StoreError::from_sql)?)?,
     })
+}
+
+/// A stored letter key: one character `a`–`z`.
+fn read_pin_key(stored: Option<String>) -> Result<Option<char>, StoreError> {
+    let Some(text) = stored else { return Ok(None) };
+    let mut chars = text.chars();
+    match (chars.next(), chars.next()) {
+        (Some(key), None) if key.is_ascii_lowercase() => Ok(Some(key)),
+        _ => Err(StoreError::Corrupt),
+    }
 }

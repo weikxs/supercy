@@ -9,7 +9,7 @@
 use std::borrow::Cow;
 
 use cy_model::{DeviceTag, Hlc, ItemId, RepKind};
-use cy_search::{IndexDoc, MatchMode, Query, SearchIndex};
+use cy_search::{IndexDoc, ListOrder, MatchMode, Query, SearchIndex};
 use proptest::prelude::*;
 
 fn id(n: u8) -> ItemId {
@@ -22,6 +22,8 @@ fn doc(n: u8, text: &str) -> IndexDoc<'_> {
         kind: RepKind::Text,
         pinned: false,
         last_used: Hlc::new(u64::from(n), 0, DeviceTag::default()),
+        first_copied_ms: u64::from(n),
+        copy_count: 1,
         text: Cow::Borrowed(text),
     }
 }
@@ -36,7 +38,12 @@ fn index(texts: &[&str]) -> SearchIndex {
 
 fn top(index: &SearchIndex, query: &str) -> Option<ItemId> {
     index
-        .search(&Query::parse(query, MatchMode::Fuzzy), None, 1)
+        .search(
+            &Query::parse(query, MatchMode::Fuzzy),
+            None,
+            ListOrder::default(),
+            1,
+        )
         .first()
         .map(|hit| hit.id)
 }
@@ -88,7 +95,14 @@ fn queries_that_match_nothing_return_nothing() {
 #[test]
 fn exact_mode_matches_substrings_of_the_text_only() {
     let index = index(HISTORY);
-    let exact = |q| index.search(&Query::parse(q, MatchMode::Exact), None, 5);
+    let exact = |q| {
+        index.search(
+            &Query::parse(q, MatchMode::Exact),
+            None,
+            ListOrder::default(),
+            5,
+        )
+    };
 
     assert_eq!(exact("from super").first().map(|h| h.id), Some(id(0)));
     assert!(exact("hfs").is_empty());
@@ -99,7 +113,12 @@ fn exact_mode_matches_substrings_of_the_text_only() {
 fn better_matches_rank_first_and_ties_go_to_the_most_recent() {
     let index = index(&["a demo b", "demo", "d e m o", "demo"]);
 
-    let hits = index.search(&Query::parse("demo", MatchMode::Fuzzy), None, 10);
+    let hits = index.search(
+        &Query::parse("demo", MatchMode::Fuzzy),
+        None,
+        ListOrder::default(),
+        10,
+    );
     let ids: Vec<ItemId> = hits.iter().map(|h| h.id).collect();
 
     assert_eq!(ids, vec![id(3), id(1), id(0), id(2)]);
@@ -113,8 +132,13 @@ fn pinned_items_win_ties_and_lead_the_list() {
         ..doc(0, "demo one")
     });
 
-    let listed = index.list(None, 0, 10);
-    let searched = index.search(&Query::parse("demo", MatchMode::Fuzzy), None, 10);
+    let listed = index.list(None, ListOrder::default(), 0, 10);
+    let searched = index.search(
+        &Query::parse("demo", MatchMode::Fuzzy),
+        None,
+        ListOrder::default(),
+        10,
+    );
 
     assert_eq!(listed, vec![id(0), id(1)]);
     assert_eq!(searched[0].id, id(0));
@@ -124,13 +148,18 @@ fn pinned_items_win_ties_and_lead_the_list() {
 fn empty_query_lists_by_recency_with_paging() {
     let index = index(&["a", "b", "c"]);
 
-    let all = index.search(&Query::parse("", MatchMode::Fuzzy), None, 10);
+    let all = index.search(
+        &Query::parse("", MatchMode::Fuzzy),
+        None,
+        ListOrder::default(),
+        10,
+    );
 
     assert_eq!(
         all.iter().map(|h| h.id).collect::<Vec<_>>(),
         vec![id(2), id(1), id(0)]
     );
-    assert_eq!(index.list(None, 1, 1), vec![id(1)]);
+    assert_eq!(index.list(None, ListOrder::default(), 1, 1), vec![id(1)]);
 }
 
 #[test]
@@ -148,9 +177,10 @@ fn kind_filter_treats_rich_text_as_text() {
     let text_only = index.search(
         &Query::parse("demo", MatchMode::Fuzzy),
         Some(RepKind::Text),
+        ListOrder::default(),
         10,
     );
-    let links = index.list(Some(RepKind::Url), 0, 10);
+    let links = index.list(Some(RepKind::Url), ListOrder::default(), 0, 10);
 
     assert_eq!(text_only.len(), 2);
     assert_eq!(links, vec![id(2)]);
@@ -196,6 +226,93 @@ proptest! {
         let refs: Vec<&str> = texts.iter().map(String::as_str).collect();
         let index = index(&refs);
 
-        let _ = index.search(&Query::parse(&query, MatchMode::Fuzzy), None, 10);
+        let _ = index.search(&Query::parse(&query, MatchMode::Fuzzy), None, ListOrder::default(), 10);
     }
+}
+
+fn ids_for(index: &SearchIndex, query: &str, mode: MatchMode) -> Vec<ItemId> {
+    index
+        .search(&Query::parse(query, mode), None, ListOrder::default(), 10)
+        .into_iter()
+        .map(|h| h.id)
+        .collect()
+}
+
+#[test]
+fn regex_mode_matches_patterns_and_invalid_patterns_match_nothing() {
+    let index = index(&["order 123456 shipped", "no digits here", "Demo-42"]);
+
+    assert_eq!(ids_for(&index, r"\d{6}", MatchMode::Regex), vec![id(0)]);
+    assert_eq!(
+        ids_for(&index, r"^demo-\d+$", MatchMode::Regex),
+        vec![id(2)]
+    );
+    assert!(ids_for(&index, "(", MatchMode::Regex).is_empty());
+}
+
+#[test]
+fn mixed_mode_prefers_exact_then_regex_then_fuzzy() {
+    let index = index(&["hello from supercy", "h.f.s", "hxfxs"]);
+
+    assert_eq!(ids_for(&index, "from", MatchMode::Mixed), vec![id(0)]);
+    assert_eq!(ids_for(&index, r"h\.f", MatchMode::Mixed), vec![id(1)]);
+    let fuzzy = ids_for(&index, "hfs", MatchMode::Mixed);
+    assert_eq!(fuzzy.len(), 3);
+}
+
+fn sorted_index() -> SearchIndex {
+    let mut index = SearchIndex::new();
+    let docs = [
+        (0u8, 30u64, 1u32, false),
+        (1, 10, 5, false),
+        (2, 20, 3, true),
+    ];
+    for (n, first, count, pinned) in docs {
+        index.upsert(&IndexDoc {
+            pinned,
+            first_copied_ms: first,
+            copy_count: count,
+            ..doc(n, "demo")
+        });
+    }
+    index
+}
+
+#[test]
+fn list_orders_by_last_use_first_copy_or_copy_count() {
+    use cy_search::{PinPosition, SortOrder};
+    let index = sorted_index();
+    let order = |sort, pins| ListOrder { sort, pins };
+
+    assert_eq!(
+        index.list(None, order(SortOrder::LastUsed, PinPosition::Top), 0, 9),
+        vec![id(2), id(1), id(0)]
+    );
+    assert_eq!(
+        index.list(None, order(SortOrder::FirstCopied, PinPosition::Top), 0, 9),
+        vec![id(2), id(0), id(1)]
+    );
+    assert_eq!(
+        index.list(None, order(SortOrder::CopyCount, PinPosition::Top), 0, 9),
+        vec![id(2), id(1), id(0)]
+    );
+    assert_eq!(
+        index.list(
+            None,
+            order(SortOrder::FirstCopied, PinPosition::Bottom),
+            0,
+            9
+        ),
+        vec![id(0), id(1), id(2)]
+    );
+    let searched = index.search(
+        &Query::parse("demo", MatchMode::Fuzzy),
+        None,
+        order(SortOrder::CopyCount, PinPosition::Bottom),
+        9,
+    );
+    assert_eq!(
+        searched.iter().map(|h| h.id).collect::<Vec<_>>(),
+        vec![id(1), id(0), id(2)]
+    );
 }

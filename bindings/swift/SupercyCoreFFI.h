@@ -347,6 +347,11 @@ RustBuffer uniffi_cy_ffi_fn_method_supercyengine_ingest(void*_Nonnull ptr, RustB
 uint64_t uniffi_cy_ffi_fn_method_supercyengine_item_count(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_ITEM_FOR_PIN_KEY
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_ITEM_FOR_PIN_KEY
+RustBuffer uniffi_cy_ffi_fn_method_supercyengine_item_for_pin_key(void*_Nonnull ptr, RustBuffer key, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_LIST
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_LIST
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_list(void*_Nonnull ptr, RustBuffer kind, uint32_t offset, uint32_t limit, RustCallStatus *_Nonnull out_status
@@ -357,14 +362,34 @@ RustBuffer uniffi_cy_ffi_fn_method_supercyengine_list(void*_Nonnull ptr, RustBuf
 void uniffi_cy_ffi_fn_method_supercyengine_mark_used(void*_Nonnull ptr, RustBuffer id, uint64_t now_ms, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_PAUSE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_PAUSE
+void uniffi_cy_ffi_fn_method_supercyengine_pause(void*_Nonnull ptr, RustBuffer until_ms, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_PAUSE_STATUS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_PAUSE_STATUS
+RustBuffer uniffi_cy_ffi_fn_method_supercyengine_pause_status(void*_Nonnull ptr, uint64_t now_ms, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_PAYLOAD
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_PAYLOAD
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_payload(void*_Nonnull ptr, RustBuffer id, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_RESUME
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_RESUME
+void uniffi_cy_ffi_fn_method_supercyengine_resume(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_SEARCH
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_SEARCH
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_search(void*_Nonnull ptr, RustBuffer query, RustBuffer mode, RustBuffer kind, uint32_t limit, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_SET_PIN_KEY
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_SET_PIN_KEY
+void uniffi_cy_ffi_fn_method_supercyengine_set_pin_key(void*_Nonnull ptr, RustBuffer id, RustBuffer key, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_SET_PINNED
@@ -377,6 +402,11 @@ void uniffi_cy_ffi_fn_method_supercyengine_set_pinned(void*_Nonnull ptr, RustBuf
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_settings(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_SKIP_NEXT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_SKIP_NEXT
+void uniffi_cy_ffi_fn_method_supercyengine_skip_next(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_TICK
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_METHOD_SUPERCYENGINE_TICK
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_tick(void*_Nonnull ptr, uint64_t now_ms, RustCallStatus *_Nonnull out_status
@@ -387,10 +417,20 @@ RustBuffer uniffi_cy_ffi_fn_method_supercyengine_tick(void*_Nonnull ptr, uint64_
 RustBuffer uniffi_cy_ffi_fn_method_supercyengine_update_settings(void*_Nonnull ptr, RustBuffer settings, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_CHECK_IGNORE_PATTERN
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_CHECK_IGNORE_PATTERN
+RustBuffer uniffi_cy_ffi_fn_func_check_ignore_pattern(RustBuffer pattern, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_CORE_VERSION
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_CORE_VERSION
 RustBuffer uniffi_cy_ffi_fn_func_core_version(RustCallStatus *_Nonnull out_status
     
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_QUERY_ERROR
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_FN_FUNC_QUERY_ERROR
+RustBuffer uniffi_cy_ffi_fn_func_query_error(RustBuffer query, RustBuffer mode, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_FFI_CY_FFI_RUSTBUFFER_ALLOC
@@ -673,9 +713,21 @@ void ffi_cy_ffi_rust_future_free_void(uint64_t handle
 void ffi_cy_ffi_rust_future_complete_void(uint64_t handle, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_CHECK_IGNORE_PATTERN
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_CHECK_IGNORE_PATTERN
+uint16_t uniffi_cy_ffi_checksum_func_check_ignore_pattern(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_CORE_VERSION
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_CORE_VERSION
 uint16_t uniffi_cy_ffi_checksum_func_core_version(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_QUERY_ERROR
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_FUNC_QUERY_ERROR
+uint16_t uniffi_cy_ffi_checksum_func_query_error(void
     
 );
 #endif
@@ -721,6 +773,12 @@ uint16_t uniffi_cy_ffi_checksum_method_supercyengine_item_count(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_ITEM_FOR_PIN_KEY
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_ITEM_FOR_PIN_KEY
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_item_for_pin_key(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_LIST
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_LIST
 uint16_t uniffi_cy_ffi_checksum_method_supercyengine_list(void
@@ -733,15 +791,39 @@ uint16_t uniffi_cy_ffi_checksum_method_supercyengine_mark_used(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_PAUSE
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_PAUSE
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_pause(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_PAUSE_STATUS
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_PAUSE_STATUS
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_pause_status(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_PAYLOAD
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_PAYLOAD
 uint16_t uniffi_cy_ffi_checksum_method_supercyengine_payload(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_RESUME
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_RESUME
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_resume(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SEARCH
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SEARCH
 uint16_t uniffi_cy_ffi_checksum_method_supercyengine_search(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SET_PIN_KEY
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SET_PIN_KEY
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_set_pin_key(void
     
 );
 #endif
@@ -754,6 +836,12 @@ uint16_t uniffi_cy_ffi_checksum_method_supercyengine_set_pinned(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SETTINGS
 #define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SETTINGS
 uint16_t uniffi_cy_ffi_checksum_method_supercyengine_settings(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SKIP_NEXT
+#define UNIFFI_FFIDEF_UNIFFI_CY_FFI_CHECKSUM_METHOD_SUPERCYENGINE_SKIP_NEXT
+uint16_t uniffi_cy_ffi_checksum_method_supercyengine_skip_next(void
     
 );
 #endif

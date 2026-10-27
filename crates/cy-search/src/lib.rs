@@ -10,8 +10,8 @@ mod index;
 mod matcher;
 mod pinyin_forms;
 
-pub use index::{Hit, IndexDoc, SearchIndex};
-pub use matcher::{MatchMode, Query};
+pub use index::{Hit, IndexDoc, ListOrder, PinPosition, SearchIndex, SortOrder};
+pub use matcher::{MatchMode, Query, highlight};
 
 /// Bytes of folded text kept per item.
 pub const INDEX_TEXT_BYTES: usize = 512;

@@ -9,6 +9,7 @@ publish.workspace = true
 [dependencies]
 cy-model.workspace = true
 pinyin.workspace = true
+regex.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true

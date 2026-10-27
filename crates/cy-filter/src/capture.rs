@@ -1,8 +1,11 @@
-//! Turns clipboard types into representations, applying the size limits.
+//! Turns clipboard types into representations, applying the per-type switches and size limits.
 
 use cy_model::{ClipEntry, ImageFormat, Representation, SecretBytes, SecretString};
 
 use crate::{DropReason, FilterPolicy};
+
+/// Most file references kept from one copy.
+const MAX_FILES: usize = 1_000;
 
 /// Representations built from one snapshot.
 pub(crate) struct Built {
@@ -17,11 +20,13 @@ enum Slot {
     Html,
     Rtf,
     Url,
-    Files,
+    FileUrl,
+    UriList,
     Image(ImageFormat),
 }
 
-/// Platform type names, macOS first, then Windows, then Linux (MIME and X11 targets).
+/// Platform type names, macOS first, then Windows, then Linux (MIME and X11 targets). Text types
+/// arrive as UTF-8 (the shell converts).
 const TYPES: &[(&str, Slot)] = &[
     ("public.utf8-plain-text", Slot::Text),
     ("NSStringPboardType", Slot::Text),
@@ -37,10 +42,8 @@ const TYPES: &[(&str, Slot)] = &[
     ("text/rtf", Slot::Rtf),
     ("public.url", Slot::Url),
     ("UniformResourceLocatorW", Slot::Url),
-    ("public.file-url", Slot::Files),
-    ("NSFilenamesPboardType", Slot::Files),
-    ("CF_HDROP", Slot::Files),
-    ("text/uri-list", Slot::Files),
+    ("public.file-url", Slot::FileUrl),
+    ("text/uri-list", Slot::UriList),
     ("public.png", Slot::Image(ImageFormat::Png)),
     ("PNG", Slot::Image(ImageFormat::Png)),
     ("image/png", Slot::Image(ImageFormat::Png)),
@@ -61,7 +64,7 @@ fn slot_of(type_id: &str) -> Option<Slot> {
         .map(|(_, slot)| *slot)
 }
 
-/// The first entry of each slot, as found on the clipboard.
+/// The first entry of each slot as found on the clipboard, and every file reference.
 #[derive(Default)]
 struct Slots<'a> {
     text: Option<&'a ClipEntry>,
@@ -69,88 +72,117 @@ struct Slots<'a> {
     rtf: Option<&'a ClipEntry>,
     url: Option<&'a ClipEntry>,
     image: Option<(&'a ClipEntry, ImageFormat)>,
-    has_files: bool,
+    files: Vec<String>,
 }
 
 fn sort_into_slots(entries: &[ClipEntry]) -> Slots<'_> {
-    entries.iter().fold(Slots::default(), |slots, entry| {
+    let mut slots = Slots::default();
+    for entry in entries {
         match slot_of(&entry.type_id) {
-            Some(Slot::Text) => Slots {
-                text: slots.text.or(Some(entry)),
-                ..slots
-            },
-            Some(Slot::Html) => Slots {
-                html: slots.html.or(Some(entry)),
-                ..slots
-            },
-            Some(Slot::Rtf) => Slots {
-                rtf: slots.rtf.or(Some(entry)),
-                ..slots
-            },
-            Some(Slot::Url) => Slots {
-                url: slots.url.or(Some(entry)),
-                ..slots
-            },
-            Some(Slot::Files) => Slots {
-                has_files: true,
-                ..slots
-            },
-            Some(Slot::Image(format)) => Slots {
-                image: slots.image.or(Some((entry, format))),
-                ..slots
-            },
-            None => slots,
+            Some(Slot::Text) => slots.text = slots.text.or(Some(entry)),
+            Some(Slot::Html) => slots.html = slots.html.or(Some(entry)),
+            Some(Slot::Rtf) => slots.rtf = slots.rtf.or(Some(entry)),
+            Some(Slot::Url) => slots.url = slots.url.or(Some(entry)),
+            Some(Slot::FileUrl) => slots.files.extend(file_urls(entry, false)),
+            Some(Slot::UriList) => slots.files.extend(file_urls(entry, true)),
+            Some(Slot::Image(format)) => slots.image = slots.image.or(Some((entry, format))),
+            None => {}
         }
-    })
+    }
+    slots.files.truncate(MAX_FILES);
+    slots
+}
+
+/// `file://` URLs in an entry: one per entry on macOS, one per line in a URI list.
+fn file_urls(entry: &ClipEntry, list: bool) -> Vec<String> {
+    let Some(text) = entry
+        .data
+        .as_ref()
+        .and_then(|d| std::str::from_utf8(d.expose()).ok())
+    else {
+        return Vec::new();
+    };
+    let lines: Vec<&str> = if list {
+        text.lines().collect()
+    } else {
+        vec![text]
+    };
+    lines
+        .into_iter()
+        .map(|line| line.trim().trim_end_matches('\0'))
+        .filter(|line| !line.starts_with('#') && line.starts_with("file://"))
+        .map(str::to_owned)
+        .collect()
 }
 
 /// Builds the representations to keep, or the reason to keep nothing.
 pub(crate) fn build(entries: &[ClipEntry], policy: &FilterPolicy) -> Result<Built, DropReason> {
     let slots = sort_into_slots(entries);
-    if slots.has_files {
-        return Err(DropReason::Files);
+    if !slots.files.is_empty() {
+        // A file copy also carries the file's name and icon; only the references matter.
+        if !policy.record_files {
+            return Err(DropReason::TypeDisabled);
+        }
+        let reps = vec![Representation::FileRef { names: slots.files }];
+        return Ok(Built {
+            reps,
+            truncated: false,
+        });
     }
     let mut oversized = false;
+    let mut disabled = false;
     let mut truncated = false;
-    let text = slots.text.and_then(|entry| {
-        let (text, cut) = read_text(entry, policy.max_text_bytes, &mut oversized)?;
-        truncated = cut;
-        Some(text)
-    });
+    let mut reps = Vec::new();
+    if policy.record_text {
+        truncated = text_reps(&slots, policy, &mut oversized, &mut reps);
+    } else {
+        disabled |= slots.text.is_some() || slots.url.is_some();
+    }
+    match slots.image {
+        Some((entry, format)) if policy.record_images => {
+            reps.extend(read_image(entry, format, policy, &mut oversized));
+        }
+        Some(_) => disabled = true,
+        None => {}
+    }
+    match (reps.is_empty(), oversized, disabled) {
+        (false, _, _) => Ok(Built { reps, truncated }),
+        (true, true, _) => Err(DropReason::TooLarge),
+        (true, false, true) => Err(DropReason::TypeDisabled),
+        (true, false, false) => Err(DropReason::Unsupported),
+    }
+}
+
+/// Adds the link and the plain or rich text; returns whether text was cut.
+fn text_reps(
+    slots: &Slots<'_>,
+    policy: &FilterPolicy,
+    oversized: &mut bool,
+    reps: &mut Vec<Representation>,
+) -> bool {
+    let limit = policy.max_text_bytes;
+    let text = slots
+        .text
+        .and_then(|entry| read_text(entry, limit, oversized));
     let url = slots
         .url
-        .and_then(|entry| read_whole_text(entry, policy.max_text_bytes, &mut oversized))
+        .and_then(|entry| read_whole_text(entry, limit, oversized))
         .or_else(|| {
             text.as_ref()
-                .filter(|t| looks_like_url(t))
-                .map(|t| t.trim().to_owned())
+                .filter(|(t, _)| looks_like_url(t))
+                .map(|(t, _)| t.trim().to_owned())
         });
-    let mut reps = Vec::new();
     if let Some(url) = url {
         reps.push(Representation::Url {
             url: SecretString::new(url),
             title: None,
         });
     }
-    if let Some(text) = text {
-        reps.push(text_rep(
-            &slots,
-            text,
-            policy.max_text_bytes,
-            &mut oversized,
-        ));
-    }
-    if let Some(image) = slots
-        .image
-        .and_then(|(entry, format)| read_image(entry, format, policy, &mut oversized))
-    {
-        reps.push(image);
-    }
-    match (reps.is_empty(), oversized) {
-        (false, _) => Ok(Built { reps, truncated }),
-        (true, true) => Err(DropReason::TooLarge),
-        (true, false) => Err(DropReason::Unsupported),
-    }
+    let Some((text, cut)) = text else {
+        return false;
+    };
+    reps.push(text_rep(slots, text, limit, oversized));
+    cut
 }
 
 /// Plain or rich text; rich parts above the limit are left out.
@@ -342,5 +374,86 @@ mod tests {
                 Err(DropReason::Unsupported)
             ));
         }
+    }
+
+    #[test]
+    fn file_copies_keep_only_their_references() {
+        let entries = [
+            ClipEntry::with_data(
+                "public.file-url",
+                b"file:///tmp/supercy-test/a.txt".to_vec(),
+            ),
+            ClipEntry::with_data(
+                "public.file-url",
+                b"file:///tmp/supercy-test/b.txt".to_vec(),
+            ),
+            ClipEntry::with_data("public.utf8-plain-text", b"a.txt".to_vec()),
+            ClipEntry::with_data("public.tiff", vec![1, 2, 3]),
+        ];
+        let uri_list = [ClipEntry::with_data(
+            "text/uri-list",
+            b"# comment\r\nfile:///tmp/supercy-test/c.txt\r\nhttps://example.com\r\n".to_vec(),
+        )];
+
+        let built = build(&entries, &policy()).ok().unwrap();
+        let listed = build(&uri_list, &policy()).ok().unwrap();
+
+        assert_eq!(
+            built.reps,
+            vec![Representation::FileRef {
+                names: vec![
+                    "file:///tmp/supercy-test/a.txt".into(),
+                    "file:///tmp/supercy-test/b.txt".into()
+                ]
+            }]
+        );
+        assert_eq!(
+            listed.reps,
+            vec![Representation::FileRef {
+                names: vec!["file:///tmp/supercy-test/c.txt".into()]
+            }]
+        );
+    }
+
+    #[test]
+    fn switched_off_kinds_are_left_out_or_disable_the_copy() {
+        let no_files = FilterPolicy {
+            record_files: false,
+            ..policy()
+        };
+        let no_images = FilterPolicy {
+            record_images: false,
+            ..policy()
+        };
+        let no_text = FilterPolicy {
+            record_text: false,
+            ..policy()
+        };
+        let file = [ClipEntry::with_data(
+            "public.file-url",
+            b"file:///tmp/supercy-test/a.txt".to_vec(),
+        )];
+        let text_and_image = [
+            ClipEntry::with_data("public.utf8-plain-text", b"Demo".to_vec()),
+            ClipEntry::with_data("public.png", png(1, 1)),
+        ];
+        let image = [ClipEntry::with_data("public.png", png(1, 1))];
+
+        assert!(matches!(
+            build(&file, &no_files),
+            Err(DropReason::TypeDisabled)
+        ));
+        assert_eq!(
+            build(&text_and_image, &no_images).ok().unwrap().reps.len(),
+            1
+        );
+        assert!(matches!(
+            build(&image, &no_images),
+            Err(DropReason::TypeDisabled)
+        ));
+        assert!(matches!(
+            &build(&text_and_image, &no_text).ok().unwrap().reps[0],
+            Representation::Image { .. }
+        ));
     }
 }

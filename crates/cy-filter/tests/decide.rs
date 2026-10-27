@@ -7,7 +7,7 @@
 )]
 
 use cy_filter::{
-    Capture, DEFAULT_SENSITIVE_TTL_MS, DropReason, FilterDecision, FilterPolicy, decide,
+    Capture, DEFAULT_SENSITIVE_TTL_MS, DropReason, FilterDecision, FilterPolicy, PatternSet, decide,
 };
 use cy_model::{
     ClipEntry, ClipboardSnapshot, ImageFormat, Representation, SensitiveReason, Sensitivity,
@@ -123,7 +123,7 @@ fn ignored_apps_are_dropped() {
 }
 
 #[test]
-fn copied_files_are_not_recorded_yet() {
+fn copied_files_are_kept_as_references() {
     let entries = vec![
         ClipEntry::with_data(
             "public.file-url",
@@ -132,9 +132,83 @@ fn copied_files_are_not_recorded_yet() {
         text("demo.txt"),
     ];
 
+    let capture = keep(decide(&snapshot(entries), &FilterPolicy::default()));
+
+    assert!(matches!(&capture.reps[..], [Representation::FileRef { names }] if names.len() == 1));
+}
+
+#[test]
+fn ignored_clipboard_types_drop_the_copy() {
+    let policy = FilterPolicy {
+        ignored_types: ["com.example.private-type".to_owned()].into(),
+        ..FilterPolicy::default()
+    };
+    let entries = vec![text("demo"), ClipEntry::marker("com.example.private-type")];
+
     assert_eq!(
-        decide(&snapshot(entries), &FilterPolicy::default()),
-        FilterDecision::Drop(DropReason::Files)
+        decide(&snapshot(entries), &policy),
+        FilterDecision::Drop(DropReason::IgnoredType)
+    );
+}
+
+#[test]
+fn allow_list_mode_keeps_only_listed_apps() {
+    let allow = |apps: &[&str]| FilterPolicy {
+        allowed_apps: Some(apps.iter().map(|a| (*a).to_owned()).collect()),
+        ..FilterPolicy::default()
+    };
+    let without_app = ClipboardSnapshot {
+        front_app: None,
+        ..snapshot(vec![text("demo")])
+    };
+
+    assert!(matches!(
+        decide(
+            &snapshot(vec![text("demo")]),
+            &allow(&["com.example.editor"])
+        ),
+        FilterDecision::Keep(_)
+    ));
+    assert_eq!(
+        decide(
+            &snapshot(vec![text("demo")]),
+            &allow(&["com.example.other"])
+        ),
+        FilterDecision::Drop(DropReason::NotAllowedApp)
+    );
+    assert_eq!(
+        decide(&without_app, &allow(&["com.example.editor"])),
+        FilterDecision::Drop(DropReason::NotAllowedApp)
+    );
+}
+
+#[test]
+fn ignore_patterns_drop_matching_text() {
+    let policy = FilterPolicy {
+        ignore_patterns: PatternSet::new(&["^otp:".to_owned()]).unwrap(),
+        ..FilterPolicy::default()
+    };
+
+    assert_eq!(
+        decide(&snapshot(vec![text("OTP: 123456")]), &policy),
+        FilterDecision::Drop(DropReason::IgnoredPattern)
+    );
+    assert!(matches!(
+        decide(&snapshot(vec![text("Hello from Supercy")]), &policy),
+        FilterDecision::Keep(_)
+    ));
+}
+
+#[test]
+fn switched_off_text_drops_a_text_copy() {
+    let policy = FilterPolicy {
+        record_text: false,
+        ..FilterPolicy::default()
+    };
+
+    assert_eq!(
+        decide(&snapshot(vec![text("demo")]), &policy),
+        FilterDecision::Drop(DropReason::TypeDisabled)
     );
 }
 

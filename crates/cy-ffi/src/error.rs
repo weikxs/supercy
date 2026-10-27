@@ -37,6 +37,12 @@ pub enum SupercyError {
         /// What happened.
         message: String,
     },
+    /// A pin key is not a free letter from a to z, or the item is not pinned.
+    #[error("{message}")]
+    InvalidPinKey {
+        /// What is wrong.
+        message: String,
+    },
     /// An item id was not 32 hexadecimal digits.
     #[error("{message}")]
     InvalidId {
@@ -69,6 +75,9 @@ impl From<EngineError> for SupercyError {
             EngineError::Store(StoreError::KeyStore(_)) => Self::Keystore { message },
             EngineError::Setting(_) => Self::InvalidSetting { message },
             EngineError::NotFound => Self::NotFound { message },
+            EngineError::NotPinned | EngineError::InvalidPinKey | EngineError::PinKeyTaken => {
+                Self::InvalidPinKey { message }
+            }
             _ => Self::Internal { message },
         }
     }

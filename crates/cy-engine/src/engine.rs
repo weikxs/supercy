@@ -3,20 +3,17 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use cy_filter::{Capture, DropReason, FilterDecision, decide};
+use cy_filter::{Capture, DropReason, FilterDecision, FilterPolicy, decide};
 use cy_model::{
     ClipboardSnapshot, DeviceTag, Fingerprint, Hlc, HlcClock, Item, ItemId, RepKind, Representation,
 };
 use cy_platform::KeyStore;
-use cy_search::{IndexDoc, MatchMode, Query, SearchIndex};
+use cy_search::{IndexDoc, MatchMode, Query, SearchIndex, highlight};
 use cy_store::Store;
 
+use crate::pause::{Gate, PauseState};
+use crate::persist::{SETTINGS_KEY, load_or_create_device, load_settings};
 use crate::{EngineError, ItemSummary, Settings};
-
-/// Meta record holding the settings.
-const SETTINGS_KEY: &str = "settings";
-/// Meta record holding this device's tag.
-const DEVICE_KEY: &str = "device-tag";
 
 /// What happened to a snapshot.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -38,6 +35,10 @@ pub enum IngestOutcome {
         /// Why.
         reason: DropReason,
     },
+    /// Recording is paused; nothing was read.
+    Paused,
+    /// This copy was skipped on request ("ignore the next copy").
+    Skipped,
 }
 
 /// The result of [`Engine::ingest`].
@@ -46,16 +47,18 @@ pub struct IngestReport {
     /// What happened.
     pub outcome: IngestOutcome,
     /// When the shell should call [`Engine::tick`] next, if ever.
-    pub next_expiry_ms: Option<u64>,
+    pub next_tick_ms: Option<u64>,
 }
 
 /// One open history. Methods that change it take `&mut self`; wrap it in a mutex to share it.
 pub struct Engine {
-    store: Store,
-    index: SearchIndex,
-    summaries: HashMap<ItemId, ItemSummary>,
+    pub(crate) store: Store,
+    pub(crate) index: SearchIndex,
+    pub(crate) summaries: HashMap<ItemId, ItemSummary>,
     clock: HlcClock,
     settings: Settings,
+    policy: FilterPolicy,
+    pub(crate) pause: PauseState,
     unreadable: usize,
 }
 
@@ -92,7 +95,9 @@ impl Engine {
                 .collect(),
             store,
             clock,
+            policy: settings.filter_policy(),
             settings,
+            pause: PauseState::default(),
             unreadable: report.unreadable.len(),
         })
     }
@@ -134,13 +139,20 @@ impl Engine {
     ///
     /// Storage failures; the history is unchanged then.
     pub fn ingest(&mut self, snapshot: &ClipboardSnapshot) -> Result<IngestReport, EngineError> {
-        let outcome = match decide(snapshot, &self.settings.filter_policy()) {
-            FilterDecision::Drop(reason) => IngestOutcome::Dropped { reason },
-            FilterDecision::Keep(capture) => self.keep(capture, snapshot.captured_at_ms)?,
+        let now_ms = snapshot.captured_at_ms;
+        let (pause, gate) = self.pause.gate(now_ms);
+        self.pause = pause;
+        let outcome = match gate {
+            Gate::Paused => IngestOutcome::Paused,
+            Gate::Skipped => IngestOutcome::Skipped,
+            Gate::Record => match decide(snapshot, &self.policy) {
+                FilterDecision::Drop(reason) => IngestOutcome::Dropped { reason },
+                FilterDecision::Keep(capture) => self.keep(capture, now_ms)?,
+            },
         };
         Ok(IngestReport {
             outcome,
-            next_expiry_ms: self.next_expiry(),
+            next_tick_ms: self.next_tick(),
         })
     }
 
@@ -202,13 +214,19 @@ impl Engine {
             pinned_at: None,
             sensitivity: capture.sensitivity,
             truncated: capture.truncated,
+            copy_count: 1,
+            pin_key: None,
         })
     }
 
-    /// Items in list order: pinned first, then most recently used; optionally of one kind.
+    /// Items in the list order of the settings (sort and pinned position), optionally of one
+    /// kind.
     #[must_use]
     pub fn list(&self, kind: Option<RepKind>, offset: usize, limit: usize) -> Vec<ItemSummary> {
-        self.summaries_of(self.index.list(kind, offset, limit))
+        self.summaries_of(
+            self.index
+                .list(kind, self.settings.list_order(), offset, limit),
+        )
     }
 
     /// The best `limit` matches for `query`; an empty query lists the history.
@@ -220,8 +238,26 @@ impl Engine {
         kind: Option<RepKind>,
         limit: usize,
     ) -> Vec<ItemSummary> {
-        let hits = self.index.search(&Query::parse(query, mode), kind, limit);
+        let query = Query::parse(query, mode);
+        let hits = self
+            .index
+            .search(&query, kind, self.settings.list_order(), limit);
         self.summaries_of(hits.into_iter().map(|hit| hit.id).collect())
+            .into_iter()
+            .map(|summary| ItemSummary {
+                matches: highlight(&summary.preview, &query),
+                ..summary
+            })
+            .collect()
+    }
+
+    /// Why `query` is not a valid regular expression in `mode`, if it is not (for the search
+    /// field); `None` in the other modes.
+    #[must_use]
+    pub fn query_error(query: &str, mode: MatchMode) -> Option<String> {
+        (mode == MatchMode::Regex)
+            .then(|| Query::parse(query, mode).regex_error().map(str::to_owned))
+            .flatten()
     }
 
     /// The full content of `id`, for pasting.
@@ -240,7 +276,14 @@ impl Engine {
     /// [`EngineError::NotFound`] for an unknown id; storage failures.
     pub fn set_pinned(&mut self, id: ItemId, pinned: bool, now_ms: u64) -> Result<(), EngineError> {
         let at = self.stamp(now_ms);
-        self.update(id, |item| item.with_pinned(pinned, at))
+        let free_key = self.free_pin_key();
+        self.update(id, |item| {
+            let changed = item.with_pinned(pinned, at);
+            match (pinned, changed.pin_key) {
+                (true, None) => changed.with_pin_key(free_key),
+                _ => changed,
+            }
+        })
     }
 
     /// Records that `id` was pasted, moving it to the top.
@@ -253,7 +296,7 @@ impl Engine {
         self.update(id, |item| item.touched(at))
     }
 
-    fn update(
+    pub(crate) fn update(
         &mut self,
         id: ItemId,
         change: impl FnOnce(&Item) -> Item,
@@ -304,7 +347,16 @@ impl Engine {
             let expired = self.store.expire(now_ms)?;
             self.forget(&expired);
         }
-        Ok(self.next_expiry())
+        self.pause = self.pause.settled(now_ms);
+        Ok(self.next_tick())
+    }
+
+    /// The next time something is due: a sensitive item expires or a timed pause ends.
+    pub(crate) fn next_tick(&self) -> Option<u64> {
+        [self.next_expiry(), self.pause.wake_at()]
+            .into_iter()
+            .flatten()
+            .min()
     }
 
     /// The earliest expiry of an unpinned sensitive item, from the in-memory summaries.
@@ -329,6 +381,7 @@ impl Engine {
         self.store.write_meta(SETTINGS_KEY, &encoded)?;
         let removed = self.store.apply_limits(&settings.limits())?;
         self.forget(&removed);
+        self.policy = settings.filter_policy();
         self.settings = settings;
         Ok(&self.settings)
     }
@@ -352,12 +405,12 @@ impl Engine {
         stamp
     }
 
-    fn remember(&mut self, item: &Item) {
+    pub(crate) fn remember(&mut self, item: &Item) {
         self.index.upsert(&IndexDoc::from_item(item));
         self.summaries.insert(item.id, ItemSummary::of(item));
     }
 
-    fn forget(&mut self, ids: &[ItemId]) {
+    pub(crate) fn forget(&mut self, ids: &[ItemId]) {
         for id in ids {
             self.index.remove(*id);
             self.summaries.remove(id);
@@ -380,31 +433,4 @@ fn refreshed(old: &Item, capture: Capture, at: Hlc) -> Item {
         truncated: capture.truncated,
         ..old.merged_with(&capture.reps, at)
     }
-}
-
-fn load_or_create_device(store: &mut Store) -> Result<DeviceTag, EngineError> {
-    if let Some(stored) = store.read_meta(DEVICE_KEY)? {
-        let bytes =
-            <[u8; 8]>::try_from(stored.expose()).map_err(|_| cy_store::StoreError::Corrupt)?;
-        return Ok(DeviceTag(bytes));
-    }
-    let random = ItemId::random().map_err(|_| EngineError::Random)?;
-    let mut tag = [0u8; 8];
-    tag.copy_from_slice(&random.as_bytes()[..8]);
-    store.write_meta(DEVICE_KEY, &tag)?;
-    Ok(DeviceTag(tag))
-}
-
-/// Stored settings, or the defaults when there are none. Settings that no longer validate (for
-/// example after ranges changed) fall back to the defaults rather than blocking the history.
-fn load_settings(store: &Store) -> Result<Settings, EngineError> {
-    let Some(stored) = store.read_meta(SETTINGS_KEY)? else {
-        return Ok(Settings::default());
-    };
-    let settings: Settings = ciborium::from_reader(stored.expose()).unwrap_or_default();
-    Ok(if settings.validate().is_ok() {
-        settings
-    } else {
-        Settings::default()
-    })
 }

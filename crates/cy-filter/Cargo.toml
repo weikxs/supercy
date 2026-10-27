@@ -8,6 +8,8 @@ publish.workspace = true
 
 [dependencies]
 cy-model.workspace = true
+thiserror.workspace = true
+regex.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true

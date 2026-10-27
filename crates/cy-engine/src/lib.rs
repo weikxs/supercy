@@ -8,12 +8,20 @@
 
 mod engine;
 mod error;
+mod pause;
+mod persist;
+mod pins;
 mod settings;
 mod summary;
 
 pub use cy_filter::DropReason;
 pub use cy_search::MatchMode;
+pub use cy_search::{PinPosition, SortOrder};
 pub use engine::{Engine, IngestOutcome, IngestReport};
 pub use error::EngineError;
-pub use settings::{DEFAULT_IGNORED_APPS, Settings, SettingsError};
+pub use pause::PauseState;
+pub use settings::{
+    DEFAULT_IGNORED_APPS, Language, PinPositionSetting, PopupPosition, SearchModeSetting, Settings,
+    SettingsError, SortSetting, check_pattern,
+};
 pub use summary::{ItemSummary, PREVIEW_CHARS};

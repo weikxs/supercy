@@ -857,6 +857,15 @@ public protocol SupercyEngineProtocol: AnyObject, Sendable {
     func itemCount() throws  -> UInt64
     
     /**
+     * The pinned item with letter `key`, if any.
+     *
+     * # Errors
+     *
+     * `InvalidPinKey` when `key` is not one character; `Internal` after an earlier failure.
+     */
+    func itemForPinKey(key: String) throws  -> String?
+    
+    /**
      * Items in list order (pinned first, then most recent), optionally of one kind.
      *
      * # Errors
@@ -875,6 +884,25 @@ public protocol SupercyEngineProtocol: AnyObject, Sendable {
     func markUsed(id: String, nowMs: UInt64) throws 
     
     /**
+     * Pauses recording until `until_ms`, or until `resume` when `nil`. Copies made while
+     * paused are never read.
+     *
+     * # Errors
+     *
+     * `Internal` after an earlier failure.
+     */
+    func pause(untilMs: UInt64?) throws 
+    
+    /**
+     * Whether recording is paused at `now_ms`, and how many copies will be skipped.
+     *
+     * # Errors
+     *
+     * `Internal` after an earlier failure.
+     */
+    func pauseStatus(nowMs: UInt64) throws  -> PauseStatus
+    
+    /**
      * Every form of an item, to put back on the clipboard.
      *
      * # Errors
@@ -884,6 +912,15 @@ public protocol SupercyEngineProtocol: AnyObject, Sendable {
     func payload(id: String) throws  -> [PasteRepresentation]
     
     /**
+     * Resumes recording.
+     *
+     * # Errors
+     *
+     * `Internal` after an earlier failure.
+     */
+    func resume() throws 
+    
+    /**
      * The best matches for `query` (an empty query lists everything).
      *
      * # Errors
@@ -891,6 +928,15 @@ public protocol SupercyEngineProtocol: AnyObject, Sendable {
      * `Internal` after an earlier failure.
      */
     func search(query: String, mode: SearchMode, kind: ItemKind?, limit: UInt32) throws  -> [ItemSummary]
+    
+    /**
+     * Gives pinned item `id` the letter `key` (`a`–`z`), or removes it with `nil`.
+     *
+     * # Errors
+     *
+     * `InvalidId`, `NotFound`, `InvalidPinKey` (not pinned, not a letter, or taken) or `Internal`.
+     */
+    func setPinKey(id: String, key: String?) throws 
     
     /**
      * Pins or unpins an item.
@@ -909,6 +955,15 @@ public protocol SupercyEngineProtocol: AnyObject, Sendable {
      * `Internal` after an earlier failure.
      */
     func settings() throws  -> Settings
+    
+    /**
+     * Ignores the next copy.
+     *
+     * # Errors
+     *
+     * `Internal` after an earlier failure.
+     */
+    func skipNext() throws 
     
     /**
      * Deletes expired sensitive items; returns when to call again, if ever. Call it at the time
@@ -1062,6 +1117,21 @@ open func itemCount()throws  -> UInt64  {
 }
     
     /**
+     * The pinned item with letter `key`, if any.
+     *
+     * # Errors
+     *
+     * `InvalidPinKey` when `key` is not one character; `Internal` after an earlier failure.
+     */
+open func itemForPinKey(key: String)throws  -> String?  {
+    return try  FfiConverterOptionString.lift(try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_item_for_pin_key(self.uniffiClonePointer(),
+        FfiConverterString.lower(key),$0
+    )
+})
+}
+    
+    /**
      * Items in list order (pinned first, then most recent), optionally of one kind.
      *
      * # Errors
@@ -1094,6 +1164,36 @@ open func markUsed(id: String, nowMs: UInt64)throws   {try rustCallWithError(Ffi
 }
     
     /**
+     * Pauses recording until `until_ms`, or until `resume` when `nil`. Copies made while
+     * paused are never read.
+     *
+     * # Errors
+     *
+     * `Internal` after an earlier failure.
+     */
+open func pause(untilMs: UInt64?)throws   {try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_pause(self.uniffiClonePointer(),
+        FfiConverterOptionUInt64.lower(untilMs),$0
+    )
+}
+}
+    
+    /**
+     * Whether recording is paused at `now_ms`, and how many copies will be skipped.
+     *
+     * # Errors
+     *
+     * `Internal` after an earlier failure.
+     */
+open func pauseStatus(nowMs: UInt64)throws  -> PauseStatus  {
+    return try  FfiConverterTypePauseStatus_lift(try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_pause_status(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(nowMs),$0
+    )
+})
+}
+    
+    /**
      * Every form of an item, to put back on the clipboard.
      *
      * # Errors
@@ -1106,6 +1206,19 @@ open func payload(id: String)throws  -> [PasteRepresentation]  {
         FfiConverterString.lower(id),$0
     )
 })
+}
+    
+    /**
+     * Resumes recording.
+     *
+     * # Errors
+     *
+     * `Internal` after an earlier failure.
+     */
+open func resume()throws   {try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_resume(self.uniffiClonePointer(),$0
+    )
+}
 }
     
     /**
@@ -1124,6 +1237,21 @@ open func search(query: String, mode: SearchMode, kind: ItemKind?, limit: UInt32
         FfiConverterUInt32.lower(limit),$0
     )
 })
+}
+    
+    /**
+     * Gives pinned item `id` the letter `key` (`a`–`z`), or removes it with `nil`.
+     *
+     * # Errors
+     *
+     * `InvalidId`, `NotFound`, `InvalidPinKey` (not pinned, not a letter, or taken) or `Internal`.
+     */
+open func setPinKey(id: String, key: String?)throws   {try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_set_pin_key(self.uniffiClonePointer(),
+        FfiConverterString.lower(id),
+        FfiConverterOptionString.lower(key),$0
+    )
+}
 }
     
     /**
@@ -1154,6 +1282,19 @@ open func settings()throws  -> Settings  {
     uniffi_cy_ffi_fn_method_supercyengine_settings(self.uniffiClonePointer(),$0
     )
 })
+}
+    
+    /**
+     * Ignores the next copy.
+     *
+     * # Errors
+     *
+     * `Internal` after an earlier failure.
+     */
+open func skipNext()throws   {try rustCallWithError(FfiConverterTypeSupercyError_lift) {
+    uniffi_cy_ffi_fn_method_supercyengine_skip_next(self.uniffiClonePointer(),$0
+    )
+}
 }
     
     /**
@@ -1583,6 +1724,18 @@ public struct ItemSummary {
      * Whether text was cut to the limit.
      */
     public var truncated: Bool
+    /**
+     * How many times it was copied.
+     */
+    public var copyCount: UInt32
+    /**
+     * The letter key of a pinned item (`a`–`z`).
+     */
+    public var pinKey: String?
+    /**
+     * Ranges of `preview` that matched the search, in UTF-16 code units (search results only).
+     */
+    public var matches: [TextRange]
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
@@ -1625,7 +1778,16 @@ public struct ItemSummary {
          */sensitiveUntilMs: UInt64?, 
         /**
          * Whether text was cut to the limit.
-         */truncated: Bool) {
+         */truncated: Bool, 
+        /**
+         * How many times it was copied.
+         */copyCount: UInt32, 
+        /**
+         * The letter key of a pinned item (`a`–`z`).
+         */pinKey: String?, 
+        /**
+         * Ranges of `preview` that matched the search, in UTF-16 code units (search results only).
+         */matches: [TextRange]) {
         self.id = id
         self.kind = kind
         self.preview = preview
@@ -1639,6 +1801,9 @@ public struct ItemSummary {
         self.sizeBytes = sizeBytes
         self.sensitiveUntilMs = sensitiveUntilMs
         self.truncated = truncated
+        self.copyCount = copyCount
+        self.pinKey = pinKey
+        self.matches = matches
     }
 }
 
@@ -1688,6 +1853,15 @@ extension ItemSummary: Equatable, Hashable {
         if lhs.truncated != rhs.truncated {
             return false
         }
+        if lhs.copyCount != rhs.copyCount {
+            return false
+        }
+        if lhs.pinKey != rhs.pinKey {
+            return false
+        }
+        if lhs.matches != rhs.matches {
+            return false
+        }
         return true
     }
 
@@ -1705,6 +1879,9 @@ extension ItemSummary: Equatable, Hashable {
         hasher.combine(sizeBytes)
         hasher.combine(sensitiveUntilMs)
         hasher.combine(truncated)
+        hasher.combine(copyCount)
+        hasher.combine(pinKey)
+        hasher.combine(matches)
     }
 }
 
@@ -1729,7 +1906,10 @@ public struct FfiConverterTypeItemSummary: FfiConverterRustBuffer {
                 imageHeight: FfiConverterOptionUInt32.read(from: &buf), 
                 sizeBytes: FfiConverterUInt64.read(from: &buf), 
                 sensitiveUntilMs: FfiConverterOptionUInt64.read(from: &buf), 
-                truncated: FfiConverterBool.read(from: &buf)
+                truncated: FfiConverterBool.read(from: &buf), 
+                copyCount: FfiConverterUInt32.read(from: &buf), 
+                pinKey: FfiConverterOptionString.read(from: &buf), 
+                matches: FfiConverterSequenceTypeTextRange.read(from: &buf)
         )
     }
 
@@ -1747,6 +1927,9 @@ public struct FfiConverterTypeItemSummary: FfiConverterRustBuffer {
         FfiConverterUInt64.write(value.sizeBytes, into: &buf)
         FfiConverterOptionUInt64.write(value.sensitiveUntilMs, into: &buf)
         FfiConverterBool.write(value.truncated, into: &buf)
+        FfiConverterUInt32.write(value.copyCount, into: &buf)
+        FfiConverterOptionString.write(value.pinKey, into: &buf)
+        FfiConverterSequenceTypeTextRange.write(value.matches, into: &buf)
     }
 }
 
@@ -1767,7 +1950,106 @@ public func FfiConverterTypeItemSummary_lower(_ value: ItemSummary) -> RustBuffe
 
 
 /**
- * What Supercy keeps and for how long. Ranges are checked by `update_settings`.
+ * Whether recording is paused.
+ */
+public struct PauseStatus {
+    /**
+     * Paused now.
+     */
+    public var paused: Bool
+    /**
+     * When a timed pause ends; `nil` when not paused or paused until resumed.
+     */
+    public var pausedUntilMs: UInt64?
+    /**
+     * Coming copies that will be skipped.
+     */
+    public var skipNext: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Paused now.
+         */paused: Bool, 
+        /**
+         * When a timed pause ends; `nil` when not paused or paused until resumed.
+         */pausedUntilMs: UInt64?, 
+        /**
+         * Coming copies that will be skipped.
+         */skipNext: UInt32) {
+        self.paused = paused
+        self.pausedUntilMs = pausedUntilMs
+        self.skipNext = skipNext
+    }
+}
+
+#if compiler(>=6)
+extension PauseStatus: Sendable {}
+#endif
+
+
+extension PauseStatus: Equatable, Hashable {
+    public static func ==(lhs: PauseStatus, rhs: PauseStatus) -> Bool {
+        if lhs.paused != rhs.paused {
+            return false
+        }
+        if lhs.pausedUntilMs != rhs.pausedUntilMs {
+            return false
+        }
+        if lhs.skipNext != rhs.skipNext {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(paused)
+        hasher.combine(pausedUntilMs)
+        hasher.combine(skipNext)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePauseStatus: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PauseStatus {
+        return
+            try PauseStatus(
+                paused: FfiConverterBool.read(from: &buf), 
+                pausedUntilMs: FfiConverterOptionUInt64.read(from: &buf), 
+                skipNext: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: PauseStatus, into buf: inout [UInt8]) {
+        FfiConverterBool.write(value.paused, into: &buf)
+        FfiConverterOptionUInt64.write(value.pausedUntilMs, into: &buf)
+        FfiConverterUInt32.write(value.skipNext, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePauseStatus_lift(_ buf: RustBuffer) throws -> PauseStatus {
+    return try FfiConverterTypePauseStatus.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePauseStatus_lower(_ value: PauseStatus) -> RustBuffer {
+    return FfiConverterTypePauseStatus.lower(value)
+}
+
+
+/**
+ * Everything the user chooses. Ranges are checked by `update_settings`.
  */
 public struct Settings {
     /**
@@ -1802,6 +2084,98 @@ public struct Settings {
      * Apps whose copies are never kept, by bundle identifier.
      */
     public var ignoredApps: [String]
+    /**
+     * Allow-list mode: keep only copies from `allowed_apps`.
+     */
+    public var allowListMode: Bool
+    /**
+     * The allow-list, by bundle identifier.
+     */
+    public var allowedApps: [String]
+    /**
+     * Clipboard types that mean "do not keep".
+     */
+    public var ignoredTypes: [String]
+    /**
+     * Regular expressions: matching text is not kept.
+     */
+    public var ignorePatterns: [String]
+    /**
+     * Keep text, rich text and links.
+     */
+    public var recordText: Bool
+    /**
+     * Keep images.
+     */
+    public var recordImages: Bool
+    /**
+     * Keep copied files (references only).
+     */
+    public var recordFiles: Bool
+    /**
+     * Search mode.
+     */
+    public var searchMode: SearchMode
+    /**
+     * Sort order.
+     */
+    public var sort: SortOrder
+    /**
+     * Where pinned items go.
+     */
+    public var pinPosition: PinPosition
+    /**
+     * Paste into the front app after choosing (needs Accessibility); else only copy.
+     */
+    public var pasteAutomatically: Bool
+    /**
+     * Paste without formatting by default.
+     */
+    public var pastePlainByDefault: Bool
+    /**
+     * Where the history opens.
+     */
+    public var popupPosition: PopupPosition
+    /**
+     * Shortcut for the history, such as `shift+cmd+v`.
+     */
+    public var historyShortcut: String
+    /**
+     * Shortcut for a screenshot (from version 0.2).
+     */
+    public var captureShortcut: String
+    /**
+     * Clipboard check interval in milliseconds (100–2000).
+     */
+    public var pollIntervalMs: UInt32
+    /**
+     * Show spaces, tabs and line breaks in previews.
+     */
+    public var showSpecialChars: Bool
+    /**
+     * Show the menu bar icon.
+     */
+    public var showMenuIcon: Bool
+    /**
+     * Show the latest copy next to the menu bar icon.
+     */
+    public var showRecentInMenuBar: Bool
+    /**
+     * Clear the history (except pins) on quit.
+     */
+    public var clearOnQuit: Bool
+    /**
+     * Rows visible before scrolling (5–100).
+     */
+    public var visibleItems: UInt32
+    /**
+     * Image preview height in the list, in points (16–400).
+     */
+    public var imagePreviewHeight: UInt32
+    /**
+     * Interface language.
+     */
+    public var language: Language
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
@@ -1829,7 +2203,76 @@ public struct Settings {
          */keepAutoGenerated: Bool, 
         /**
          * Apps whose copies are never kept, by bundle identifier.
-         */ignoredApps: [String]) {
+         */ignoredApps: [String], 
+        /**
+         * Allow-list mode: keep only copies from `allowed_apps`.
+         */allowListMode: Bool, 
+        /**
+         * The allow-list, by bundle identifier.
+         */allowedApps: [String], 
+        /**
+         * Clipboard types that mean "do not keep".
+         */ignoredTypes: [String], 
+        /**
+         * Regular expressions: matching text is not kept.
+         */ignorePatterns: [String], 
+        /**
+         * Keep text, rich text and links.
+         */recordText: Bool, 
+        /**
+         * Keep images.
+         */recordImages: Bool, 
+        /**
+         * Keep copied files (references only).
+         */recordFiles: Bool, 
+        /**
+         * Search mode.
+         */searchMode: SearchMode, 
+        /**
+         * Sort order.
+         */sort: SortOrder, 
+        /**
+         * Where pinned items go.
+         */pinPosition: PinPosition, 
+        /**
+         * Paste into the front app after choosing (needs Accessibility); else only copy.
+         */pasteAutomatically: Bool, 
+        /**
+         * Paste without formatting by default.
+         */pastePlainByDefault: Bool, 
+        /**
+         * Where the history opens.
+         */popupPosition: PopupPosition, 
+        /**
+         * Shortcut for the history, such as `shift+cmd+v`.
+         */historyShortcut: String, 
+        /**
+         * Shortcut for a screenshot (from version 0.2).
+         */captureShortcut: String, 
+        /**
+         * Clipboard check interval in milliseconds (100–2000).
+         */pollIntervalMs: UInt32, 
+        /**
+         * Show spaces, tabs and line breaks in previews.
+         */showSpecialChars: Bool, 
+        /**
+         * Show the menu bar icon.
+         */showMenuIcon: Bool, 
+        /**
+         * Show the latest copy next to the menu bar icon.
+         */showRecentInMenuBar: Bool, 
+        /**
+         * Clear the history (except pins) on quit.
+         */clearOnQuit: Bool, 
+        /**
+         * Rows visible before scrolling (5–100).
+         */visibleItems: UInt32, 
+        /**
+         * Image preview height in the list, in points (16–400).
+         */imagePreviewHeight: UInt32, 
+        /**
+         * Interface language.
+         */language: Language) {
         self.maxItems = maxItems
         self.maxTextBytes = maxTextBytes
         self.maxImageBytes = maxImageBytes
@@ -1838,6 +2281,29 @@ public struct Settings {
         self.sensitiveTtlMs = sensitiveTtlMs
         self.keepAutoGenerated = keepAutoGenerated
         self.ignoredApps = ignoredApps
+        self.allowListMode = allowListMode
+        self.allowedApps = allowedApps
+        self.ignoredTypes = ignoredTypes
+        self.ignorePatterns = ignorePatterns
+        self.recordText = recordText
+        self.recordImages = recordImages
+        self.recordFiles = recordFiles
+        self.searchMode = searchMode
+        self.sort = sort
+        self.pinPosition = pinPosition
+        self.pasteAutomatically = pasteAutomatically
+        self.pastePlainByDefault = pastePlainByDefault
+        self.popupPosition = popupPosition
+        self.historyShortcut = historyShortcut
+        self.captureShortcut = captureShortcut
+        self.pollIntervalMs = pollIntervalMs
+        self.showSpecialChars = showSpecialChars
+        self.showMenuIcon = showMenuIcon
+        self.showRecentInMenuBar = showRecentInMenuBar
+        self.clearOnQuit = clearOnQuit
+        self.visibleItems = visibleItems
+        self.imagePreviewHeight = imagePreviewHeight
+        self.language = language
     }
 }
 
@@ -1872,6 +2338,75 @@ extension Settings: Equatable, Hashable {
         if lhs.ignoredApps != rhs.ignoredApps {
             return false
         }
+        if lhs.allowListMode != rhs.allowListMode {
+            return false
+        }
+        if lhs.allowedApps != rhs.allowedApps {
+            return false
+        }
+        if lhs.ignoredTypes != rhs.ignoredTypes {
+            return false
+        }
+        if lhs.ignorePatterns != rhs.ignorePatterns {
+            return false
+        }
+        if lhs.recordText != rhs.recordText {
+            return false
+        }
+        if lhs.recordImages != rhs.recordImages {
+            return false
+        }
+        if lhs.recordFiles != rhs.recordFiles {
+            return false
+        }
+        if lhs.searchMode != rhs.searchMode {
+            return false
+        }
+        if lhs.sort != rhs.sort {
+            return false
+        }
+        if lhs.pinPosition != rhs.pinPosition {
+            return false
+        }
+        if lhs.pasteAutomatically != rhs.pasteAutomatically {
+            return false
+        }
+        if lhs.pastePlainByDefault != rhs.pastePlainByDefault {
+            return false
+        }
+        if lhs.popupPosition != rhs.popupPosition {
+            return false
+        }
+        if lhs.historyShortcut != rhs.historyShortcut {
+            return false
+        }
+        if lhs.captureShortcut != rhs.captureShortcut {
+            return false
+        }
+        if lhs.pollIntervalMs != rhs.pollIntervalMs {
+            return false
+        }
+        if lhs.showSpecialChars != rhs.showSpecialChars {
+            return false
+        }
+        if lhs.showMenuIcon != rhs.showMenuIcon {
+            return false
+        }
+        if lhs.showRecentInMenuBar != rhs.showRecentInMenuBar {
+            return false
+        }
+        if lhs.clearOnQuit != rhs.clearOnQuit {
+            return false
+        }
+        if lhs.visibleItems != rhs.visibleItems {
+            return false
+        }
+        if lhs.imagePreviewHeight != rhs.imagePreviewHeight {
+            return false
+        }
+        if lhs.language != rhs.language {
+            return false
+        }
         return true
     }
 
@@ -1884,6 +2419,29 @@ extension Settings: Equatable, Hashable {
         hasher.combine(sensitiveTtlMs)
         hasher.combine(keepAutoGenerated)
         hasher.combine(ignoredApps)
+        hasher.combine(allowListMode)
+        hasher.combine(allowedApps)
+        hasher.combine(ignoredTypes)
+        hasher.combine(ignorePatterns)
+        hasher.combine(recordText)
+        hasher.combine(recordImages)
+        hasher.combine(recordFiles)
+        hasher.combine(searchMode)
+        hasher.combine(sort)
+        hasher.combine(pinPosition)
+        hasher.combine(pasteAutomatically)
+        hasher.combine(pastePlainByDefault)
+        hasher.combine(popupPosition)
+        hasher.combine(historyShortcut)
+        hasher.combine(captureShortcut)
+        hasher.combine(pollIntervalMs)
+        hasher.combine(showSpecialChars)
+        hasher.combine(showMenuIcon)
+        hasher.combine(showRecentInMenuBar)
+        hasher.combine(clearOnQuit)
+        hasher.combine(visibleItems)
+        hasher.combine(imagePreviewHeight)
+        hasher.combine(language)
     }
 }
 
@@ -1903,7 +2461,30 @@ public struct FfiConverterTypeSettings: FfiConverterRustBuffer {
                 detectSensitive: FfiConverterBool.read(from: &buf), 
                 sensitiveTtlMs: FfiConverterUInt64.read(from: &buf), 
                 keepAutoGenerated: FfiConverterBool.read(from: &buf), 
-                ignoredApps: FfiConverterSequenceString.read(from: &buf)
+                ignoredApps: FfiConverterSequenceString.read(from: &buf), 
+                allowListMode: FfiConverterBool.read(from: &buf), 
+                allowedApps: FfiConverterSequenceString.read(from: &buf), 
+                ignoredTypes: FfiConverterSequenceString.read(from: &buf), 
+                ignorePatterns: FfiConverterSequenceString.read(from: &buf), 
+                recordText: FfiConverterBool.read(from: &buf), 
+                recordImages: FfiConverterBool.read(from: &buf), 
+                recordFiles: FfiConverterBool.read(from: &buf), 
+                searchMode: FfiConverterTypeSearchMode.read(from: &buf), 
+                sort: FfiConverterTypeSortOrder.read(from: &buf), 
+                pinPosition: FfiConverterTypePinPosition.read(from: &buf), 
+                pasteAutomatically: FfiConverterBool.read(from: &buf), 
+                pastePlainByDefault: FfiConverterBool.read(from: &buf), 
+                popupPosition: FfiConverterTypePopupPosition.read(from: &buf), 
+                historyShortcut: FfiConverterString.read(from: &buf), 
+                captureShortcut: FfiConverterString.read(from: &buf), 
+                pollIntervalMs: FfiConverterUInt32.read(from: &buf), 
+                showSpecialChars: FfiConverterBool.read(from: &buf), 
+                showMenuIcon: FfiConverterBool.read(from: &buf), 
+                showRecentInMenuBar: FfiConverterBool.read(from: &buf), 
+                clearOnQuit: FfiConverterBool.read(from: &buf), 
+                visibleItems: FfiConverterUInt32.read(from: &buf), 
+                imagePreviewHeight: FfiConverterUInt32.read(from: &buf), 
+                language: FfiConverterTypeLanguage.read(from: &buf)
         )
     }
 
@@ -1916,6 +2497,29 @@ public struct FfiConverterTypeSettings: FfiConverterRustBuffer {
         FfiConverterUInt64.write(value.sensitiveTtlMs, into: &buf)
         FfiConverterBool.write(value.keepAutoGenerated, into: &buf)
         FfiConverterSequenceString.write(value.ignoredApps, into: &buf)
+        FfiConverterBool.write(value.allowListMode, into: &buf)
+        FfiConverterSequenceString.write(value.allowedApps, into: &buf)
+        FfiConverterSequenceString.write(value.ignoredTypes, into: &buf)
+        FfiConverterSequenceString.write(value.ignorePatterns, into: &buf)
+        FfiConverterBool.write(value.recordText, into: &buf)
+        FfiConverterBool.write(value.recordImages, into: &buf)
+        FfiConverterBool.write(value.recordFiles, into: &buf)
+        FfiConverterTypeSearchMode.write(value.searchMode, into: &buf)
+        FfiConverterTypeSortOrder.write(value.sort, into: &buf)
+        FfiConverterTypePinPosition.write(value.pinPosition, into: &buf)
+        FfiConverterBool.write(value.pasteAutomatically, into: &buf)
+        FfiConverterBool.write(value.pastePlainByDefault, into: &buf)
+        FfiConverterTypePopupPosition.write(value.popupPosition, into: &buf)
+        FfiConverterString.write(value.historyShortcut, into: &buf)
+        FfiConverterString.write(value.captureShortcut, into: &buf)
+        FfiConverterUInt32.write(value.pollIntervalMs, into: &buf)
+        FfiConverterBool.write(value.showSpecialChars, into: &buf)
+        FfiConverterBool.write(value.showMenuIcon, into: &buf)
+        FfiConverterBool.write(value.showRecentInMenuBar, into: &buf)
+        FfiConverterBool.write(value.clearOnQuit, into: &buf)
+        FfiConverterUInt32.write(value.visibleItems, into: &buf)
+        FfiConverterUInt32.write(value.imagePreviewHeight, into: &buf)
+        FfiConverterTypeLanguage.write(value.language, into: &buf)
     }
 }
 
@@ -2019,6 +2623,91 @@ public func FfiConverterTypeSourceApp_lower(_ value: SourceApp) -> RustBuffer {
     return FfiConverterTypeSourceApp.lower(value)
 }
 
+
+/**
+ * A range of text in UTF-16 code units, as `NSRange` counts them.
+ */
+public struct TextRange {
+    /**
+     * Start offset.
+     */
+    public var location: UInt32
+    /**
+     * Length.
+     */
+    public var length: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Start offset.
+         */location: UInt32, 
+        /**
+         * Length.
+         */length: UInt32) {
+        self.location = location
+        self.length = length
+    }
+}
+
+#if compiler(>=6)
+extension TextRange: Sendable {}
+#endif
+
+
+extension TextRange: Equatable, Hashable {
+    public static func ==(lhs: TextRange, rhs: TextRange) -> Bool {
+        if lhs.location != rhs.location {
+            return false
+        }
+        if lhs.length != rhs.length {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(location)
+        hasher.combine(length)
+    }
+}
+
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTextRange: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TextRange {
+        return
+            try TextRange(
+                location: FfiConverterUInt32.read(from: &buf), 
+                length: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TextRange, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.location, into: &buf)
+        FfiConverterUInt32.write(value.length, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTextRange_lift(_ buf: RustBuffer) throws -> TextRange {
+    return try FfiConverterTypeTextRange.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTextRange_lower(_ value: TextRange) -> RustBuffer {
+    return FfiConverterTypeTextRange.lower(value)
+}
+
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
@@ -2040,13 +2729,25 @@ public enum DropReason {
      */
     case autoGenerated
     /**
+     * Carries an ignored clipboard type.
+     */
+    case ignoredType
+    /**
      * Copied from an ignored app.
      */
     case ignoredApp
     /**
-     * Copied files (not recorded yet).
+     * Allow-list mode, and the app is not on the list.
      */
-    case files
+    case notAllowedApp
+    /**
+     * Matches an ignore pattern.
+     */
+    case ignoredPattern
+    /**
+     * Its kind of content is switched off.
+     */
+    case typeDisabled
     /**
      * Nothing Supercy can keep.
      */
@@ -2078,13 +2779,19 @@ public struct FfiConverterTypeDropReason: FfiConverterRustBuffer {
         
         case 3: return .autoGenerated
         
-        case 4: return .ignoredApp
+        case 4: return .ignoredType
         
-        case 5: return .files
+        case 5: return .ignoredApp
         
-        case 6: return .unsupported
+        case 6: return .notAllowedApp
         
-        case 7: return .tooLarge
+        case 7: return .ignoredPattern
+        
+        case 8: return .typeDisabled
+        
+        case 9: return .unsupported
+        
+        case 10: return .tooLarge
         
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -2106,20 +2813,32 @@ public struct FfiConverterTypeDropReason: FfiConverterRustBuffer {
             writeInt(&buf, Int32(3))
         
         
-        case .ignoredApp:
+        case .ignoredType:
             writeInt(&buf, Int32(4))
         
         
-        case .files:
+        case .ignoredApp:
             writeInt(&buf, Int32(5))
         
         
-        case .unsupported:
+        case .notAllowedApp:
             writeInt(&buf, Int32(6))
         
         
-        case .tooLarge:
+        case .ignoredPattern:
             writeInt(&buf, Int32(7))
+        
+        
+        case .typeDisabled:
+            writeInt(&buf, Int32(8))
+        
+        
+        case .unsupported:
+            writeInt(&buf, Int32(9))
+        
+        
+        case .tooLarge:
+            writeInt(&buf, Int32(10))
         
         }
     }
@@ -2282,6 +3001,14 @@ public enum IngestOutcome {
          * Why.
          */reason: DropReason
     )
+    /**
+     * Recording is paused.
+     */
+    case paused
+    /**
+     * Skipped on request ("ignore the next copy").
+     */
+    case skipped
 }
 
 
@@ -2308,6 +3035,10 @@ public struct FfiConverterTypeIngestOutcome: FfiConverterRustBuffer {
         case 3: return .dropped(reason: try FfiConverterTypeDropReason.read(from: &buf)
         )
         
+        case 4: return .paused
+        
+        case 5: return .skipped
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -2331,6 +3062,14 @@ public struct FfiConverterTypeIngestOutcome: FfiConverterRustBuffer {
             writeInt(&buf, Int32(3))
             FfiConverterTypeDropReason.write(reason, into: &buf)
             
+        
+        case .paused:
+            writeInt(&buf, Int32(4))
+        
+        
+        case .skipped:
+            writeInt(&buf, Int32(5))
+        
         }
     }
 }
@@ -2564,6 +3303,95 @@ extension KeystoreError: Foundation.LocalizedError {
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
+ * The interface language.
+ */
+
+public enum Language {
+    
+    /**
+     * Follow the system (Chinese or English, else English).
+     */
+    case system
+    /**
+     * Simplified Chinese.
+     */
+    case simplifiedChinese
+    /**
+     * English.
+     */
+    case english
+}
+
+
+#if compiler(>=6)
+extension Language: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLanguage: FfiConverterRustBuffer {
+    typealias SwiftType = Language
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Language {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .system
+        
+        case 2: return .simplifiedChinese
+        
+        case 3: return .english
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: Language, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .system:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .simplifiedChinese:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .english:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLanguage_lift(_ buf: RustBuffer) throws -> Language {
+    return try FfiConverterTypeLanguage.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLanguage_lower(_ value: Language) -> RustBuffer {
+    return FfiConverterTypeLanguage.lower(value)
+}
+
+
+extension Language: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
  * One form of an item to put back on the clipboard, in paste-preference order.
  */
 
@@ -2727,7 +3555,185 @@ extension PasteRepresentation: Equatable, Hashable {}
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 /**
- * How search terms match.
+ * Where pinned items go.
+ */
+
+public enum PinPosition {
+    
+    /**
+     * Above the other items.
+     */
+    case top
+    /**
+     * Below the other items.
+     */
+    case bottom
+}
+
+
+#if compiler(>=6)
+extension PinPosition: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePinPosition: FfiConverterRustBuffer {
+    typealias SwiftType = PinPosition
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PinPosition {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .top
+        
+        case 2: return .bottom
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: PinPosition, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .top:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .bottom:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePinPosition_lift(_ buf: RustBuffer) throws -> PinPosition {
+    return try FfiConverterTypePinPosition.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePinPosition_lower(_ value: PinPosition) -> RustBuffer {
+    return FfiConverterTypePinPosition.lower(value)
+}
+
+
+extension PinPosition: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * Where the history opens.
+ */
+
+public enum PopupPosition {
+    
+    /**
+     * At the mouse pointer.
+     */
+    case cursor
+    /**
+     * Below the menu bar icon.
+     */
+    case menuIcon
+    /**
+     * In the middle of the screen.
+     */
+    case screenCenter
+    /**
+     * Where it was last time.
+     */
+    case lastPosition
+}
+
+
+#if compiler(>=6)
+extension PopupPosition: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePopupPosition: FfiConverterRustBuffer {
+    typealias SwiftType = PopupPosition
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PopupPosition {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .cursor
+        
+        case 2: return .menuIcon
+        
+        case 3: return .screenCenter
+        
+        case 4: return .lastPosition
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: PopupPosition, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .cursor:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .menuIcon:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .screenCenter:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .lastPosition:
+            writeInt(&buf, Int32(4))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePopupPosition_lift(_ buf: RustBuffer) throws -> PopupPosition {
+    return try FfiConverterTypePopupPosition.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePopupPosition_lower(_ value: PopupPosition) -> RustBuffer {
+    return FfiConverterTypePopupPosition.lower(value)
+}
+
+
+extension PopupPosition: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * How search matches.
  */
 
 public enum SearchMode {
@@ -2740,6 +3746,14 @@ public enum SearchMode {
      * Substring of the text.
      */
     case exact
+    /**
+     * A regular expression (case-insensitive).
+     */
+    case regex
+    /**
+     * Exact matches if any, else regular-expression matches, else fuzzy matches.
+     */
+    case mixed
 }
 
 
@@ -2761,6 +3775,10 @@ public struct FfiConverterTypeSearchMode: FfiConverterRustBuffer {
         
         case 2: return .exact
         
+        case 3: return .regex
+        
+        case 4: return .mixed
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -2775,6 +3793,14 @@ public struct FfiConverterTypeSearchMode: FfiConverterRustBuffer {
         
         case .exact:
             writeInt(&buf, Int32(2))
+        
+        
+        case .regex:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .mixed:
+            writeInt(&buf, Int32(4))
         
         }
     }
@@ -2797,6 +3823,95 @@ public func FfiConverterTypeSearchMode_lower(_ value: SearchMode) -> RustBuffer 
 
 
 extension SearchMode: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * How unpinned items are sorted.
+ */
+
+public enum SortOrder {
+    
+    /**
+     * Most recently used first.
+     */
+    case lastUsed
+    /**
+     * Most recently first copied first.
+     */
+    case firstCopied
+    /**
+     * Most often copied first.
+     */
+    case copyCount
+}
+
+
+#if compiler(>=6)
+extension SortOrder: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSortOrder: FfiConverterRustBuffer {
+    typealias SwiftType = SortOrder
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SortOrder {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .lastUsed
+        
+        case 2: return .firstCopied
+        
+        case 3: return .copyCount
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: SortOrder, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .lastUsed:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .firstCopied:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .copyCount:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSortOrder_lift(_ buf: RustBuffer) throws -> SortOrder {
+    return try FfiConverterTypeSortOrder.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSortOrder_lower(_ value: SortOrder) -> RustBuffer {
+    return FfiConverterTypeSortOrder.lower(value)
+}
+
+
+extension SortOrder: Equatable, Hashable {}
 
 
 
@@ -2849,6 +3964,14 @@ public enum SupercyError: Swift.Error {
     case NotFound(
         /**
          * What happened.
+         */message: String
+    )
+    /**
+     * A pin key is not a free letter from a to z, or the item is not pinned.
+     */
+    case InvalidPinKey(
+        /**
+         * What is wrong.
          */message: String
     )
     /**
@@ -2906,13 +4029,16 @@ public struct FfiConverterTypeSupercyError: FfiConverterRustBuffer {
         case 5: return .NotFound(
             message: try FfiConverterString.read(from: &buf)
             )
-        case 6: return .InvalidId(
+        case 6: return .InvalidPinKey(
             message: try FfiConverterString.read(from: &buf)
             )
-        case 7: return .Keystore(
+        case 7: return .InvalidId(
             message: try FfiConverterString.read(from: &buf)
             )
-        case 8: return .Internal(
+        case 8: return .Keystore(
+            message: try FfiConverterString.read(from: &buf)
+            )
+        case 9: return .Internal(
             message: try FfiConverterString.read(from: &buf)
             )
 
@@ -2952,18 +4078,23 @@ public struct FfiConverterTypeSupercyError: FfiConverterRustBuffer {
             FfiConverterString.write(message, into: &buf)
             
         
-        case let .InvalidId(message):
+        case let .InvalidPinKey(message):
             writeInt(&buf, Int32(6))
             FfiConverterString.write(message, into: &buf)
             
         
-        case let .Keystore(message):
+        case let .InvalidId(message):
             writeInt(&buf, Int32(7))
             FfiConverterString.write(message, into: &buf)
             
         
-        case let .Internal(message):
+        case let .Keystore(message):
             writeInt(&buf, Int32(8))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case let .Internal(message):
+            writeInt(&buf, Int32(9))
             FfiConverterString.write(message, into: &buf)
             
         }
@@ -3222,6 +4353,31 @@ fileprivate struct FfiConverterSequenceTypeItemSummary: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeTextRange: FfiConverterRustBuffer {
+    typealias SwiftType = [TextRange]
+
+    public static func write(_ value: [TextRange], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTextRange.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TextRange] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TextRange]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTextRange.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypePasteRepresentation: FfiConverterRustBuffer {
     typealias SwiftType = [PasteRepresentation]
 
@@ -3244,11 +4400,32 @@ fileprivate struct FfiConverterSequenceTypePasteRepresentation: FfiConverterRust
     }
 }
 /**
+ * Why an ignore pattern is not valid, if it is not (for the settings screen).
+ */
+public func checkIgnorePattern(pattern: String) -> String?  {
+    return try!  FfiConverterOptionString.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_func_check_ignore_pattern(
+        FfiConverterString.lower(pattern),$0
+    )
+})
+}
+/**
  * The version of the core library.
  */
 public func coreVersion() -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_cy_ffi_fn_func_core_version($0
+    )
+})
+}
+/**
+ * Why `query` is not a valid regular expression in `mode`, if it is not (for the search field).
+ */
+public func queryError(query: String, mode: SearchMode) -> String?  {
+    return try!  FfiConverterOptionString.lift(try! rustCall() {
+    uniffi_cy_ffi_fn_func_query_error(
+        FfiConverterString.lower(query),
+        FfiConverterTypeSearchMode_lower(mode),$0
     )
 })
 }
@@ -3268,7 +4445,13 @@ private let initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
+    if (uniffi_cy_ffi_checksum_func_check_ignore_pattern() != 3421) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_cy_ffi_checksum_func_core_version() != 24397) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_func_query_error() != 8522) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_keystore_read() != 22629) {
@@ -3292,22 +4475,40 @@ private let initializationResult: InitializationResult = {
     if (uniffi_cy_ffi_checksum_method_supercyengine_item_count() != 46290) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_item_for_pin_key() != 9089) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_cy_ffi_checksum_method_supercyengine_list() != 8969) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_mark_used() != 21140) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_pause() != 42536) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_pause_status() != 38025) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_cy_ffi_checksum_method_supercyengine_payload() != 11807) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_resume() != 32803) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_cy_ffi_checksum_method_supercyengine_search() != 38817) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_set_pin_key() != 55816) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_set_pinned() != 8333) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_settings() != 44265) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_cy_ffi_checksum_method_supercyengine_skip_next() != 25809) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_cy_ffi_checksum_method_supercyengine_tick() != 39053) {

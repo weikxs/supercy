@@ -42,6 +42,8 @@ fn item(store: &Store, n: u64, reps: Vec<Representation>) -> Item {
         pinned_at: None,
         sensitivity: Sensitivity::Normal,
         truncated: false,
+        copy_count: 1,
+        pin_key: None,
     }
 }
 
@@ -546,8 +548,13 @@ fn a_version_1_history_is_migrated_and_keeps_its_items() {
     store.save(&kept, &Limits::default()).unwrap();
     drop(store);
     let raw = rusqlite::Connection::open(dir.path().join(DATABASE_FILE)).unwrap();
-    raw.execute_batch("DROP TABLE meta; PRAGMA user_version = 1;")
-        .unwrap();
+    raw.execute_batch(
+        "DROP INDEX items_pin_key; ALTER TABLE items DROP COLUMN pin_key; ALTER TABLE items DROP COLUMN copy_count;
+         DROP TABLE meta; DROP INDEX items_expiry;
+         CREATE INDEX items_expiry ON items(expires_at) WHERE expires_at IS NOT NULL;
+         PRAGMA user_version = 1;",
+    )
+    .unwrap();
     drop(raw);
 
     let mut store = Store::open(dir.path(), &keys).unwrap();
@@ -590,4 +597,43 @@ fn lowering_the_limits_applies_them_at_once() {
 
     assert_eq!(removed.len(), 10);
     assert_eq!(store.load().unwrap().items.len(), 50);
+}
+
+#[test]
+fn copy_counts_and_pin_keys_round_trip_and_keys_are_unique() {
+    let dir = temp_dir();
+    let keys = MemoryKeyStore::new();
+    let mut store = Store::open(dir.path(), &keys).unwrap();
+    let at = Hlc::new(5, 0, DEVICE);
+    let a = Item {
+        copy_count: 7,
+        ..item(&store, 1, text("a"))
+    }
+    .with_pinned(true, at)
+    .with_pin_key(Some('a'));
+    let b = item(&store, 2, text("b"))
+        .with_pinned(true, at)
+        .with_pin_key(Some('a'));
+
+    store.save(&a, &Limits::default()).unwrap();
+
+    assert_eq!(store.get(a.id).unwrap(), Some(a));
+    assert!(store.save(&b, &Limits::default()).is_err());
+}
+
+#[test]
+fn a_damaged_pin_key_makes_the_row_unreadable() {
+    let dir = temp_dir();
+    let keys = MemoryKeyStore::new();
+    let mut store = Store::open(dir.path(), &keys).unwrap();
+    let it = item(&store, 1, text("demo"));
+    store.save(&it, &Limits::default()).unwrap();
+    drop(store);
+    let raw = rusqlite::Connection::open(dir.path().join(DATABASE_FILE)).unwrap();
+    raw.execute("UPDATE items SET pin_key = 'AB'", []).unwrap();
+    drop(raw);
+
+    let report = Store::open(dir.path(), &keys).unwrap().load().unwrap();
+
+    assert_eq!(report.unreadable, vec![it.id]);
 }
