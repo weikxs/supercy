@@ -81,24 +81,19 @@ impl Engine {
         let device = load_or_create_device(&mut store)?;
         let settings = load_settings(&store)?;
         store.expire(now_ms)?;
-        let report = store.load()?;
-        let newest = report.items.iter().map(|item| item.last_used).max();
-        let clock = HlcClock::resume(newest.map_or(Hlc::new(0, 0, device), |h| {
+        let loaded = Loaded::from_store(&store)?;
+        let clock = HlcClock::resume(loaded.newest.map_or(Hlc::new(0, 0, device), |h| {
             Hlc::new(h.wall_ms(), h.counter(), device)
         }));
         Ok(Self {
-            index: SearchIndex::from_items(&report.items),
-            summaries: report
-                .items
-                .iter()
-                .map(|item| (item.id, ItemSummary::of(item)))
-                .collect(),
+            index: loaded.index,
+            summaries: loaded.summaries,
             store,
             clock,
             policy: settings.filter_policy(),
             settings,
             pause: PauseState::default(),
-            unreadable: report.unreadable.len(),
+            unreadable: loaded.unreadable,
         })
     }
 
@@ -326,13 +321,9 @@ impl Engine {
     /// Storage failures.
     pub fn clear(&mut self, keep_pinned: bool) -> Result<usize, EngineError> {
         let deleted = self.store.clear(keep_pinned)?;
-        let remaining = self.store.load()?;
-        self.index = SearchIndex::from_items(&remaining.items);
-        self.summaries = remaining
-            .items
-            .iter()
-            .map(|item| (item.id, ItemSummary::of(item)))
-            .collect();
+        let loaded = Loaded::from_store(&self.store)?;
+        self.index = loaded.index;
+        self.summaries = loaded.summaries;
         Ok(deleted)
     }
 
@@ -432,5 +423,34 @@ fn refreshed(old: &Item, capture: Capture, at: Hlc) -> Item {
         sensitivity: capture.sensitivity,
         truncated: capture.truncated,
         ..old.merged_with(&capture.reps, at)
+    }
+}
+
+/// The in-memory state built from storage one item at a time: only the index entry and the
+/// summary of each item are kept, never its full content.
+struct Loaded {
+    index: SearchIndex,
+    summaries: HashMap<ItemId, ItemSummary>,
+    newest: Option<Hlc>,
+    unreadable: usize,
+}
+
+impl Loaded {
+    fn from_store(store: &Store) -> Result<Self, EngineError> {
+        let mut loaded = Self {
+            index: SearchIndex::new(),
+            summaries: HashMap::new(),
+            newest: None,
+            unreadable: 0,
+        };
+        store.for_each(|read| match read {
+            Ok(item) => {
+                loaded.index.push(&IndexDoc::from_item(&item));
+                loaded.summaries.insert(item.id, ItemSummary::of(&item));
+                loaded.newest = loaded.newest.max(Some(item.last_used));
+            }
+            Err(_) => loaded.unreadable += 1,
+        })?;
+        Ok(loaded)
     }
 }

@@ -100,17 +100,28 @@ impl Store {
     ///
     /// Database failures. Rows that cannot be read are reported in [`LoadReport::unreadable`].
     pub fn load(&self) -> Result<LoadReport, StoreError> {
+        let mut report = LoadReport::default();
+        self.for_each(|read| match read {
+            Ok(item) => report.items.push(item),
+            Err(id) => report.unreadable.push(id),
+        })?;
+        Ok(report)
+    }
+
+    /// Calls `visit` for every item in list order, one at a time, so a large history (with
+    /// images) is never held in memory at once. Unreadable rows arrive as `Err(id)`.
+    ///
+    /// # Errors
+    ///
+    /// Database failures.
+    pub fn for_each(&self, mut visit: impl FnMut(Result<Item, ItemId>)) -> Result<(), StoreError> {
         let sql = format!("SELECT {ITEM_COLUMNS} FROM items ORDER BY pinned DESC, last_used DESC");
         let mut statement = self.conn.prepare(&sql).map_err(StoreError::from_sql)?;
         let mut rows = statement.query([]).map_err(StoreError::from_sql)?;
-        let mut report = LoadReport::default();
         while let Some(row) = rows.next().map_err(StoreError::from_sql)? {
-            match read_item(row, &self.keys)? {
-                Ok(item) => report.items.push(item),
-                Err(id) => report.unreadable.push(id),
-            }
+            visit(read_item(row, &self.keys)?);
         }
-        Ok(report)
+        Ok(())
     }
 
     /// The item `id`, if it exists and can be read.
@@ -342,7 +353,8 @@ fn delete_ids(conn: &Connection, ids: &[ItemId]) -> Result<(), StoreError> {
 }
 
 /// Exclusive locking (one process at a time, no shared-memory file), WAL, overwrite deleted
-/// content, and take the lock now so a second process fails at once.
+/// content, a small page cache (512 KiB; the history is read once at start), and take the lock
+/// now so a second process fails at once.
 fn configure(conn: &Connection) -> Result<(), StoreError> {
     conn.busy_timeout(std::time::Duration::ZERO)
         .map_err(StoreError::from_sql)?;
@@ -353,7 +365,8 @@ fn configure(conn: &Connection) -> Result<(), StoreError> {
         .query_row("PRAGMA journal_mode = WAL", [], |row| row.get(0))
         .map_err(StoreError::from_sql)?;
     conn.execute_batch(
-        "PRAGMA secure_delete = ON; PRAGMA synchronous = NORMAL; BEGIN IMMEDIATE; COMMIT;",
+        "PRAGMA secure_delete = ON; PRAGMA synchronous = NORMAL; PRAGMA cache_size = -512;
+         BEGIN IMMEDIATE; COMMIT;",
     )
     .map_err(StoreError::from_sql)
 }

@@ -16,7 +16,7 @@ mod types;
 pub use engine::{PauseStatus, SupercyEngine, check_ignore_pattern, core_version, query_error};
 pub use error::{KeystoreError, SupercyError};
 pub use keystore::Keystore;
-pub use settings::{Language, PinPosition, PopupPosition, Settings, SortOrder};
+pub use settings::{Language, MenuIcon, PinPosition, PopupPosition, Settings, SortOrder};
 pub use types::{
     ClipEntry, ClipboardSnapshot, DropReason, ImageFormat, IngestOutcome, IngestResult, ItemKind,
     ItemSummary, PasteRepresentation, SearchMode, SourceApp, TextRange,

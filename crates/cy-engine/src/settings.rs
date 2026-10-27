@@ -124,6 +124,20 @@ pub enum PopupPosition {
     LastPosition,
 }
 
+/// The menu bar icon.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum MenuIcon {
+    /// A clipboard.
+    #[default]
+    Clipboard,
+    /// A paper clip.
+    Paperclip,
+    /// Scissors.
+    Scissors,
+    /// A stack of pages.
+    Stack,
+}
+
 /// The interface language.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum Language {
@@ -196,6 +210,8 @@ pub struct Settings {
     pub show_special_chars: bool,
     /// Show the menu bar icon (when hidden, open with the shortcut).
     pub show_menu_icon: bool,
+    /// Which menu bar icon.
+    pub menu_icon: MenuIcon,
     /// Show the latest copy next to the menu bar icon.
     pub show_recent_in_menu_bar: bool,
     /// Clear the history (except pins) when Supercy quits.
@@ -240,6 +256,7 @@ impl Default for Settings {
             poll_interval_ms: DEFAULT_POLL_INTERVAL_MS,
             show_special_chars: false,
             show_menu_icon: true,
+            menu_icon: MenuIcon::default(),
             show_recent_in_menu_bar: false,
             clear_on_quit: false,
             visible_items: 20,
@@ -424,6 +441,7 @@ mod tests {
         assert_eq!(settings.filter_policy().allowed_apps, None);
         assert_eq!(settings.limits().max_items, 500);
         assert_eq!(settings.list_order(), ListOrder::default());
+        assert_eq!(settings.menu_icon, MenuIcon::Clipboard);
     }
 
     /// A change to the defaults, and the setting validation should name.

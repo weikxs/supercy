@@ -21,7 +21,7 @@ pub use engine::{Engine, IngestOutcome, IngestReport};
 pub use error::EngineError;
 pub use pause::PauseState;
 pub use settings::{
-    DEFAULT_IGNORED_APPS, Language, PinPositionSetting, PopupPosition, SearchModeSetting, Settings,
-    SettingsError, SortSetting, check_pattern,
+    DEFAULT_IGNORED_APPS, Language, MenuIcon, PinPositionSetting, PopupPosition, SearchModeSetting,
+    Settings, SettingsError, SortSetting, check_pattern,
 };
 pub use summary::{ItemSummary, PREVIEW_CHARS};

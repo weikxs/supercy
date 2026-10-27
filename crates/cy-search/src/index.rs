@@ -212,6 +212,12 @@ impl SearchIndex {
         self.entries.is_empty()
     }
 
+    /// Adds `doc`, which must not be in the index yet (building an index from storage, where
+    /// ids are unique); use [`SearchIndex::upsert`] otherwise.
+    pub fn push(&mut self, doc: &IndexDoc<'_>) {
+        self.entries.push(Entry::new(doc));
+    }
+
     /// Adds `doc`, or replaces the entry with the same id.
     pub fn upsert(&mut self, doc: &IndexDoc<'_>) {
         let entry = Entry::new(doc);

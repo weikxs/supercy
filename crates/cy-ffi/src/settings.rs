@@ -35,6 +35,19 @@ pub enum PopupPosition {
     LastPosition,
 }
 
+/// The menu bar icon.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, uniffi::Enum)]
+pub enum MenuIcon {
+    /// A clipboard.
+    Clipboard,
+    /// A paper clip.
+    Paperclip,
+    /// Scissors.
+    Scissors,
+    /// A stack of pages.
+    Stack,
+}
+
 /// The interface language.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, uniffi::Enum)]
 pub enum Language {
@@ -68,6 +81,11 @@ both_ways!(
     [LastUsed, FirstCopied, CopyCount]
 );
 both_ways!(PinPosition, engine::PinPositionSetting, [Top, Bottom]);
+both_ways!(
+    MenuIcon,
+    engine::MenuIcon,
+    [Clipboard, Paperclip, Scissors, Stack]
+);
 both_ways!(
     PopupPosition,
     engine::PopupPosition,
@@ -145,6 +163,8 @@ pub struct Settings {
     pub show_special_chars: bool,
     /// Show the menu bar icon.
     pub show_menu_icon: bool,
+    /// Which menu bar icon.
+    pub menu_icon: MenuIcon,
     /// Show the latest copy next to the menu bar icon.
     pub show_recent_in_menu_bar: bool,
     /// Clear the history (except pins) on quit.
@@ -197,6 +217,7 @@ impl From<engine::Settings> for Settings {
                 poll_interval_ms,
                 show_special_chars,
                 show_menu_icon,
+                menu_icon,
                 show_recent_in_menu_bar,
                 clear_on_quit,
                 visible_items,
@@ -239,6 +260,7 @@ impl From<Settings> for engine::Settings {
                 poll_interval_ms,
                 show_special_chars,
                 show_menu_icon,
+                menu_icon,
                 show_recent_in_menu_bar,
                 clear_on_quit,
                 visible_items,
@@ -260,6 +282,7 @@ mod tests {
             pin_position: engine::PinPositionSetting::Bottom,
             popup_position: engine::PopupPosition::ScreenCenter,
             language: engine::Language::SimplifiedChinese,
+            menu_icon: engine::MenuIcon::Scissors,
             search_mode: engine::SearchModeSetting::Mixed,
             ..engine::Settings::default()
         };

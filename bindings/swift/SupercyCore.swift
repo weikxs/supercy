@@ -2157,6 +2157,10 @@ public struct Settings {
      */
     public var showMenuIcon: Bool
     /**
+     * Which menu bar icon.
+     */
+    public var menuIcon: MenuIcon
+    /**
      * Show the latest copy next to the menu bar icon.
      */
     public var showRecentInMenuBar: Bool
@@ -2259,6 +2263,9 @@ public struct Settings {
          * Show the menu bar icon.
          */showMenuIcon: Bool, 
         /**
+         * Which menu bar icon.
+         */menuIcon: MenuIcon, 
+        /**
          * Show the latest copy next to the menu bar icon.
          */showRecentInMenuBar: Bool, 
         /**
@@ -2299,6 +2306,7 @@ public struct Settings {
         self.pollIntervalMs = pollIntervalMs
         self.showSpecialChars = showSpecialChars
         self.showMenuIcon = showMenuIcon
+        self.menuIcon = menuIcon
         self.showRecentInMenuBar = showRecentInMenuBar
         self.clearOnQuit = clearOnQuit
         self.visibleItems = visibleItems
@@ -2392,6 +2400,9 @@ extension Settings: Equatable, Hashable {
         if lhs.showMenuIcon != rhs.showMenuIcon {
             return false
         }
+        if lhs.menuIcon != rhs.menuIcon {
+            return false
+        }
         if lhs.showRecentInMenuBar != rhs.showRecentInMenuBar {
             return false
         }
@@ -2437,6 +2448,7 @@ extension Settings: Equatable, Hashable {
         hasher.combine(pollIntervalMs)
         hasher.combine(showSpecialChars)
         hasher.combine(showMenuIcon)
+        hasher.combine(menuIcon)
         hasher.combine(showRecentInMenuBar)
         hasher.combine(clearOnQuit)
         hasher.combine(visibleItems)
@@ -2480,6 +2492,7 @@ public struct FfiConverterTypeSettings: FfiConverterRustBuffer {
                 pollIntervalMs: FfiConverterUInt32.read(from: &buf), 
                 showSpecialChars: FfiConverterBool.read(from: &buf), 
                 showMenuIcon: FfiConverterBool.read(from: &buf), 
+                menuIcon: FfiConverterTypeMenuIcon.read(from: &buf), 
                 showRecentInMenuBar: FfiConverterBool.read(from: &buf), 
                 clearOnQuit: FfiConverterBool.read(from: &buf), 
                 visibleItems: FfiConverterUInt32.read(from: &buf), 
@@ -2515,6 +2528,7 @@ public struct FfiConverterTypeSettings: FfiConverterRustBuffer {
         FfiConverterUInt32.write(value.pollIntervalMs, into: &buf)
         FfiConverterBool.write(value.showSpecialChars, into: &buf)
         FfiConverterBool.write(value.showMenuIcon, into: &buf)
+        FfiConverterTypeMenuIcon.write(value.menuIcon, into: &buf)
         FfiConverterBool.write(value.showRecentInMenuBar, into: &buf)
         FfiConverterBool.write(value.clearOnQuit, into: &buf)
         FfiConverterUInt32.write(value.visibleItems, into: &buf)
@@ -3383,6 +3397,105 @@ public func FfiConverterTypeLanguage_lower(_ value: Language) -> RustBuffer {
 
 
 extension Language: Equatable, Hashable {}
+
+
+
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * The menu bar icon.
+ */
+
+public enum MenuIcon {
+    
+    /**
+     * A clipboard.
+     */
+    case clipboard
+    /**
+     * A paper clip.
+     */
+    case paperclip
+    /**
+     * Scissors.
+     */
+    case scissors
+    /**
+     * A stack of pages.
+     */
+    case stack
+}
+
+
+#if compiler(>=6)
+extension MenuIcon: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeMenuIcon: FfiConverterRustBuffer {
+    typealias SwiftType = MenuIcon
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MenuIcon {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .clipboard
+        
+        case 2: return .paperclip
+        
+        case 3: return .scissors
+        
+        case 4: return .stack
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: MenuIcon, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .clipboard:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .paperclip:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .scissors:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .stack:
+            writeInt(&buf, Int32(4))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeMenuIcon_lift(_ buf: RustBuffer) throws -> MenuIcon {
+    return try FfiConverterTypeMenuIcon.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeMenuIcon_lower(_ value: MenuIcon) -> RustBuffer {
+    return FfiConverterTypeMenuIcon.lower(value)
+}
+
+
+extension MenuIcon: Equatable, Hashable {}
 
 
 
