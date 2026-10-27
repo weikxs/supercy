@@ -1,6 +1,6 @@
 # Supercy
 
-**A lightweight clipboard manager for the menu bar, with private sync between your own devices.**
+**A lightweight menu-bar clipboard manager with screenshots, annotation and pins, and private sync between your own devices.**
 
 [简体中文](README.zh-CN.md)
 
@@ -16,13 +16,30 @@
 
 - **Light:** a native menu-bar app (SwiftUI/AppKit on macOS first), no web view. Target: at most 30 MB of memory
   and no CPU use while idle.
-- **History at your fingertips:** text, rich text, links and small images; fuzzy search (including pinyin for
-  Chinese); pins; a global shortcut; keyboard navigation; paste straight back into the app you were using.
+- **History at your fingertips:** text, rich text, links, images and file references; exact, fuzzy and regular
+  expression search (fuzzy search understands pinyin for Chinese); pins with their own keys; sorting by recent use,
+  first copy or copy count; previews; a global shortcut; full keyboard control; paste straight back into the app
+  you were using, with or without formatting; pause recording or skip the next copy.
+- **More than a history:** favourites and snippets, edit an item before pasting, merge several items into one.
+- **Screenshots, annotation and pins:** capture a region, a window or the whole screen with a magnifier and colour
+  picker; draw rectangles, arrows, text, numbered steps, highlights, mosaic and blur; copy, save or pin the result
+  as a floating, always-on-top image. Every image in the history can be annotated or pinned too, and text can be
+  recognised on the device. Nothing stays in memory when you are not capturing.
 - **Private by default:** content that password managers mark as concealed or transient is never stored; apps
   can be ignored; sensitive items expire; history is encrypted on disk with a key kept in the system keychain.
   No account, no cloud, no telemetry.
 - **Sync between your own devices:** on the local network, end-to-end encrypted, after pairing with a QR code or
   a one-time code. No server by default.
+
+## Roadmap
+
+| Version | Scope |
+|---|---|
+| 0.1 | macOS clipboard history with the full core feature set |
+| 0.2 | Screenshots, annotation and pins |
+| 0.3 | Favourites, edit before paste, merge, text recognition, file references |
+| 0.4 | Sync between your own devices on the local network |
+| 1.0 | Release: measured resource use, privacy audit, signed builds |
 
 ## Platforms
 
