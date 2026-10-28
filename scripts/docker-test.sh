@@ -5,7 +5,8 @@
 # The repository is mounted read-only and copied into the container, so the host
 # tree is never written; build output, the crate cache and installed tools live in
 # named volumes. Only the write steps (lock, format, bindings-write, golden-write)
-# mount it read-write.
+# mount it read-write. The check steps run scripts/check.sh in the container, the
+# same script CI runs on its Linux runners.
 #
 # Usage: scripts/docker-test.sh [step]
 #   all (default)   fmt, clippy, deny, audit, test, bindings
@@ -99,9 +100,6 @@ read -r -d '' inner <<'INNER' || true
 set -eu
 export TMPDIR=/tmp/supercy-test CARGO_INSTALL_ROOT=/tools PATH="/tools/bin:$PATH"
 mkdir -p "$TMPDIR" /work
-install_tool() { command -v "$1" >/dev/null || cargo install --locked "$2"; }
-# The advisory database is fetched with git, which the slim image lacks.
-need_git() { command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq git >/dev/null; }; }
 
 # Swift bindings: build the library, then generate from its metadata (UniFFI library mode).
 generate_bindings() {
@@ -132,51 +130,8 @@ esac
 tar -C /src --exclude=./target --exclude=./.git --exclude=./fuzz/target -cf - . | tar -C /work -xf -
 cd /work
 rustup component add rustfmt clippy >/dev/null 2>&1 || true
-run_fmt() { cargo fmt --all --check; (cd fuzz && cargo +1.95.0 fmt --all --check); }
-run_clippy() { cargo clippy --workspace --all-targets --locked -- -D warnings; }
-run_test() { cargo test --workspace --locked; }
-run_bench() { cargo test --workspace --release --locked -- --ignored --nocapture perf_; }
-run_deny() { need_git; install_tool cargo-deny cargo-deny; cargo deny --locked check; }
-run_audit() { need_git; install_tool cargo-audit cargo-audit; cargo audit --ignore RUSTSEC-2026-0374; }
-run_bindings() {
-  generate_bindings
-  if ! diff -r /tmp/bindings bindings/swift; then
-    echo "bindings: bindings/swift is out of date; run scripts/docker-test.sh bindings-write" >&2
-    exit 1
-  fi
-  echo "bindings: bindings/swift is up to date"
-}
-run_cover() {
-  rustup component add llvm-tools-preview >/dev/null
-  install_tool cargo-llvm-cov cargo-llvm-cov
-  cargo llvm-cov --workspace --locked --fail-under-lines "$COVER_MIN" --summary-only
-}
-run_fuzz() {
-  install_tool cargo-fuzz cargo-fuzz
-  cd fuzz
-  for target in $(cargo fuzz list); do
-    echo "fuzz: $target for ${FUZZ_SECONDS}s"
-    if ! cargo fuzz run "$target" -- -max_total_time="$FUZZ_SECONDS" -rss_limit_mb=2048 \
-      >"/tmp/fuzz-$target.log" 2>&1; then
-      tail -n 40 "/tmp/fuzz-$target.log" >&2
-      echo "fuzz: $target failed" >&2
-      exit 1
-    fi
-    grep -E '^Done [0-9]+ runs' "/tmp/fuzz-$target.log" || tail -n 3 "/tmp/fuzz-$target.log"
-  done
-}
-case "$STEP" in
-  all) run_fmt; run_clippy; run_deny; run_audit; run_test; run_bindings ;;
-  fmt) run_fmt ;;
-  clippy) run_clippy ;;
-  deny) run_deny ;;
-  audit) run_audit ;;
-  test) run_test ;;
-  bindings) run_bindings ;;
-  bench) run_bench ;;
-  cover) run_cover ;;
-  fuzz) run_fuzz ;;
-esac
+# The checks themselves are scripts/check.sh, which CI runs natively on its Linux runners.
+exec bash scripts/check.sh "$STEP"
 INNER
 
 exec docker run --rm \

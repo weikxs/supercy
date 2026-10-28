@@ -1,43 +1,57 @@
 # Common tasks. Every Rust check runs in Docker (scripts/docker-test.sh); nothing is built on the host.
+# `make ci` is what CI's `check` job runs on every pull request; `make check` adds the benchmarks and
+# fuzzing. Run `make check` before every pull request.
 
-.PHONY: all check privacy test fmt clippy deny audit bench cover fuzz format lock bindings golden hooks \
-        macos-project macos-test macos-measure macos-app macos-trial macos-trial-clean
+# Where the Rust checks run: in a container (default), or directly on a CI runner, which installs
+# the pinned toolchain itself (RUN=scripts/check.sh). Both take the same step names.
+RUN ?= scripts/docker-test.sh
+
+.PHONY: all check ci privacy xcode-project test fmt clippy deny audit bench cover fuzz format lock bindings golden \
+        hooks macos-project macos-test macos-measure macos-app macos-trial macos-trial-clean
 
 all: check
 
-check: privacy test bench cover fuzz
+# Everything: what CI runs, plus the performance budgets and a short fuzzing run.
+check: ci bench fuzz
+
+# What CI's `check` job runs on every pull request.
+ci: privacy xcode-project test cover
 
 privacy:
 	scripts/check-privacy.sh
 
-# fmt + clippy -D warnings + cargo test, in a Linux container.
+# The generated Xcode project matches the Swift sources (needs python3, writes nothing).
+xcode-project:
+	scripts/check-xcode-project.sh
+
+# fmt, clippy -D warnings, cargo deny, cargo audit, cargo test and the bindings check (Linux).
 test:
-	scripts/docker-test.sh
+	$(RUN)
 
 fmt:
-	scripts/docker-test.sh fmt
+	$(RUN) fmt
 
 clippy:
-	scripts/docker-test.sh clippy
+	$(RUN) clippy
 
 # Licenses, advisories, sources (cargo deny) and known vulnerabilities (cargo audit).
 deny:
-	scripts/docker-test.sh deny
+	$(RUN) deny
 
 audit:
-	scripts/docker-test.sh audit
+	$(RUN) audit
 
 # Each fuzz target for FUZZ_SECONDS (default 30) in a nightly container.
 fuzz:
-	scripts/docker-test.sh fuzz
+	$(RUN) fuzz
 
 # Search performance and memory budgets, release build.
 bench:
-	scripts/docker-test.sh bench
+	$(RUN) bench
 
 # Line coverage; fails below 80%.
 cover:
-	scripts/docker-test.sh cover
+	$(RUN) cover
 
 # Write changes: format the sources, or update Cargo.lock after changing dependencies.
 format:
