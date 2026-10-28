@@ -1,0 +1,33 @@
+# One pull request per ecosystem per month at most: the month's updates are grouped together.
+# Major versions are not proposed automatically: they change APIs and are upgraded on purpose, with
+# their own tests. The UniFFI crates are left out as well: an update changes the generated Swift
+# bindings, which are regenerated (make bindings) and checked together with the app.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directories:
+      - /
+      # The fuzz targets have their own workspace and Cargo.lock.
+      - /fuzz
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    groups:
+      cargo:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "uniffi*"
+    commit-message:
+      prefix: build
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci

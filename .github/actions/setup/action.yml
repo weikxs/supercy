@@ -1,0 +1,28 @@
+name: Set up Supercy build
+description: >-
+  The Rust toolchain of rust-toolchain.toml, installed with the runner's own rustup (no third-party
+  actions), and on request the nightly toolchain that fuzzing needs or the Apple targets of the
+  universal macOS app.
+inputs:
+  nightly:
+    description: Whether to install the nightly toolchain as well (fuzz/rust-toolchain.toml).
+    default: "false"
+  apple-targets:
+    description: Whether to add the aarch64 and x86_64 Apple targets for a universal macOS build.
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: Rust toolchain
+      shell: bash
+      run: |
+        rustup toolchain install
+        rustup show active-toolchain
+    - name: Nightly toolchain for fuzzing
+      if: inputs.nightly == 'true'
+      shell: bash
+      run: rustup toolchain install nightly --profile minimal
+    - name: Apple targets
+      if: inputs.apple-targets == 'true'
+      shell: bash
+      run: rustup target add aarch64-apple-darwin x86_64-apple-darwin

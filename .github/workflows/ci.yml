@@ -1,0 +1,63 @@
+name: CI
+
+# One job per pull request, on Linux: the privacy check, then whether the generated Xcode project
+# matches the Swift sources, then the Rust checks: formatting, clippy -D warnings, cargo deny, cargo
+# audit, the tests, whether the committed Swift bindings are up to date, and line coverage (at least
+# 80%). They run natively with the pinned toolchain, through the same make targets and
+# scripts/check.sh that run in Docker on a developer's machine (`make ci`). A change to documentation
+# alone runs only the privacy check, in seconds; a draft runs nothing. Merging to main starts
+# nothing, since the pull request was already tested. The macOS app build and its Swift tests, the
+# benchmarks and fuzzing are in full.yml, started by hand before a release; the release workflow
+# runs every check again before it publishes anything. Branch rules require this job, `check`.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: What changed
+        id: diff
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          files=$(git diff --name-only "$BASE"...HEAD)
+          printf '%s\n' "$files"
+          docs='\.md$|^docs/|^LICENSE$|^\.github/(ISSUE_TEMPLATE|release-notes)/|^\.github/(CODEOWNERS|pull_request_template\.md)$'
+          if printf '%s\n' "$files" | grep -Ev "$docs" | grep -q .; then code=true; else code=false; fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" = false ]; then echo "documentation only: nothing to test"; fi
+      # Documentation is where a local path or a name slips in most easily, so this runs for every
+      # change.
+      - name: Privacy
+        run: make privacy
+      - if: steps.diff.outputs.code == 'true'
+        uses: ./.github/actions/setup
+      - name: Xcode project up to date
+        if: steps.diff.outputs.code == 'true'
+        run: make xcode-project
+      - name: Install cargo-deny, cargo-audit and cargo-llvm-cov
+        if: steps.diff.outputs.code == 'true'
+        run: scripts/check.sh tools
+      - name: Format, clippy, dependency policy, advisories, tests and bindings
+        if: steps.diff.outputs.code == 'true'
+        run: make test RUN=scripts/check.sh
+      - name: Line coverage (at least 80%)
+        if: steps.diff.outputs.code == 'true'
+        run: make cover RUN=scripts/check.sh
