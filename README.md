@@ -38,12 +38,61 @@
 | 0.2 | Screenshots, annotation and pins |
 | 0.3 | Favourites, edit before paste, merge, text recognition, file references |
 | 0.4 | Sync between your own devices on the local network |
-| 1.0 | Release: measured resource use, privacy audit, signed builds |
+| 1.0 | Release: measured resource use, privacy audit |
 
 ## Platforms
 
 macOS first. Windows and Linux follow; mobile comes last and can only send and receive by hand, because iOS and
 Android do not let apps read the clipboard in the background.
+
+## Install
+
+No release has been published yet; until then, build Supercy from source as in [Development](#development).
+Releases will be published on the [Releases page](https://github.com/weikxs/supercy/releases), built by GitHub
+Actions from this repository, for macOS only: one disk image for Apple silicon and Intel Macs with macOS 14
+(Sonoma) or newer. There is no Windows or Linux version.
+
+### Install script, fully automatic
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/weikxs/supercy/main/install.sh | sh
+```
+
+The script downloads the disk image, checks it against the release's `checksums.txt` and copies `Supercy.app` into
+`/Applications` (or `~/Applications`), without the "downloaded from the internet" prompt. Nothing else is changed.
+Run it again to upgrade. Options go after `sh -s --`, for example `sh -s -- --version v0.1.0`:
+
+| Option | Meaning |
+|---|---|
+| `--version <tag>` | install this release instead of the latest |
+| `--dir <folder>` | where `Supercy.app` goes |
+
+### Homebrew
+
+```sh
+brew install --cask weikxs/tap/supercy
+brew upgrade --cask supercy            # later, to upgrade
+```
+
+### Disk image
+
+Download `supercy_<version>_darwin_universal.dmg` from the
+[latest release](https://github.com/weikxs/supercy/releases/latest) and check it against `checksums.txt`
+(`shasum -a 256 -c checksums.txt --ignore-missing`).
+
+The macOS app is not signed or notarized by Apple. The script and Homebrew handle that for you. If you install the
+disk image yourself, open Supercy once, then choose **Open Anyway** in System Settings → Privacy & Security and
+open it again — or run `xattr -dr com.apple.quarantine /Applications/Supercy.app`. Details in
+[SECURITY.md](SECURITY.md#release-packages-and-macos).
+
+To paste straight into the app you were using, Supercy asks for Accessibility permission (System Settings →
+Privacy & Security → Accessibility).
+
+### Uninstall
+
+Quit Supercy, then delete `Supercy.app` (or run `brew uninstall --cask supercy`). Your history stays in
+`~/Library/Application Support/Supercy`, with its key in your login keychain (`io.github.weikxs.Supercy`); delete
+both to remove it for good.
 
 ## Development
 
@@ -63,6 +112,8 @@ All checks run in a Linux container, so nothing is built or installed on your ma
 
 ```sh
 make hooks     # use the repository's git hooks
+make ci        # what CI runs on every pull request: privacy, Xcode project, test and cover below
+make check     # everything: make ci, bench and fuzz; run it before every pull request
 make privacy   # no local paths, secrets or real identifiers
 make test      # fmt, clippy -D warnings, cargo deny, cargo audit, tests and a bindings check in Docker
 make bench     # search speed and memory budgets (release build)
@@ -92,7 +143,32 @@ make macos-trial-clean   # quit it and delete /tmp/supercy
 Icons are drawn as SVG in `design/icons` and rendered in a container (`scripts/docker-test.sh icons`); see
 [docs/design/icons.md](docs/design/icons.md).
 
+### Continuous integration and releases
+
+- **Pull requests:** CI's `check` job runs `make ci` on Linux, natively, with the same `scripts/check.sh` that
+  runs in the container on your machine. A change to documentation alone runs only the privacy check.
+- **`main` is protected:** changes arrive only through pull requests, squash-merged, with the `check` job green.
+  Nobody bypasses this, maintainers included.
+- **Full run** (Actions → Full → Run workflow, by hand before a release): everything CI runs, the performance
+  budgets, fuzzing, the macOS app build with its unit tests, and the universal release build installed and
+  started.
+- **Release:** pushing a tag `vX.Y.Z` checks the version and the release notes
+  (`.github/release-notes/vX.Y.Z.md`), runs every check, builds the universal disk image, installs and starts it
+  on fresh Apple silicon and Intel Macs, and only then publishes it with `checksums.txt`.
+
 Read [docs/development/standards.md](docs/development/standards.md) before contributing.
+
+## Contributing
+
+Contributions are welcome; please open an issue first. Read [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md), run `make check`, and use
+[Conventional Commits](https://www.conventionalcommits.org/) (`make hooks` checks them). Never put real clipboard
+contents in an issue or a pull request. Notable changes are recorded in the [changelog](CHANGELOG.md).
+
+## Security
+
+Supercy sees everything you copy. Please report vulnerabilities privately as described in
+[SECURITY.md](SECURITY.md), never in public issues.
 
 ## License
 

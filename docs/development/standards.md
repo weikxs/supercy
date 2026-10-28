@@ -17,9 +17,11 @@ messages. Privacy (§4) and security (§5) rules therefore come before every oth
 | Rust style | [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/), `rustfmt`, `clippy` (pedantic) with `-D warnings` |
 | Swift style | Swift API Design Guidelines; warnings treated as errors (from milestone M3) |
 | Shell style | POSIX `sh` or `bash`, clean under [ShellCheck](https://www.shellcheck.net) |
+| Workflows | Clean under [actionlint](https://github.com/rhysd/actionlint) |
 | Clipboard markers | [nspasteboard.org](http://nspasteboard.org) concealed / transient / auto-generated types on macOS; the platform equivalents elsewhere |
 | User interface | [WCAG 2.2](https://www.w3.org/TR/WCAG22/) level AA; the platform's own human interface guidelines |
 | Community | [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) |
+| Security reporting | Private GitHub Security Advisories ([SECURITY.md](../../SECURITY.md)) |
 | License | Not chosen yet; all rights reserved until a license file is added (see `LICENSE`) |
 
 ## 2. Contribution process
@@ -30,8 +32,11 @@ messages. Privacy (§4) and security (§5) rules therefore come before every oth
 - **Bug reports** say the Supercy version, the system and CPU, what you did, what you expected and what
   happened — with demo clipboard content only (§4), never real copied data.
 - **One pull request, one purpose.** Do not mix a fix, a refactor and a feature; split them.
-- **Review:** every change reaches `main` through a pull request with green required checks once the
-  repository is published. Nobody bypasses the checks.
+- **Review:** every change reaches `main` through a pull request with CI's `check` job green (§6), squash-merged.
+  Contributors' pull requests also need an approval from a code owner (`.github/CODEOWNERS`). Maintainers follow
+  the same rule; a documentation-only pull request still runs the `check` job, which runs the privacy check, sees
+  that nothing testable changed and passes in seconds. Nobody bypasses the checks.
+- **Security reports** are never public issues; they follow [SECURITY.md](../../SECURITY.md).
 
 ## 3. AI-assisted contributions (MUST)
 
@@ -101,7 +106,12 @@ Enforced by `make privacy` (pre-commit hook) and review.
 | A new dependency needs a reason in the pull request: maintenance, size, permissive license (MIT, MIT-0, Apache-2.0, BSD, ISC, Zlib, Unicode, CC0, BSL-1.0); any other license needs a recorded decision and a named exception in `deny.toml` | MUST | `cargo deny` in `make test`, review |
 | MPL-2.0 is allowed only for the UniFFI crates (`uniffi*`): they are used unmodified, and MPL-2.0 is file-level copyleft, so it binds only changes to UniFFI's own files | MUST | `deny.toml` exceptions |
 | Known vulnerabilities in dependencies are checked | MUST | `cargo deny` advisories and `cargo audit` in `make test` |
-| Release packages are built in CI only, never on a developer's machine, and published with SHA-256 checksums | MUST | release workflow (later) |
+| `main` is protected: changes arrive only through pull requests, squash-merged, with the `check` job green; no force-push or deletion; linear history; nobody bypasses the rules, maintainers included (§2) | MUST | repository ruleset |
+| Release tags `v*` are never moved or deleted once a release is published | MUST | repository ruleset |
+| Workflows declare least-privilege `permissions` (read-only by default; `contents: write` only for the release jobs) | MUST | review |
+| Third-party actions are pinned to a full commit SHA, with the version in a comment; the Rust toolchain and the cargo tools are installed with `rustup` and `cargo install --locked` at pinned versions, not by third-party actions | MUST | review |
+| Dependencies are updated by Dependabot: one grouped pull request per ecosystem (Cargo, including `fuzz/`, and GitHub Actions) per month; major versions and UniFFI are upgraded on purpose, with their own tests and regenerated bindings | MUST | `.github/dependabot.yml` |
+| Release packages are built in CI only, never on a developer's machine, and published with SHA-256 `checksums.txt`; the install script and Homebrew verify them | MUST | release workflow, `install.sh` |
 
 ## 7. Code
 
@@ -150,6 +160,12 @@ the default history size; a change that breaks a budget needs a recorded decisio
   the machine is at 70% CPU or more (the script checks both).
 - **Isolation:** no network outside loopback and in-memory test networks; no real home directory, clipboard or
   keystore. Tests wait for conditions, never for a fixed time that a slow machine may miss.
+- **CI:** every pull request runs CI's `check` job on Linux (`make ci`): the privacy check, the Xcode project
+  check, and the Rust checks through `scripts/check.sh`, the script `scripts/docker-test.sh` runs in its
+  container, installed natively on the runner with the pinned toolchain. The full workflow, started by hand
+  before a release, adds the performance budgets, fuzzing, the macOS app build with its unit tests, and the
+  universal release build installed and started as a release does it. The release workflow runs every check
+  again, then installs and starts the disk image on fresh Apple silicon and Intel Macs before publishing it.
 - **Platform shells** cannot be tested in a Linux container. The macOS app is built and its unit tests run on
   the Mac (`make macos-test`), strictly isolated: `HOME`, `CFFIXED_USER_HOME`, `TMPDIR` and Xcode's derived
   data live under `/tmp/supercy` and are removed afterwards; tests use an in-memory pasteboard and keystore and
@@ -160,18 +176,38 @@ the default history size; a change that breaks a budget needs a recorded decisio
 
 ## 10. Git workflow
 
-- **Branching:** GitHub Flow once published. `main` is always releasable.
+- **Branching:** GitHub Flow. `main` is always releasable; work happens on short-lived branches (`feat/…`,
+  `fix/…`, `perf/…`, `docs/…`, `refactor/…`, `test/…`, `ci/…`, `chore/…`, `build/…`).
 - **Commits:** Conventional Commits, subject at most 72 characters, imperative, enforced by the `commit-msg` hook
   (`make hooks`). One logical change per commit; the body says *why*.
 - Commits are authored by the contributor's own account, with no tool or bot attribution trailers.
-- **Never** force-push to `main` or rewrite published history.
+- **Squash** fix-up commits before merging. Pull requests are squash-merged with a Conventional Commit title.
+- **Never** force-push to `main` or rewrite published history; a tag whose release is published is never moved
+  or deleted.
 
 ## 11. Versioning and changelog
 
 - SemVer. Before 1.0, minor versions may contain breaking changes; they are called out in the changelog.
 - The storage format and the sync protocol have their own version numbers; a change to either needs migration
   tests and a changelog entry.
-- Every user-visible change adds a line under **Unreleased** in `CHANGELOG.md` (from the first release).
+- Every user-visible change adds a line under **Unreleased** in `CHANGELOG.md` (Added / Changed / Deprecated /
+  Removed / Fixed / Security), in the user's words.
+- **Release notes** are product communication, one file per release in `.github/release-notes/vX.Y.Z.md`, in the
+  layout of `.github/release-notes/TEMPLATE.md`. Draft with
+  `scripts/release-notes.sh vX.Y.Z > .github/release-notes/vX.Y.Z.md`, then write the TODO parts.
+  `CHANGELOG.md` stays the complete engineering record.
+- **Version:** the app's version is `VERSION` in `apps/macos/tools/generate_project.py`; `make macos-project`
+  writes it into the Xcode project. The Cargo workspace version is internal (the crates are not published).
+- **Release:** move the Unreleased entries to a new version section with its date, set the version, write the
+  release notes, merge to `main`, run the full workflow, then tag `vX.Y.Z` on `main` and push the tag
+  (`vX.Y.Z-rc.N` for a pre-release, with its own notes file). The release workflow stops when the version differs
+  from the tag or the notes are missing or still have TODOs; then it runs every check, builds the universal
+  (Apple silicon and Intel) app and its disk image, installs it with `install.sh` and starts it on fresh Apple
+  silicon and Intel machines, publishes it with `checksums.txt` and the notes, and updates the Homebrew cask when
+  the `HOMEBREW_TAP_SSH_KEY` secret is set (a pre-release only on the tap's `rc/supercy` branch).
+- **macOS only:** Supercy is released for macOS only; there is no Windows or Linux version.
+- **Not signed:** the macOS app is not signed with an Apple Developer ID or notarized by Apple. The README, the
+  release notes and [SECURITY.md](../../SECURITY.md#release-packages-and-macos) say how to open it.
 
 ## 12. Documentation
 
@@ -183,10 +219,13 @@ the default history size; a change that breaks a budget needs a recorded decisio
 
 ## 13. Definition of done
 
-- [ ] tests were written first and pass in Docker (`make test`);
+- [ ] tests were written first and pass in Docker (`make check`), and on the Mac (`make macos-test`) when the app
+      changed;
+- [ ] scripts are ShellCheck clean and workflows actionlint clean;
 - [ ] no real identities, local paths or secrets (`make privacy`);
 - [ ] no clipboard content can reach logs, errors or anything outside the device except paired devices;
 - [ ] the resource budget (§8) still holds for changes that touch capture, storage, search or sync;
 - [ ] errors are handled and messages are actionable, in both languages;
-- [ ] README (both languages) is updated where relevant;
-- [ ] the author understands and has verified every line, including AI-assisted parts.
+- [ ] `CHANGELOG.md` and README (both languages) are updated where relevant;
+- [ ] the author understands and has verified every line, including AI-assisted parts;
+- [ ] the pull request has the `check` job green and is squash-merged with a Conventional Commit title.

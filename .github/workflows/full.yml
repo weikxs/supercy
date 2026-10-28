@@ -1,0 +1,80 @@
+name: Full
+
+# The runs a pull request leaves out, on demand (Actions > Full > Run workflow): everything CI
+# runs, the performance budgets on a release build, a short fuzzing run of every target, the macOS
+# app build with its Swift unit tests, and the universal macOS app packaged, installed and started
+# as a release does it. Nothing requires these jobs to merge.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux:
+    name: check (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: make ci
+        run: make ci RUN=scripts/check.sh
+
+  bench:
+    name: performance budgets (Linux, release build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: make bench
+        run: make bench RUN=scripts/check.sh
+
+  fuzz:
+    name: fuzz (60 s per target)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      FUZZ_SECONDS: "60"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          nightly: "true"
+      - name: make fuzz
+        run: make fuzz RUN=scripts/check.sh
+
+  macos:
+    name: app build and Swift tests (macOS)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Xcode
+        run: xcodebuild -version
+      # Builds the Rust library for Apple silicon and the app, and runs the unit tests isolated
+      # under /tmp/supercy, exactly as on a developer's Mac.
+      - name: make macos-test
+        run: make macos-test
+
+  package:
+    name: release build, install and start (macOS universal)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          apple-targets: "true"
+      - name: Build the universal app and its disk image
+        run: |
+          version=$(scripts/release/app-version.sh)
+          scripts/release/build-macos.sh "$version" dist
+          ls -l dist
+      - name: Install it with install.sh and start it
+        run: scripts/release/verify-install.sh "v$(scripts/release/app-version.sh)" dist

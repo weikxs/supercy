@@ -1,0 +1,204 @@
+name: Release
+
+# A tag vX.Y.Z publishes a release; vX.Y.Z-rc.N publishes a pre-release for testing. Nothing else runs this
+# workflow: pushing commits or branches never does, and ci.yml only runs for pull requests.
+#
+# Supercy is released for macOS only: one universal (Apple silicon and Intel) disk image, not signed or
+# notarized by Apple. The package travels between jobs through a draft release, which only maintainers can
+# see: the draft is made once every check passed, the build machine attaches the disk image, fresh Apple
+# silicon and Intel machines download, install and start it, and only then is checksums.txt added and the
+# draft published. A failed run leaves the draft behind; running the workflow again replaces it.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  prepare:
+    name: check the tag, version and release notes
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      prerelease: ${{ steps.check.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The release page is .github/release-notes/<tag>.md, written by a person from TEMPLATE.md; never
+      # commit messages, hashes or emails. The check stops here when it is missing or has TODOs.
+      - id: check
+        run: scripts/release/check-release.sh "$GITHUB_REF_NAME"
+
+  check:
+    name: every check and test (Linux)
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          nightly: "true"
+      # What CI runs, the performance budgets and a short fuzzing run of every target.
+      - name: make check
+        run: make check RUN=scripts/check.sh
+
+  macos-test:
+    name: app build and Swift tests (macOS)
+    needs: prepare
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: make macos-test
+        run: make macos-test
+
+  draft:
+    name: start the draft release
+    needs: [prepare, check, macos-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Create the draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if draft=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft 2>/dev/null); then
+            if [ "$draft" != true ]; then
+              echo "::error::$GITHUB_REF_NAME is already published; a published release is never replaced"
+              exit 1
+            fi
+            echo "replacing the draft left by an earlier run"
+            gh release delete "$GITHUB_REF_NAME" --yes
+          fi
+          gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
+            --title "Supercy $GITHUB_REF_NAME" --notes-file ".github/release-notes/$GITHUB_REF_NAME.md"
+
+  build:
+    name: build (macOS universal)
+    needs: [prepare, draft]
+    runs-on: macos-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          apple-targets: "true"
+      - name: Build the universal app and its disk image
+        run: scripts/release/build-macos.sh "${{ needs.prepare.outputs.version }}" dist
+      - name: Attach the disk image to the draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/supercy_* --clobber
+
+  verify:
+    name: install and start (${{ matrix.name }})
+    needs: [prepare, build]
+    strategy:
+      # Every machine reports, so one failure does not hide the other's result.
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS, Apple silicon
+            runner: macos-latest
+          - name: macOS, Intel
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download the disk image from the draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release download "$GITHUB_REF_NAME" --pattern "supercy_*_darwin_universal.dmg" --dir dist
+      - name: Install with install.sh and start the app
+        run: scripts/release/verify-install.sh "$GITHUB_REF_NAME" dist
+
+  publish:
+    name: publish the GitHub release
+    needs: [prepare, verify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" --pattern 'supercy_*' --dir dist
+          cd dist
+          set -- supercy_*
+          test "$#" -eq 1 || { echo "expected 1 package, found $#: $*"; exit 1; }
+          sha256sum supercy_* > checksums.txt
+          cat checksums.txt
+          gh release upload "$GITHUB_REF_NAME" checksums.txt --clobber
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ needs.prepare.outputs.prerelease }}" = true ]; then flag=--prerelease; else flag=--latest; fi
+          gh release edit "$GITHUB_REF_NAME" --draft=false "$flag"
+
+  homebrew:
+    name: update the Homebrew cask
+    needs: [prepare, publish]
+    runs-on: ubuntu-latest
+    env:
+      # A deploy key with write access to weikxs/homebrew-tap. Without it this job does nothing.
+      TAP_KEY: ${{ secrets.HOMEBREW_TAP_SSH_KEY }}
+    steps:
+      - name: Is the tap key set?
+        id: key
+        run: |
+          if [ -n "$TAP_KEY" ]; then
+            echo "set=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "set=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::HOMEBREW_TAP_SSH_KEY is not set; the Homebrew cask is not updated"
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.key.outputs.set == 'true'
+      - name: Write the cask
+        if: steps.key.outputs.set == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${{ needs.prepare.outputs.version }}"
+          gh release download "$GITHUB_REF_NAME" --pattern "supercy_${version}_darwin_universal.dmg" --dir dist
+          scripts/release/homebrew-cask.sh "$version" "dist/supercy_${version}_darwin_universal.dmg" > "$RUNNER_TEMP/supercy.rb"
+          cat "$RUNNER_TEMP/supercy.rb"
+      - name: Push it to weikxs/homebrew-tap
+        if: steps.key.outputs.set == 'true'
+        run: |
+          # A pre-release goes to the rc/supercy branch, so the key and the cask are tried before a
+          # release without anyone installing it; a release goes to main.
+          if [ "${{ needs.prepare.outputs.prerelease }}" = true ]; then branch=rc/supercy; else branch=main; fi
+          key="$RUNNER_TEMP/tap_key"
+          printf '%s\n' "$TAP_KEY" > "$key"
+          chmod 600 "$key"
+          export GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          git clone --depth 1 git@github.com:weikxs/homebrew-tap.git "$RUNNER_TEMP/tap"
+          cd "$RUNNER_TEMP/tap"
+          git config user.name "Weikxs"
+          git config user.email "weikxs.dev@gmail.com"
+          git checkout -B "$branch"
+          mkdir -p Casks
+          cp "$RUNNER_TEMP/supercy.rb" Casks/supercy.rb
+          git add Casks/supercy.rb
+          if git diff --cached --quiet; then echo "the cask is already up to date"; exit 0; fi
+          git commit -m "supercy ${{ needs.prepare.outputs.version }}"
+          if [ "$branch" = main ]; then git push origin main; else git push --force origin "$branch"; fi
+          rm -f "$key"

@@ -1,0 +1,59 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste real clipboard contents** into this issue: not in the text, the logs or a screenshot of
+        the history. What you copy can hold passwords, tokens and private messages, and issues are public.
+        Describe the content instead (for example "a 3 MB PNG" or "text with an emoji") or use demo text such
+        as `Hello from Supercy`. Replace personal paths, app names and account names with placeholders too
+        (for example `~/Documents/…`, `com.example.editor`, `demo@example.com`).
+
+        Found a security problem? Do not open an issue: report it privately as described in SECURITY.md.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: With demo content only.
+      placeholder: |
+        1. Copy the text "Hello from Supercy" in Demo Editor
+        2. Press ⇧⌘V and search for "hello"
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: macOS version and CPU
+      placeholder: macOS 15.1 on Apple silicon / macOS 14.7 on Intel
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Supercy version or commit
+      description: Finder → Applications → Supercy.app → Get Info shows the version.
+    validations:
+      required: true
+  - type: dropdown
+    id: installed
+    attributes:
+      label: Installed with
+      options: [install.sh, Homebrew, the disk image by hand, built from source]
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error messages or logs
+      description: With clipboard contents removed and personal paths and names replaced by placeholders.
+      render: text

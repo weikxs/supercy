@@ -27,11 +27,49 @@
 | 0.2 | 截图、标注与贴图 |
 | 0.3 | 收藏夹、粘贴前编辑、合并、识别文字、文件引用 |
 | 0.4 | 局域网内自己的设备之间同步 |
-| 1.0 | 发布：实测资源占用、隐私审计、签名构建 |
+| 1.0 | 发布：实测资源占用、隐私审计 |
 
 ## 平台
 
 先做 macOS，再做 Windows 和 Linux；移动端最后做，且只能手动发送和接收，因为 iOS 和 Android 不允许应用在后台读取剪贴板。
+
+## 安装
+
+目前还没有发布任何版本；在那之前，请按[开发](#开发)一节从源码构建。之后的版本会发布在
+[Releases 页面](https://github.com/weikxs/supercy/releases)，由 GitHub Actions 从本仓库构建，只提供 macOS 版：一个磁盘映像，适用于
+macOS 14（Sonoma）或更新版本的 Apple 芯片和 Intel Mac。没有 Windows 或 Linux 版。
+
+### 安装脚本，全自动
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/weikxs/supercy/main/install.sh | sh
+```
+
+脚本会下载磁盘映像，用该版本的 `checksums.txt` 校验，然后把 `Supercy.app` 复制到 `/Applications`（或 `~/Applications`），不会出现“从互联网下载”的提示。除此之外不做任何改动。再运行一次即可升级。选项写在 `sh -s --` 之后，例如 `sh -s -- --version v0.1.0`：
+
+| 选项 | 含义 |
+|---|---|
+| `--version <tag>` | 安装指定版本，而不是最新版 |
+| `--dir <folder>` | `Supercy.app` 的安装位置 |
+
+### Homebrew
+
+```sh
+brew install --cask weikxs/tap/supercy
+brew upgrade --cask supercy            # 以后升级
+```
+
+### 磁盘映像
+
+从[最新版本](https://github.com/weikxs/supercy/releases/latest)下载 `supercy_<version>_darwin_universal.dmg`，并用 `checksums.txt` 校验（`shasum -a 256 -c checksums.txt --ignore-missing`）。
+
+macOS 应用没有经过 Apple 签名或公证。安装脚本和 Homebrew 会替你处理。如果你自己安装磁盘映像，请先打开一次 Supercy，再到“系统设置 → 隐私与安全性”中选择**仍要打开**，然后重新打开；也可以运行 `xattr -dr com.apple.quarantine /Applications/Supercy.app`。详见 [SECURITY.md](SECURITY.md#release-packages-and-macos)（英文）。
+
+为了把内容直接粘贴回刚才使用的应用，Supercy 会请求“辅助功能”权限（系统设置 → 隐私与安全性 → 辅助功能）。
+
+### 卸载
+
+退出 Supercy，然后删除 `Supercy.app`（或运行 `brew uninstall --cask supercy`）。你的历史仍保存在 `~/Library/Application Support/Supercy`，密钥在登录钥匙串中（`io.github.weikxs.Supercy`）；要彻底清除，请把两者都删除。
 
 ## 开发
 
@@ -51,6 +89,8 @@
 
 ```sh
 make hooks     # 启用仓库自带的 git 钩子
+make ci        # 每个拉取请求上 CI 运行的内容：隐私、Xcode 工程，以及下面的 test 和 cover
+make check     # 全部检查：make ci、bench 和 fuzz；每次提交拉取请求前运行
 make privacy   # 检查没有本地路径、密钥或真实身份信息
 make test      # 在 Docker 中运行 fmt、clippy -D warnings、cargo deny、cargo audit、测试和绑定检查
 make bench     # 搜索速度与内存预算（release 构建）
@@ -75,7 +115,22 @@ make macos-trial-clean   # 退出试用并删除 /tmp/supercy
 
 图标以 SVG 绘制在 `design/icons`，在容器中渲染（`scripts/docker-test.sh icons`），说明见 [docs/design/icons.md](docs/design/icons.md)。
 
+### 持续集成与发布
+
+- **拉取请求：** CI 的 `check` 任务在 Linux 上直接运行 `make ci`，所用的 `scripts/check.sh` 与你电脑上容器里运行的是同一个脚本。只改文档时只运行隐私检查。
+- **`main` 受保护：** 只能通过拉取请求合入，以 squash 方式合并，且 `check` 任务必须通过。任何人都不能绕过，维护者也一样。
+- **完整运行**（Actions → Full → Run workflow，发布前手动启动）：CI 的全部检查、性能预算、模糊测试、macOS 应用的构建与单元测试，以及通用版发布构建的安装与启动。
+- **发布：** 推送标签 `vX.Y.Z` 后，先检查版本号和发布说明（`.github/release-notes/vX.Y.Z.md`），运行全部检查，构建通用版磁盘映像，在全新的 Apple 芯片和 Intel Mac 上安装并启动，全部通过后才连同 `checksums.txt` 一起发布。
+
 参与开发前请先阅读 [docs/development/standards.md](docs/development/standards.md)（英文）。
+
+## 参与贡献
+
+欢迎贡献，请先开一个 issue 讨论。请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和[行为准则](CODE_OF_CONDUCT.md)（英文），运行 `make check`，并使用 [Conventional Commits](https://www.conventionalcommits.org/) 格式（`make hooks` 会检查）。不要在 issue 或拉取请求中放入真实的剪贴板内容。重要变更记录在[变更日志](CHANGELOG.md)中。
+
+## 安全
+
+Supercy 能看到你复制的所有内容。请按 [SECURITY.md](SECURITY.md)（英文）的说明私下报告漏洞，不要发到公开 issue。
 
 ## 许可证
 
