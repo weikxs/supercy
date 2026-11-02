@@ -16,6 +16,8 @@ public enum LaunchMode: Equatable {
     public var usesLoginKeychain: Bool { self == .normal }
     public var registersGlobalShortcut: Bool { self != .isolated }
     public var allowsLoginItem: Bool { self == .normal }
+    /// Screenshots and pins: never in the isolated mode, which must not see the user's screen.
+    public var allowsScreenCapture: Bool { self != .isolated }
 }
 
 /// The parsed launch arguments and environment.
@@ -89,4 +91,8 @@ public final class TrialSystemIntegration: SystemIntegration {
     public var isAccessibilityTrusted: Bool { base.isAccessibilityTrusted }
 
     public func openAccessibilitySettings() { base.openAccessibilitySettings() }
+
+    public var isScreenCaptureAllowed: Bool { base.isScreenCaptureAllowed }
+
+    public func openScreenCaptureSettings() { base.openScreenCaptureSettings() }
 }

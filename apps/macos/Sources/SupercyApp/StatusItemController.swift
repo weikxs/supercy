@@ -11,6 +11,10 @@ final class StatusItemController: NSObject {
     /// Shows the trial notice at the top of the menu.
     var isTrial = false
     var onOpenSettings: (() -> Void)?
+    /// Screenshots and pins; `nil` where they are not available (isolated mode).
+    var capture: CaptureCoordinator?
+    /// The screenshot shortcut, shown next to its menu item.
+    var captureShortcut: Shortcut?
 
     init(controller: ClipboardController, panel: HistoryPanelController) {
         self.controller = controller
@@ -75,6 +79,7 @@ final class StatusItemController: NSObject {
             menu.addItem(.separator())
         }
         menu.addItem(menuItem(.openHistory, #selector(openHistory)))
+        if let capture { addCaptureItems(to: menu, capture: capture) }
         menu.addItem(.separator())
         if controller.isPaused {
             menu.addItem(menuItem(.resumeRecording, #selector(resume)))
@@ -98,6 +103,36 @@ final class StatusItemController: NSObject {
         item?.menu = nil
     }
 
+    private func addCaptureItems(to menu: NSMenu, capture: CaptureCoordinator) {
+        menu.addItem(.separator())
+        let take = menuItem(.captureScreen, #selector(captureScreen))
+        if let shortcut = captureShortcut {
+            take.keyEquivalent = shortcut.key.count == 1 ? shortcut.key : ""
+            take.keyEquivalentModifierMask = NSEvent.ModifierFlags(shortcutModifiers: shortcut.modifiers)
+        }
+        menu.addItem(take)
+        let delayed = NSMenuItem(title: L10n.text(.captureDelayed), action: nil, keyEquivalent: "")
+        let delays = NSMenu()
+        for seconds in CaptureDelay.seconds {
+            let item = NSMenuItem(title: String(format: L10n.text(.captureInSeconds), seconds),
+                                  action: #selector(captureDelayed(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = seconds
+            delays.addItem(item)
+        }
+        delayed.submenu = delays
+        menu.addItem(delayed)
+        let repeatItem = menuItem(.repeatLastRegion, #selector(repeatLastRegion))
+        // Without an action the (auto-enabling) menu shows it disabled.
+        if !capture.canRepeatLastRegion { repeatItem.action = nil }
+        menu.addItem(repeatItem)
+        guard capture.pins.count > 0 else { return }
+        let through = menuItem(.pinsClickThrough, #selector(togglePinsClickThrough))
+        through.state = capture.pins.isAnyClickThrough ? .on : .off
+        menu.addItem(through)
+        menu.addItem(menuItem(.closeAllPins, #selector(closeAllPins)))
+    }
+
     private func menuItem(_ key: L10nKey, _ action: Selector) -> NSMenuItem {
         let menuItem = NSMenuItem(title: L10n.text(key), action: action, keyEquivalent: "")
         menuItem.target = self
@@ -112,5 +147,24 @@ final class StatusItemController: NSObject {
     @objc private func skipNext() { controller.skipNextCopy() }
     @objc private func clearHistory() { _ = try? controller.engine.clear(keepPinned: true); refresh() }
     @objc private func openSettings() { onOpenSettings?() }
+    @objc private func captureScreen() { capture?.start(fromMenu: true) }
+    @objc private func captureDelayed(_ sender: NSMenuItem) { capture?.start(delay: sender.tag, fromMenu: true) }
+    @objc private func repeatLastRegion() { capture?.start(repeatLast: true, fromMenu: true) }
+    @objc private func closeAllPins() { capture?.pins.closeAll() }
+    @objc private func togglePinsClickThrough() {
+        guard let pins = capture?.pins else { return }
+        pins.setClickThrough(!pins.isAnyClickThrough)
+    }
     @objc private func quit() { NSApp.terminate(nil) }
+}
+
+extension NSEvent.ModifierFlags {
+    /// The flags of a shortcut's modifiers.
+    init(shortcutModifiers modifiers: Set<Shortcut.Modifier>) {
+        self = []
+        if modifiers.contains(.ctrl) { insert(.control) }
+        if modifiers.contains(.opt) { insert(.option) }
+        if modifiers.contains(.shift) { insert(.shift) }
+        if modifiers.contains(.cmd) { insert(.command) }
+    }
 }

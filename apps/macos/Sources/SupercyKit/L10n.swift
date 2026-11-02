@@ -21,6 +21,10 @@ public enum L10nKey: String, CaseIterable {
     case menuIcon, iconSupercy, iconPaperclip, iconScissors, iconStack, trialMode
     case pinnedItems, exportPins, importPins, exportPinsNote, pinsExported, pinsAdded, pinsPinnedExisting
     case pinsAlreadyPinned, pinsSkipped
+    case captureShortcut, captureScreen, captureDelayed, captureInSeconds, repeatLastRegion, copy, save
+    case pinToScreen, cancel, closePin, closeAllPins, pinsClickThrough, actualSize, opacity
+    case screenRecording, screenRecordingExplanation, needsScreenRecordingTitle, captureFailed, saveFailed
+    case captureHint, colorHint
 }
 
 /// The interface language actually used.
@@ -94,7 +98,7 @@ public enum L10n {
         .accessibilityExplanation: "To paste into the app you were using, Supercy sends ⌘V for you. macOS asks you to allow this under Privacy & Security → Accessibility. Without it, Supercy copies the item and you paste it yourself.",
         .needsAccessibilityTitle: "Allow Supercy to paste for you?", .version: "Version",
         .coreVersion: "Core", .privacyNote: "Your history stays on this Mac, encrypted. No account, no cloud, no telemetry.",
-        .keyHints: "⏎ paste · ⌥⏎ copy · ⌥⇧⏎ plain text · ⌥P pin · ⌥⌘↑↓ move pin · ⌥⌫ delete · ⌘1–9 choose · ⌃letter pinned",
+        .keyHints: "⏎ paste · ⌥⏎ copy · ⌥⇧⏎ plain text · ⌥P pin · ⌥⌘↑↓ move pin · ⌥⌫ delete · ⌘1–9 choose · ⌃letter pinned · ⌥T pin to screen",
         .paused: "Recording paused", .kindText: "Text", .kindRichText: "Rich text", .kindLink: "Link",
         .kindImage: "Image", .kindFiles: "Files", .invalidRegex: "Invalid regular expression",
         .menuIcon: "Menu bar icon", .iconSupercy: "Supercy", .iconPaperclip: "Paper clip",
@@ -104,6 +108,17 @@ public enum L10n {
         .exportPinsNote: "Saves the pinned items, in order and with their letters, to a file you can import on another Mac. The file is not encrypted: keep it somewhere safe.",
         .pinsExported: "Exported", .pinsAdded: "Added", .pinsPinnedExisting: "Pinned from history",
         .pinsAlreadyPinned: "Already pinned", .pinsSkipped: "Empty, skipped",
+        .captureShortcut: "Take a screenshot", .captureScreen: "Capture Screen",
+        .captureDelayed: "Capture After a Delay", .captureInSeconds: "In %d Seconds",
+        .repeatLastRegion: "Capture the Last Region Again", .copy: "Copy", .save: "Save…",
+        .pinToScreen: "Pin to Screen", .cancel: "Cancel", .closePin: "Close", .closeAllPins: "Close All Screen Pins",
+        .pinsClickThrough: "Let Clicks Pass Through Screen Pins", .actualSize: "Actual Size", .opacity: "Opacity",
+        .screenRecording: "Screen Recording",
+        .screenRecordingExplanation: "To take screenshots, macOS asks you to allow Supercy under Privacy & Security → Screen & System Audio Recording. Supercy only looks at the screen while you take a screenshot, and screenshots stay on this Mac. The clipboard history works without it.",
+        .needsScreenRecordingTitle: "Allow Supercy to take screenshots?",
+        .captureFailed: "The screenshot could not be taken.", .saveFailed: "The screenshot could not be saved.",
+        .captureHint: "Drag to select · click a window · Space whole screen · arrows move · Esc cancel",
+        .colorHint: "C copy colour · ⇧C copy RGB",
     ]
 
     static let chinese: [L10nKey: String] = [
@@ -141,7 +156,7 @@ public enum L10n {
         .accessibilityExplanation: "为了粘贴到你刚才使用的应用，Supercy 会替你按下 ⌘V。macOS 需要你在“隐私与安全性 → 辅助功能”中允许。不允许时，Supercy 只复制条目，由你自己粘贴。",
         .needsAccessibilityTitle: "允许 Supercy 替你粘贴吗？", .version: "版本", .coreVersion: "核心",
         .privacyNote: "历史只保存在这台 Mac 上，并且加密。不用注册，不上云，没有遥测。",
-        .keyHints: "⏎ 粘贴 · ⌥⏎ 复制 · ⌥⇧⏎ 纯文本 · ⌥P 置顶 · ⌥⌘↑↓ 移动置顶 · ⌥⌫ 删除 · ⌘1–9 选择 · ⌃字母 置顶项",
+        .keyHints: "⏎ 粘贴 · ⌥⏎ 复制 · ⌥⇧⏎ 纯文本 · ⌥P 置顶 · ⌥⌘↑↓ 移动置顶 · ⌥⌫ 删除 · ⌘1–9 选择 · ⌃字母 置顶项 · ⌥T 贴图",
         .paused: "已暂停记录", .kindText: "文本", .kindRichText: "富文本", .kindLink: "链接",
         .kindImage: "图片", .kindFiles: "文件", .invalidRegex: "正则表达式无效",
         .menuIcon: "菜单栏图标", .iconSupercy: "Supercy", .iconPaperclip: "回形针",
@@ -151,5 +166,15 @@ public enum L10n {
         .exportPinsNote: "把置顶条目按顺序连同字母键保存成一个文件，可以在另一台 Mac 上导入。这个文件没有加密，请妥善保管。",
         .pinsExported: "已导出", .pinsAdded: "新增", .pinsPinnedExisting: "从历史中置顶",
         .pinsAlreadyPinned: "原本已置顶", .pinsSkipped: "内容为空，已跳过",
+        .captureShortcut: "截图", .captureScreen: "截图", .captureDelayed: "延时截图",
+        .captureInSeconds: "%d 秒后", .repeatLastRegion: "重复上次区域", .copy: "复制", .save: "保存…",
+        .pinToScreen: "贴到屏幕", .cancel: "取消", .closePin: "关闭", .closeAllPins: "关闭全部贴图",
+        .pinsClickThrough: "贴图点击穿透", .actualSize: "原始大小", .opacity: "透明度",
+        .screenRecording: "屏幕录制",
+        .screenRecordingExplanation: "截图需要你在“隐私与安全性 → 录屏与系统录音”中允许 Supercy。Supercy 只在你截图时读取屏幕，截图只留在这台 Mac 上。不允许时，剪贴板历史照常使用。",
+        .needsScreenRecordingTitle: "允许 Supercy 截图吗？",
+        .captureFailed: "截图失败。", .saveFailed: "无法保存截图。",
+        .captureHint: "拖动选择 · 单击选窗口 · 空格全屏 · 方向键移动 · Esc 取消",
+        .colorHint: "C 复制颜色 · ⇧C 复制 RGB",
     ]
 }

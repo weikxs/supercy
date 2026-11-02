@@ -9,6 +9,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: StatusItemController?
     private var panel: HistoryPanelController?
     private var hotKey: HotKey?
+    private var captureHotKey: HotKey?
+    /// Screenshots and pins (not in the isolated mode).
+    private var capture: CaptureCoordinator?
     private var settingsWindow: NSWindow?
     private var system: SystemIntegration = MacSystemIntegration()
     private let clock = SystemClock()
@@ -86,11 +89,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         self.controller = controller
         self.panel = panel
         self.statusItem = statusItem
+        if mode.allowsScreenCapture { setUpCapture(controller: controller, panel: panel, statusItem: statusItem) }
         if mode.registersGlobalShortcut {
             let hotKey = HotKey { [weak self] in self?.panel?.toggle(near: self?.statusItem?.button) }
             if let shortcut = Shortcut(text: settings.historyShortcut) { hotKey.register(shortcut) }
             self.hotKey = hotKey
+            if capture != nil {
+                let captureHotKey = HotKey { [weak self] in self?.capture?.start() }
+                if let shortcut = Shortcut(text: settings.captureShortcut) { captureHotKey.register(shortcut) }
+                self.captureHotKey = captureHotKey
+            }
         }
+        statusItem.captureShortcut = Shortcut(text: settings.captureShortcut)
         statusItem.apply(settings)
         controller.start()
         if mode == .isolated, let scenario = ProcessInfo.processInfo.environment["SUPERCY_MEASURE"]
@@ -106,6 +116,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             measurement = script
             script.run(scenario)
         }
+    }
+
+    /// Screenshots and pins: small objects only; windows and images exist only while in use.
+    private func setUpCapture(controller: ClipboardController, panel: HistoryPanelController,
+                              statusItem: StatusItemController) {
+        let pins = PinsController()
+        let output = CaptureOutput(controller: controller, pins: pins)
+        pins.onCopy = { [weak output] image in output?.copy(image) }
+        pins.onSave = { [weak output] image in output?.save(image) }
+        pins.onClosed = { Self.releaseFreedMemory() }
+        let capture = CaptureCoordinator(output: output, pins: pins)
+        capture.onFinished = { Self.releaseFreedMemory() }
+        panel.onPinImage = { [weak pins] data in pins?.pin(imageData: data) }
+        statusItem.capture = capture
+        self.capture = capture
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -195,6 +220,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         controller?.applyPollInterval(settings.pollIntervalMs)
         statusItem?.apply(settings)
         if let shortcut = Shortcut(text: settings.historyShortcut) { hotKey?.register(shortcut) }
+        if let shortcut = Shortcut(text: settings.captureShortcut) { captureHotKey?.register(shortcut) }
+        statusItem?.captureShortcut = Shortcut(text: settings.captureShortcut)
     }
 
     private func explainAccessibility() {

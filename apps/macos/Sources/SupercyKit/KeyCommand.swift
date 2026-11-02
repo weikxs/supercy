@@ -12,11 +12,13 @@ public enum KeyCommand: Equatable {
     case selectNumber(Int)
     /// ⌃ + the letter of a pinned item.
     case pinKey(String)
+    /// ⌥T: show the selected image on screen in a floating window.
+    case pinToScreen
 
     private enum Code {
         static let returnKey: UInt16 = 36, enter: UInt16 = 76, escape: UInt16 = 53
         static let up: UInt16 = 126, down: UInt16 = 125, delete: UInt16 = 51
-        static let p: UInt16 = 35, comma: UInt16 = 43
+        static let p: UInt16 = 35, comma: UInt16 = 43, t: UInt16 = 17
         static let digits: [UInt16: Int] = [18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9]
     }
 
@@ -32,6 +34,7 @@ public enum KeyCommand: Equatable {
         case Code.returnKey, Code.enter: return chooseCommand(flags)
         case Code.delete: return deleteCommand(flags)
         case Code.p where flags == .option: return .togglePin
+        case Code.t where flags == .option: return .pinToScreen
         case Code.comma where flags == .command: return .openSettings
         default: break
         }
@@ -83,6 +86,8 @@ extension HistoryViewModel {
         case let .pinKey(key):
             guard let item = select(pinKey: key) else { return false }
             choose(item)
+        case .pinToScreen:
+            return pinSelectedToScreen()
         }
         return true
     }

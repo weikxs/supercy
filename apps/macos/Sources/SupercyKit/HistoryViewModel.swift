@@ -24,6 +24,9 @@ public final class HistoryViewModel: ObservableObject {
     public var onNeedsAccessibility: (() -> Void)?
     /// Called when the user asks for the settings (⌘,).
     public var onOpenSettings: (() -> Void)?
+    /// Called with an image item's encoded image to show it on screen (⌥T); `nil` when
+    /// screenshots and pins are not available.
+    public var onPinImage: ((Data) -> Void)?
 
     public init(controller: ClipboardController) {
         self.controller = controller
@@ -137,6 +140,20 @@ public final class HistoryViewModel: ObservableObject {
     public func moveSelectedPin(by offset: Int, nowMs: UInt64) {
         guard let rows = pinnedRows, rows.contains(selectedIndex), rows.contains(selectedIndex + offset) else { return }
         movePin(fromRow: selectedIndex, toRow: selectedIndex + (offset > 0 ? offset + 1 : offset), nowMs: nowMs)
+    }
+
+    /// Pins the selected image item to the screen and closes the panel; false when the
+    /// selection is not an image or pins are not available.
+    @discardableResult
+    public func pinSelectedToScreen() -> Bool {
+        guard let item = selected, item.kind == .image, let onPinImage else { return false }
+        let representations = (try? controller.engine.payload(id: item.id)) ?? []
+        for case let .image(_, _, _, bytes) in representations {
+            onClose?()
+            onPinImage(bytes)
+            return true
+        }
+        return false
     }
 
     public func deleteSelected() {

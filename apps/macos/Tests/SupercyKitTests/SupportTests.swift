@@ -55,7 +55,7 @@ final class LaunchOptionsTests: XCTestCase {
         let options = try parse([], [:]).get()
 
         XCTAssertEqual(options, LaunchOptions(mode: .normal, dataDirectory: standard))
-        XCTAssertTrue(options.mode.usesLoginKeychain && options.mode.allowsLoginItem)
+        XCTAssertTrue(options.mode.usesLoginKeychain && options.mode.allowsLoginItem && options.mode.allowsScreenCapture)
     }
 
     func testIsolatedLaunchNeedsADataDirectoryUnderTmpAndNeverReadsThePasteboard() throws {
@@ -63,6 +63,7 @@ final class LaunchOptionsTests: XCTestCase {
 
         XCTAssertEqual(ok.mode, .isolated)
         XCTAssertFalse(ok.mode.readsSystemPasteboard || ok.mode.usesLoginKeychain || ok.mode.registersGlobalShortcut)
+        XCTAssertFalse(ok.mode.allowsScreenCapture, "the isolated mode never looks at the screen")
         XCTAssertEqual(parse(["--isolated"], [:]), .failure(.needsTemporaryDataDirectory))
         XCTAssertEqual(parse(["--isolated"], ["SUPERCY_DATA_DIR": "/var/data"]), .failure(.needsTemporaryDataDirectory))
         XCTAssertEqual(parse(["--isolated"], ["SUPERCY_DATA_DIR": "/tmp/../var"]), .failure(.needsTemporaryDataDirectory))
@@ -74,7 +75,7 @@ final class LaunchOptionsTests: XCTestCase {
         let trial = try parse(["--trial"], environment).get()
 
         XCTAssertEqual(trial, LaunchOptions(mode: .trial, dataDirectory: URL(fileURLWithPath: "/tmp/supercy/data", isDirectory: true)))
-        XCTAssertTrue(trial.mode.readsSystemPasteboard && trial.mode.registersGlobalShortcut)
+        XCTAssertTrue(trial.mode.readsSystemPasteboard && trial.mode.registersGlobalShortcut && trial.mode.allowsScreenCapture)
         XCTAssertFalse(trial.mode.usesLoginKeychain || trial.mode.allowsLoginItem)
     }
 
@@ -99,6 +100,18 @@ final class LaunchOptionsTests: XCTestCase {
         XCTAssertFalse(trial.launchAtLogin)
         XCTAssertFalse(base.launchAtLogin)
         XCTAssertTrue(trial.isAccessibilityTrusted)
+    }
+
+    func testTheTrialPassesTheScreenRecordingPermissionThrough() {
+        let base = FakeSystem()
+        let trial = TrialSystemIntegration(base: base)
+
+        XCTAssertFalse(trial.isScreenCaptureAllowed)
+        base.isScreenCaptureAllowed = true
+        trial.openScreenCaptureSettings()
+
+        XCTAssertTrue(trial.isScreenCaptureAllowed)
+        XCTAssertEqual(base.openedScreenCaptureSettings, 1)
     }
 }
 

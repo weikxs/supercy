@@ -41,6 +41,7 @@ private struct GeneralTab: View {
         Form {
             Toggle(L10n.text(.launchAtLogin), isOn: $model.launchAtLogin)
             ShortcutField(title: L10n.text(.historyShortcut), text: binding(model, \.historyShortcut))
+            ShortcutField(title: L10n.text(.captureShortcut), text: binding(model, \.captureShortcut))
             Toggle(L10n.text(.pasteAutomatically), isOn: binding(model, \.pasteAutomatically))
             Toggle(L10n.text(.pastePlainByDefault), isOn: binding(model, \.pastePlainByDefault))
             Picker(L10n.text(.popupPosition), selection: binding(model, \.popupPosition)) {
@@ -231,6 +232,15 @@ private struct PermissionsTab: View {
             }
             Text(L10n.text(.accessibilityExplanation)).font(.callout).fixedSize(horizontal: false, vertical: true)
             Button(L10n.text(.openSystemSettings)) { model.openAccessibilitySettings() }
+            Divider().padding(.vertical, 4)
+            HStack {
+                Text(L10n.text(.screenRecording)).font(.headline)
+                Spacer()
+                Text(L10n.text(model.isScreenCaptureAllowed ? .accessibilityGranted : .accessibilityMissing))
+                    .foregroundStyle(model.isScreenCaptureAllowed ? .green : .orange)
+            }
+            Text(L10n.text(.screenRecordingExplanation)).font(.callout).fixedSize(horizontal: false, vertical: true)
+            Button(L10n.text(.openSystemSettings)) { model.openScreenCaptureSettings() }
             Spacer()
         }
         .padding(8)

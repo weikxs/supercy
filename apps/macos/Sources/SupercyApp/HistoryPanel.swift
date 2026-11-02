@@ -16,6 +16,8 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
     private var lastOrigin: NSPoint?
     var onOpenSettings: (() -> Void)?
     var onNeedsAccessibility: (() -> Void)?
+    /// Shows an image item on screen (⌥T); `nil` where pins are not available.
+    var onPinImage: ((Data) -> Void)?
     /// Called after the panel closed and released its views (to hand memory back).
     var onClosed: (() -> Void)?
     /// Places the panel off screen (scripted measurements only).
@@ -41,6 +43,7 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
             self?.onOpenSettings?()
         }
         model.onNeedsAccessibility = { [weak self] in self?.onNeedsAccessibility?() }
+        if let onPinImage { model.onPinImage = onPinImage }
         let view = HistoryPanelView(model: model, isPaused: controller.isPaused, clock: clock)
         let panel = KeyPanel(contentRect: NSRect(origin: .zero, size: view.frame.size),
                              styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],

@@ -27,6 +27,17 @@
 			isa = PBXBuildFile;
 			fileRef = D79A804A17645278414EB9E0;
 		};
+		0A86C8A642B7684A2CA804DE = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CaptureSession.swift;
+			path = Sources/SupercyApp/CaptureSession.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		0AE35B53B44AEDA3B181F259 = {
+			isa = PBXBuildFile;
+			fileRef = 4F2DE1E63F117F268FD1B706;
+		};
 		0BAE5AFE2862C1D7F495C0DB = {
 			isa = PBXBuildFile;
 			fileRef = 866C68F0809EE0FFF55DA1C3;
@@ -74,9 +85,17 @@
 			isa = PBXBuildFile;
 			fileRef = 8D06EAC446F2E034AF24853B;
 		};
+		1774C574530B13D66A597203 = {
+			isa = PBXBuildFile;
+			fileRef = 22A960964174E942F9D71907;
+		};
 		179CCAB13E16DD51822CD70F = {
 			isa = PBXBuildFile;
 			fileRef = 7CBCDE4730426D1AC8661B70;
+		};
+		18CA73B88D4438D1D214812B = {
+			isa = PBXBuildFile;
+			fileRef = DA4D01C148297D2E202462A8;
 		};
 		19EFE9DB901B166DDF00FE1A = {
 			isa = PBXFileReference;
@@ -94,6 +113,39 @@
 			lastKnownFileType = sourcecode.swift;
 			name = SystemServices.swift;
 			path = Sources/SupercyApp/SystemServices.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		1C55E94D833C47F252CD143B = {
+			isa = PBXBuildFile;
+			fileRef = FA473FF2A4A1A2DA1DE7A620;
+		};
+		2168E52FCB81586F3955CC5F = {
+			isa = PBXBuildFile;
+			fileRef = DA4D01C148297D2E202462A8;
+		};
+		21953FDF0FF27CC351FEDA42 = {
+			isa = PBXBuildFile;
+			fileRef = 283DABD563AFDB13B55B7C7F;
+		};
+		22A960964174E942F9D71907 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CaptureCoordinator.swift;
+			path = Sources/SupercyApp/CaptureCoordinator.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		283DABD563AFDB13B55B7C7F = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = MagnifierView.swift;
+			path = Sources/SupercyApp/MagnifierView.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		28C33D3A0AF7BC75CD72D52B = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CaptureOutput.swift;
+			path = Sources/SupercyApp/CaptureOutput.swift;
 			sourceTree = SOURCE_ROOT;
 		};
 		295995B7E7DD7A5042755312 = {
@@ -135,9 +187,19 @@
 			isa = PBXGroup;
 			children = (
 				A591E88546F54FBEA6F3EAE5,
+				44DCA2D60881FCBA49BA1334,
+				22A960964174E942F9D71907,
+				28C33D3A0AF7BC75CD72D52B,
+				0A86C8A642B7684A2CA804DE,
+				68FECFAEEE60C1DFEDDE8FC1,
 				555C4164DB01E24CE853E4A1,
 				ED84963EE2BCB0455C3E299D,
+				283DABD563AFDB13B55B7C7F,
 				59542C2EE14BB0C1F12F9A7B,
+				E1D7BDEFECBB575FF03D7061,
+				C6F02BE49622511E53D53B8E,
+				D94561CA17E13A3BE7619EB3,
+				94ABFEA872F8BCC2C0A82BEF,
 				866C68F0809EE0FFF55DA1C3,
 				753F3E2592D629452688755F,
 				1BE32799EFD87E0EC1ED3F0B,
@@ -199,6 +261,13 @@
 			isa = PBXBuildFile;
 			fileRef = C0FF50272609FDB896678AE9;
 		};
+		3FA107CD13B3813673EA9AA2 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CaptureFileName.swift;
+			path = Sources/SupercyKit/CaptureFileName.swift;
+			sourceTree = SOURCE_ROOT;
+		};
 		3FD35DE70625E12A64B019B8 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -209,6 +278,13 @@
 		4143A2E8E43E3011993A3A87 = {
 			isa = PBXBuildFile;
 			fileRef = 9361A571F96E0552648F4DA8;
+		};
+		44DCA2D60881FCBA49BA1334 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CaptureActionBar.swift;
+			path = Sources/SupercyApp/CaptureActionBar.swift;
+			sourceTree = SOURCE_ROOT;
 		};
 		450A8281EB69E5133704399D = {
 			isa = PBXBuildFile;
@@ -222,6 +298,10 @@
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
+		};
+		486E428930B44ECFF2C22591 = {
+			isa = PBXBuildFile;
+			fileRef = E1B82C22D8B802D594DA77F9;
 		};
 		498A8F6C8829BCF6F1BC8C2A = {
 			isa = PBXFileReference;
@@ -240,19 +320,25 @@
 		4BB34665A4A3903180DB3F80 = {
 			isa = PBXGroup;
 			children = (
+				3FA107CD13B3813673EA9AA2,
+				814CA67000F71A4E2271E2CD,
+				4F2DE1E63F117F268FD1B706,
 				07E4E59CE95AD0AB0D7B5F44,
 				4B5D565C8EC281FE6E5B1E03,
 				CBE3ABB6E7B7E3F9ADC5BCE4,
 				55BA82D026AD73406D266CFD,
 				33BD50CF20918BC05EEB4F0B,
+				DA4D01C148297D2E202462A8,
 				584D785838DCD9E3EBF2F9E2,
 				37C053271B0E6B77806A4580,
 				9361A571F96E0552648F4DA8,
 				3AAF4EDCB83A18469A4AD8C7,
 				0519F9BA6645B43646EE9AE3,
+				FA473FF2A4A1A2DA1DE7A620,
 				639DEF8ACED0BB7726735495,
 				94F12836EAABFE2BF12C4A2D,
 				3FD35DE70625E12A64B019B8,
+				8866567E4E6AC259024D1C71,
 				FAD44FE9A88644FF5BA811E4,
 				19EFE9DB901B166DDF00FE1A,
 				F1D411B7AF6339985E96DB1F,
@@ -269,9 +355,24 @@
 			isa = PBXBuildFile;
 			fileRef = 37C053271B0E6B77806A4580;
 		};
+		4F2DE1E63F117F268FD1B706 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CaptureImage.swift;
+			path = Sources/SupercyKit/CaptureImage.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		5222542A5B87A515DC63668B = {
+			isa = PBXBuildFile;
+			fileRef = 94ABFEA872F8BCC2C0A82BEF;
+		};
 		53A71791BEFF860001C7219E = {
 			isa = PBXBuildFile;
 			fileRef = 743676AFC5D4EAD2B6406C2C;
+		};
+		53E8D377785DD059F9D1098E = {
+			isa = PBXBuildFile;
+			fileRef = 4F2DE1E63F117F268FD1B706;
 		};
 		5428CF351BA300DEA5BAE5DA = {
 			isa = PBXBuildFile;
@@ -295,19 +396,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D6AA10AA89C6C39EE3AF8094,
+				AD518BD84F686FA18FE61B7F,
+				0AE35B53B44AEDA3B181F259,
 				B89CF0428E3093599312C02A,
 				F735AE77198E2E215B8B2163,
 				F32AB9268883F2B005455C27,
 				2E15BE4A6BE7AB3AE6DE5BFB,
 				61D7BC6FC7A16AAC3FD8953F,
+				18CA73B88D4438D1D214812B,
 				D377CDADCBABD189E1164DB8,
 				4E7B9DD28BE46A32D5136747,
 				4143A2E8E43E3011993A3A87,
 				F0F012D91F28B211E869F1A2,
 				87F7E8FB1E4B0196FC277DD4,
+				978B5C851392020DC243285A,
 				EE2C1EF29C9EBC3BAFA15003,
 				6735782F83BD6E2844748D16,
 				5428CF351BA300DEA5BAE5DA,
+				CA694F1F37889461B70B5026,
 				DA72D83E61D4B456D26153DD,
 				BDA2F31C758761FB5E5BD111,
 				D35586CCDD38B2A605585042,
@@ -317,9 +424,19 @@
 				15751CDB70DF15E0AB8BFE57,
 				0D7C502F483E9C412B44994C,
 				67E1D049080F8688AFDC8FA1,
+				C0D39C716266E002A3ECD972,
+				1774C574530B13D66A597203,
+				D84EEB5A903CF37C43F547EC,
+				D5C94B21082D51B17AB1D100,
+				863CD4610897FF878891B713,
 				A0318ECA6C5A7AE1448C5E13,
 				D2B01304578417F2CD703F35,
+				21953FDF0FF27CC351FEDA42,
 				E7FBB617B99556DE11B83D55,
+				C2D1EB05B2BDDA9815B6955C,
+				952E8AE8303FC76886866DF3,
+				A3BAC9379E595CB14792634C,
+				5222542A5B87A515DC63668B,
 				0BAE5AFE2862C1D7F495C0DB,
 				D5E367E13B8434FAD779789C,
 				D63D240C4692E6456CA64F5F,
@@ -408,6 +525,13 @@
 			isa = PBXBuildFile;
 			fileRef = A591E88546F54FBEA6F3EAE5;
 		};
+		68FECFAEEE60C1DFEDDE8FC1 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CountdownPanel.swift;
+			path = Sources/SupercyApp/CountdownPanel.swift;
+			sourceTree = SOURCE_ROOT;
+		};
 		6AFE22E70BE079CBB63426F8 = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -433,6 +557,10 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 			};
 			name = Release;
+		};
+		6B28609F8B29CD5F6EAA454D = {
+			isa = PBXBuildFile;
+			fileRef = 7DC1B7D7C20BB1868367DF93;
 		};
 		6EA43F133B79FD02264085AF = {
 			isa = PBXFileReference;
@@ -470,19 +598,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B25E6872D5ECD99517F25BCB,
+				F5A594AFAFD4BC19A5D90302,
+				53E8D377785DD059F9D1098E,
 				1A2120112BFA0FCC8691C34B,
 				EC9EFBB6C1B26C1D3B8C3933,
 				D4B735DD3E4A23FE8FE0F566,
 				D1621B0BB26DAE0176A4924A,
 				FFF1B21347875D7485DBB7CB,
+				2168E52FCB81586F3955CC5F,
 				BA117510D6DC958EE24AE442,
 				9C824E9AC28854818A1A65F7,
 				03117EDA19B77B580FA02D34,
 				295995B7E7DD7A5042755312,
 				A4B59DA6B8F9AC506F7EFEE2,
+				1C55E94D833C47F252CD143B,
 				450A8281EB69E5133704399D,
 				8E9F9F3AABE5E48CA605E1DA,
 				13F5F2AE80828A8E56E54E85,
+				CA9528CDDC94A3C9787E1793,
 				36865445BBF5E1AFF022893C,
 				81F75B60530B4CB8FE057EE5,
 				EB066EF68B669ABCAF78E973,
@@ -491,9 +625,12 @@
 				3E07164BCD13E630CA3F5E5D,
 				B3C340B4A4D0A5EBE0FAE5BF,
 				A192DB92A2D42293B4B6003C,
+				486E428930B44ECFF2C22591,
+				6B28609F8B29CD5F6EAA454D,
 				091A54C5BE2464F8CC5DB6AD,
 				179CCAB13E16DD51822CD70F,
 				D19BDD81A3DF0A90243D0A82,
+				A37F98592093D1BA7643E0B9,
 				7047B7054753AF80CB136C45,
 				BFA4AADF711FCF0ED950C2E0,
 				FAEE6EFAE26CAB5C3D4F26F6,
@@ -507,6 +644,13 @@
 			lastKnownFileType = sourcecode.swift;
 			name = HistoryViewModelTests.swift;
 			path = Tests/SupercyKitTests/HistoryViewModelTests.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		7DC1B7D7C20BB1868367DF93 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CaptureOutputTests.swift;
+			path = Tests/SupercyKitTests/CaptureOutputTests.swift;
 			sourceTree = SOURCE_ROOT;
 		};
 		814B949D6EF58B5AC987DD7A = {
@@ -547,6 +691,13 @@
 			};
 			name = Debug;
 		};
+		814CA67000F71A4E2271E2CD = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CaptureGeometry.swift;
+			path = Sources/SupercyKit/CaptureGeometry.swift;
+			sourceTree = SOURCE_ROOT;
+		};
 		81F75B60530B4CB8FE057EE5 = {
 			isa = PBXBuildFile;
 			fileRef = 19EFE9DB901B166DDF00FE1A;
@@ -565,6 +716,10 @@
 			path = Sources/SupercyKit/SettingsView.swift;
 			sourceTree = SOURCE_ROOT;
 		};
+		863CD4610897FF878891B713 = {
+			isa = PBXBuildFile;
+			fileRef = 68FECFAEEE60C1DFEDDE8FC1;
+		};
 		866C68F0809EE0FFF55DA1C3 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -575,6 +730,13 @@
 		87F7E8FB1E4B0196FC277DD4 = {
 			isa = PBXBuildFile;
 			fileRef = 0519F9BA6645B43646EE9AE3;
+		};
+		8866567E4E6AC259024D1C71 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SelectionState.swift;
+			path = Sources/SupercyKit/SelectionState.swift;
+			sourceTree = SOURCE_ROOT;
 		};
 		8874F642ED8AEC4168E499F6 = {
 			isa = PBXBuildFile;
@@ -643,12 +805,23 @@
 			path = Supercy.app;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		94ABFEA872F8BCC2C0A82BEF = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SelectionView.swift;
+			path = Sources/SupercyApp/SelectionView.swift;
+			sourceTree = SOURCE_ROOT;
+		};
 		94F12836EAABFE2BF12C4A2D = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
 			name = RowPresentation.swift;
 			path = Sources/SupercyKit/RowPresentation.swift;
 			sourceTree = SOURCE_ROOT;
+		};
+		952E8AE8303FC76886866DF3 = {
+			isa = PBXBuildFile;
+			fileRef = C6F02BE49622511E53D53B8E;
 		};
 		9706914E1138CDDB028F542E = {
 			isa = PBXNativeTarget;
@@ -665,6 +838,10 @@
 			productName = SupercyKitTests;
 			productReference = 63EEE1472EDB2C2C0F585BCE;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		978B5C851392020DC243285A = {
+			isa = PBXBuildFile;
+			fileRef = FA473FF2A4A1A2DA1DE7A620;
 		};
 		99A72A448CF5A9DDB939CE4F = {
 			isa = PBXGroup;
@@ -694,6 +871,14 @@
 		A192DB92A2D42293B4B6003C = {
 			isa = PBXBuildFile;
 			fileRef = 6EA43F133B79FD02264085AF;
+		};
+		A37F98592093D1BA7643E0B9 = {
+			isa = PBXBuildFile;
+			fileRef = B6A2D9B008A2BBF26B46588F;
+		};
+		A3BAC9379E595CB14792634C = {
+			isa = PBXBuildFile;
+			fileRef = D94561CA17E13A3BE7619EB3;
 		};
 		A41AFED4A024AF3478BD5674 = {
 			isa = XCConfigurationList;
@@ -739,6 +924,14 @@
 			isa = PBXBuildFile;
 			fileRef = 0E51A6B86EB25DC55FBA5271;
 		};
+		AD518BD84F686FA18FE61B7F = {
+			isa = PBXBuildFile;
+			fileRef = 814CA67000F71A4E2271E2CD;
+		};
+		B25E6872D5ECD99517F25BCB = {
+			isa = PBXBuildFile;
+			fileRef = 3FA107CD13B3813673EA9AA2;
+		};
 		B2C6509C6F8880D7CC15B692 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -757,6 +950,13 @@
 			path = Tests/SupercyKitTests/SettingsChannelTests.swift;
 			sourceTree = SOURCE_ROOT;
 		};
+		B6A2D9B008A2BBF26B46588F = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = SelectionStateTests.swift;
+			path = Tests/SupercyKitTests/SelectionStateTests.swift;
+			sourceTree = SOURCE_ROOT;
+		};
 		B89CF0428E3093599312C02A = {
 			isa = PBXBuildFile;
 			fileRef = 07E4E59CE95AD0AB0D7B5F44;
@@ -773,6 +973,10 @@
 			isa = PBXBuildFile;
 			fileRef = 498A8F6C8829BCF6F1BC8C2A;
 		};
+		C0D39C716266E002A3ECD972 = {
+			isa = PBXBuildFile;
+			fileRef = 44DCA2D60881FCBA49BA1334;
+		};
 		C0FF50272609FDB896678AE9 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -780,9 +984,28 @@
 			path = Sources/SupercyKit/SnapshotReader.swift;
 			sourceTree = SOURCE_ROOT;
 		};
+		C2D1EB05B2BDDA9815B6955C = {
+			isa = PBXBuildFile;
+			fileRef = E1D7BDEFECBB575FF03D7061;
+		};
 		C5C45D5409A1E8021AC0FEEB = {
 			isa = PBXBuildFile;
 			fileRef = CD2B32BEAFE23494565A6405;
+		};
+		C6F02BE49622511E53D53B8E = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = PinsController.swift;
+			path = Sources/SupercyApp/PinsController.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		CA694F1F37889461B70B5026 = {
+			isa = PBXBuildFile;
+			fileRef = 8866567E4E6AC259024D1C71;
+		};
+		CA9528CDDC94A3C9787E1793 = {
+			isa = PBXBuildFile;
+			fileRef = 8866567E4E6AC259024D1C71;
 		};
 		CBE3ABB6E7B7E3F9ADC5BCE4 = {
 			isa = PBXFileReference;
@@ -801,9 +1024,12 @@
 		CF052370AFDE71D3B7745306 = {
 			isa = PBXGroup;
 			children = (
+				E1B82C22D8B802D594DA77F9,
+				7DC1B7D7C20BB1868367DF93,
 				D79A804A17645278414EB9E0,
 				7CBCDE4730426D1AC8661B70,
 				B2C6509C6F8880D7CC15B692,
+				B6A2D9B008A2BBF26B46588F,
 				B5A803D46E1D27A02C1E9000,
 				498A8F6C8829BCF6F1BC8C2A,
 				833C3915CE6966FE92600D81,
@@ -892,6 +1118,10 @@
 			isa = PBXBuildFile;
 			fileRef = CBE3ABB6E7B7E3F9ADC5BCE4;
 		};
+		D5C94B21082D51B17AB1D100 = {
+			isa = PBXBuildFile;
+			fileRef = 0A86C8A642B7684A2CA804DE;
+		};
 		D5E367E13B8434FAD779789C = {
 			isa = PBXBuildFile;
 			fileRef = 753F3E2592D629452688755F;
@@ -900,6 +1130,10 @@
 			isa = PBXBuildFile;
 			fileRef = 1BE32799EFD87E0EC1ED3F0B;
 		};
+		D6AA10AA89C6C39EE3AF8094 = {
+			isa = PBXBuildFile;
+			fileRef = 3FA107CD13B3813673EA9AA2;
+		};
 		D79A804A17645278414EB9E0 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -907,13 +1141,45 @@
 			path = Tests/SupercyKitTests/ClipboardControllerTests.swift;
 			sourceTree = SOURCE_ROOT;
 		};
+		D84EEB5A903CF37C43F547EC = {
+			isa = PBXBuildFile;
+			fileRef = 28C33D3A0AF7BC75CD72D52B;
+		};
+		D94561CA17E13A3BE7619EB3 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = ScreenCapturer.swift;
+			path = Sources/SupercyApp/ScreenCapturer.swift;
+			sourceTree = SOURCE_ROOT;
+		};
 		D9B32EB9A63819D2FF8451D9 = {
 			isa = PBXBuildFile;
 			fileRef = 743676AFC5D4EAD2B6406C2C;
 		};
+		DA4D01C148297D2E202462A8 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = Magnifier.swift;
+			path = Sources/SupercyKit/Magnifier.swift;
+			sourceTree = SOURCE_ROOT;
+		};
 		DA72D83E61D4B456D26153DD = {
 			isa = PBXBuildFile;
 			fileRef = FAD44FE9A88644FF5BA811E4;
+		};
+		E1B82C22D8B802D594DA77F9 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = CaptureGeometryTests.swift;
+			path = Tests/SupercyKitTests/CaptureGeometryTests.swift;
+			sourceTree = SOURCE_ROOT;
+		};
+		E1D7BDEFECBB575FF03D7061 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = PinWindow.swift;
+			path = Sources/SupercyApp/PinWindow.swift;
+			sourceTree = SOURCE_ROOT;
 		};
 		E7FBB617B99556DE11B83D55 = {
 			isa = PBXBuildFile;
@@ -953,9 +1219,20 @@
 			isa = PBXBuildFile;
 			fileRef = CBE3ABB6E7B7E3F9ADC5BCE4;
 		};
+		F5A594AFAFD4BC19A5D90302 = {
+			isa = PBXBuildFile;
+			fileRef = 814CA67000F71A4E2271E2CD;
+		};
 		F735AE77198E2E215B8B2163 = {
 			isa = PBXBuildFile;
 			fileRef = 4B5D565C8EC281FE6E5B1E03;
+		};
+		FA473FF2A4A1A2DA1DE7A620 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			name = PinMetrics.swift;
+			path = Sources/SupercyKit/PinMetrics.swift;
+			sourceTree = SOURCE_ROOT;
 		};
 		FAD44FE9A88644FF5BA811E4 = {
 			isa = PBXFileReference;
