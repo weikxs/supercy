@@ -58,7 +58,25 @@ public final class ClipboardController {
     // MARK: Recording
 
     func pasteboardChanged() {
-        let snapshot = reader.snapshot(at: clock.nowMs())
+        ingest(reader.snapshot(at: clock.nowMs()))
+    }
+
+    /// Records content Supercy made itself (a screenshot) as one history item, as copied from
+    /// `source`; with `copy` it also goes on the pasteboard. Recorded once: the watcher accepts
+    /// the pasteboard change without reporting it. The core decides as for any copy (pause,
+    /// limits, ignore rules).
+    public func record(items: [[PasteboardEntry]], source: SourceApp?, copy: Bool) {
+        let staging = InMemoryPasteboard()
+        staging.write(items: items)
+        let snapshot = SnapshotReader(pasteboard: staging, frontApp: NoFrontApp()).snapshot(at: clock.nowMs(), source: source)
+        if copy {
+            pasteboard.write(items: items)
+            watcher.resync()
+        }
+        ingest(snapshot)
+    }
+
+    private func ingest(_ snapshot: ClipboardSnapshot) {
         guard let result = try? engine.ingest(snapshot: snapshot) else { return }
         schedule(result.nextTickMs)
         onIngest?(result.outcome)
@@ -133,6 +151,11 @@ public final class ClipboardController {
         paster.paste()
         return .pasted
     }
+}
+
+/// No front app: for content Supercy made itself, whose source is given explicitly.
+private struct NoFrontApp: FrontAppProviding {
+    func frontApp() -> SourceApp? { nil }
 }
 
 extension UInt64 {

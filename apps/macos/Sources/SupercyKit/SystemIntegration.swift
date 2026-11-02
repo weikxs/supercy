@@ -6,6 +6,9 @@ public protocol SystemIntegration: AnyObject {
     var launchAtLogin: Bool { get set }
     var isAccessibilityTrusted: Bool { get }
     func openAccessibilitySettings()
+    /// Whether screenshots are allowed (Screen Recording). Only checks; never asks.
+    var isScreenCaptureAllowed: Bool { get }
+    func openScreenCaptureSettings()
 }
 
 /// A keystore in memory: used by tests and by the isolated mode. Never used for real data.

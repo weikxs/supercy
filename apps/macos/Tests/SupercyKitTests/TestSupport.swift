@@ -61,8 +61,11 @@ final class FakeFrontApp: FrontAppProviding {
 final class FakeSystem: SystemIntegration {
     var launchAtLogin = false
     var isAccessibilityTrusted = false
+    var isScreenCaptureAllowed = false
     private(set) var openedSettings = 0
+    private(set) var openedScreenCaptureSettings = 0
     func openAccessibilitySettings() { openedSettings += 1 }
+    func openScreenCaptureSettings() { openedScreenCaptureSettings += 1 }
 }
 
 let demoNow: UInt64 = 1_700_000_000_000

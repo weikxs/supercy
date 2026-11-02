@@ -32,6 +32,10 @@ public final class SettingsModel: ObservableObject {
 
     public func openAccessibilitySettings() { system.openAccessibilitySettings() }
 
+    public var isScreenCaptureAllowed: Bool { system.isScreenCaptureAllowed }
+
+    public func openScreenCaptureSettings() { system.openScreenCaptureSettings() }
+
     /// Saves `change` applied to the current settings.
     public func update(_ change: (inout Settings) -> Void) {
         var next = settings

@@ -25,13 +25,14 @@ public struct SnapshotReader {
         self.frontApp = frontApp
     }
 
-    public func snapshot(at nowMs: UInt64) -> ClipboardSnapshot {
+    /// The pasteboard's content now, as copied from the front app (or from `source` when given).
+    public func snapshot(at nowMs: UInt64, source: SourceApp? = nil) -> ClipboardSnapshot {
         let items = pasteboard.readItems()
         var all = items.flatMap { item in clipEntries(of: item) }
         if let thumbnail = Self.thumbnail(of: all) {
             all.append(ClipEntry(typeId: thumbnailType(), data: thumbnail, size: UInt64(thumbnail.count)))
         }
-        return ClipboardSnapshot(entries: all, frontApp: frontApp.frontApp(), capturedAtMs: nowMs)
+        return ClipboardSnapshot(entries: all, frontApp: source ?? frontApp.frontApp(), capturedAtMs: nowMs)
     }
 
     private func clipEntries(of item: [PasteboardEntry]) -> [ClipEntry] {

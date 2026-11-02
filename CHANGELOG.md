@@ -31,6 +31,14 @@ Nothing has been released yet. This section records what exists on `main` so far
   permissions, in English and Simplified Chinese, following the system language.
 - The core of the coming screenshot feature: annotation documents with ten shape kinds, undo and redo, rendering
   and export to PNG and JPEG. The macOS app does not use it yet.
+- Screenshots in the macOS app, from a global shortcut (⇧⌘2 by default) or the menu bar menu, now or after a few
+  seconds: drag a region, click a window or press Space for the whole display, on every display, with a
+  magnifier that shows the pixel under the pointer and copies its colour. Copy, save or pin the result; every
+  screenshot also goes into the history once. The last region can be captured again. Screen Recording is
+  checked only when a screenshot starts or the permissions tab is open; the isolated mode never looks at the
+  screen.
+- Pins: images floating on the screen, from a screenshot or from an image in the history (⌥T). Drag, zoom,
+  change the opacity, let clicks pass through, copy, save or close them. They are not kept after a restart.
 - For development: every Rust check in a Linux container (`make check`), a trial mode that keeps all its data
   under `/tmp/supercy` (`make macos-trial`), and an isolated measurement mode (`make macos-measure`).
 - Continuous integration for pull requests, an on-demand full run with the macOS app build and tests, and a

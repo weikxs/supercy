@@ -121,17 +121,26 @@ final class MacSystemIntegration: SystemIntegration {
             NSWorkspace.shared.open(url)
         }
     }
+
+    var isScreenCaptureAllowed: Bool { ScreenCapturePermission.isAllowed }
+
+    func openScreenCaptureSettings() { ScreenCapturePermission.openSettings() }
 }
 
-/// A global shortcut through Carbon's hot keys (no Accessibility permission needed).
+/// A global shortcut through Carbon's hot keys (no Accessibility permission needed). Each
+/// instance has its own id and handles only its own key, so several can be registered.
 final class HotKey {
     private var reference: EventHotKeyRef?
     private var handler: EventHandlerRef?
     private let action: () -> Void
+    private let id: UInt32
     private static let signature: OSType = 0x5343_5059 // "SCPY"
+    private static var nextID: UInt32 = 1
 
     init(action: @escaping () -> Void) {
         self.action = action
+        id = Self.nextID
+        Self.nextID += 1
     }
 
     deinit { unregister() }
@@ -142,13 +151,21 @@ final class HotKey {
         unregister()
         var type = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let context = Unmanaged.passUnretained(self).toOpaque()
-        InstallEventHandler(GetApplicationEventTarget(), { _, _, context in
-            guard let context else { return noErr }
-            Unmanaged<HotKey>.fromOpaque(context).takeUnretainedValue().action()
+        InstallEventHandler(GetApplicationEventTarget(), { _, event, context in
+            guard let event, let context else { return OSStatus(eventNotHandledErr) }
+            var pressed = EventHotKeyID()
+            let status = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                                           nil, MemoryLayout<EventHotKeyID>.size, nil, &pressed)
+            let hotKey = Unmanaged<HotKey>.fromOpaque(context).takeUnretainedValue()
+            // Another hot key's press: let the next handler have it.
+            guard status == noErr, pressed.signature == HotKey.signature, pressed.id == hotKey.id else {
+                return OSStatus(eventNotHandledErr)
+            }
+            hotKey.action()
             return noErr
         }, 1, &type, context, &handler)
-        let id = EventHotKeyID(signature: Self.signature, id: 1)
-        let status = RegisterEventHotKey(shortcut.carbonKeyCode, shortcut.carbonModifiers, id,
+        let hotKeyID = EventHotKeyID(signature: Self.signature, id: id)
+        let status = RegisterEventHotKey(shortcut.carbonKeyCode, shortcut.carbonModifiers, hotKeyID,
                                          GetApplicationEventTarget(), 0, &reference)
         return status == noErr
     }

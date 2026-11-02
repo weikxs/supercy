@@ -132,7 +132,7 @@ final class KeyCommandTests: XCTestCase {
             (35, .option, .togglePin), (51, .option, .delete), (51, [.option, .command], .clearHistory),
             (51, [.option, .command, .shift], .clearAll), (43, .command, .openSettings),
             (18, .command, .selectNumber(1)), (25, .command, .selectNumber(9)),
-            (0, .control, .pinKey("a")), (40, .control, .pinKey("k")),
+            (0, .control, .pinKey("a")), (40, .control, .pinKey("k")), (17, .option, .pinToScreen),
             (0, [], nil), (51, [], nil), (18, [], nil), (36, .command, nil),
         ]
         for (code, flags, expected) in cases {
