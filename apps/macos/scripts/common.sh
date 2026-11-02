@@ -13,6 +13,9 @@ repo_root=$(git rev-parse --show-toplevel)
 app_dir="$repo_root/apps/macos"
 
 require_quiet_host() {
+  # A CI runner is a machine of its own: nothing else of the developer's runs there, and its
+  # load average says little about free capacity.
+  [[ "${CI:-}" == "true" ]] && return 0
   if command -v docker >/dev/null 2>&1 && [[ -n "$(docker ps -q 2>/dev/null)" ]]; then
     echo "macos: a Docker container is running; wait for it to finish" >&2
     exit 1
